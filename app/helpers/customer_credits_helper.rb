@@ -1,0 +1,2 @@
+module CustomerCreditsHelper
+end
