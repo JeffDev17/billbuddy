@@ -1,24 +1,35 @@
-# README
+# BillBuddy
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+BillBuddy é um sistema de gerenciamento de cobranças recorrentes para profissionais autônomos e pequenos negócios.
 
-Things you may want to cover:
+## Funcionalidades
 
-* Ruby version
+- Gerenciamento de clientes/alunos
+- Sistema de créditos (pacotes de horas)
+- Cobranças recorrentes (mensalidades)
+- Controle de aulas e agendamentos
+- Notificações e lembretes
 
-* System dependencies
+## Requisitos
 
-* Configuration
+- Ruby 3.2.x
+- Rails 7.x
+- PostgreSQL
 
-* Database creation
+## Instalação
 
-* Database initialization
+1. Clone o repositório
+2. Execute `bundle install`
+3. Configure o banco de dados: `rails db:create db:migrate`
+4. Inicie o servidor: `rails server`
 
-* How to run the test suite
+## Desenvolvimento
 
-* Services (job queues, cache servers, search engines, etc.)
+Este projeto segue as convenções padrão do Rails e utiliza:
+- TailwindCSS para estilização
+- RSpec para testes
+- Devise para autenticação
 
-* Deployment instructions
+## Licença
 
-* ...
+[Escolha uma licença apropriada]

@@ -1,0 +1,2 @@
+class ServicePackage < ApplicationRecord
+end
