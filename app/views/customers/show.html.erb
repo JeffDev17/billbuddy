@@ -1,0 +1,184 @@
+<div class="mb-8">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold"><%= @customer.name %></h2>
+    <div>
+      <%= link_to "Editar", edit_customer_path(@customer), class: "px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 mr-2" %>
+      <%= link_to "Voltar", customers_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Informações do Cliente</h3>
+
+      <div class="mb-4">
+        <p class="text-sm text-gray-500">Email</p>
+        <p><%= @customer.email %></p>
+      </div>
+
+      <div class="mb-4">
+        <p class="text-sm text-gray-500">Telefone</p>
+        <p><%= @customer.phone %></p>
+      </div>
+
+      <div class="mb-4">
+        <p class="text-sm text-gray-500">Status</p>
+        <p>
+          <% case @customer.status %>
+          <% when 'active' %>
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
+          <% when 'inactive' %>
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inativo</span>
+          <% when 'on_hold' %>
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Em espera</span>
+          <% end %>
+        </p>
+      </div>
+
+      <div>
+        <p class="text-sm text-gray-500">Tipo de Plano</p>
+        <p>
+          <% case @customer.plan_type %>
+          <% when 'credit' %>
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Créditos</span>
+          <% when 'subscription' %>
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Assinatura</span>
+          <% end %>
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+      <% if @customer.credit? %>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Créditos</h3>
+
+        <% if @active_credit %>
+          <div class="mb-4">
+            <p class="text-sm text-gray-500">Pacote Atual</p>
+            <p><%= @active_credit.service_package.name %></p>
+          </div>
+
+          <div class="mb-4">
+            <p class="text-sm text-gray-500">Horas Restantes</p>
+            <p><%= @active_credit.remaining_hours %> horas</p>
+          </div>
+
+          <div>
+            <p class="text-sm text-gray-500">Data de Compra</p>
+            <p><%= @active_credit.purchase_date.strftime("%d/%m/%Y") %></p>
+          </div>
+        <% else %>
+          <p class="text-gray-500">Nenhum crédito ativo.</p>
+        <% end %>
+
+        <div class="mt-4">
+          <%= link_to "Adicionar Créditos", new_customer_customer_credit_path(@customer), class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+        </div>
+      <% elsif @customer.subscription? %>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Assinatura</h3>
+
+        <% if @active_subscription %>
+          <div class="mb-4">
+            <p class="text-sm text-gray-500">Valor Mensal</p>
+            <p>R$ <%= sprintf("%.2f", @active_subscription.amount) %></p>
+          </div>
+
+          <div class="mb-4">
+            <p class="text-sm text-gray-500">Data de Início</p>
+            <p><%= @active_subscription.start_date.strftime("%d/%m/%Y") %></p>
+          </div>
+
+          <div>
+            <p class="text-sm text-gray-500">Status</p>
+            <p>
+              <% case @active_subscription.status %>
+              <% when 'active' %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Ativa</span>
+              <% when 'cancelled' %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Cancelada</span>
+              <% when 'paused' %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pausada</span>
+              <% end %>
+            </p>
+          </div>
+        <% else %>
+          <p class="text-gray-500">Nenhuma assinatura ativa.</p>
+        <% end %>
+
+        <div class="mt-4">
+          <% if @active_subscription %>
+            <%= link_to "Editar Assinatura", edit_customer_subscription_path(@customer, @active_subscription), class: "px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600" %>
+          <% else %>
+            <%= link_to "Criar Assinatura", new_customer_subscription_path(@customer), class: "px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @customer.subscription? && @extra_time_balances.any? %>
+    <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+      <div class="px-6 py-4 border-b">
+        <h3 class="text-lg font-medium text-gray-900">Saldo de Tempo Extra</h3>
+      </div>
+
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data de Expiração</th>
+        </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+        <% @extra_time_balances.each do |balance| %>
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap"><%= balance.hours %> horas</td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= balance.expiry_date.strftime("%d/%m/%Y") %></td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="px-6 py-4 border-b flex justify-between items-center">
+      <h3 class="text-lg font-medium text-gray-900">Próximos Compromissos</h3>
+      <%= link_to "Novo Compromisso", new_customer_appointment_path(@customer), class: "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" %>
+    </div>
+
+    <div class="divide-y">
+      <% if @upcoming_appointments.any? %>
+        <% @upcoming_appointments.each do |appointment| %>
+          <div class="px-6 py-4">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-sm text-gray-500"><%= appointment.scheduled_at.strftime("%d/%m/%Y %H:%M") %></p>
+                <p><%= appointment.notes %></p>
+              </div>
+              <div class="text-right">
+                <p><%= appointment.duration %> horas</p>
+                <p>
+                  <% case appointment.status %>
+                  <% when 'scheduled' %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Agendado</span>
+                  <% when 'completed' %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Concluído</span>
+                  <% when 'cancelled' %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Cancelado</span>
+                  <% when 'no_show' %>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Não compareceu</span>
+                  <% end %>
+                </p>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="px-6 py-4 text-center text-gray-500">
+          Não há compromissos agendados.
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
