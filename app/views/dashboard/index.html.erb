@@ -1,20 +1,20 @@
 <div class="mb-8">
-  <h2 class="text-xl font-semibold mb-4">Dashboard</h2>
+  <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Dashboard</h2>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h3 class="text-lg font-medium text-gray-900">Total de Clientes</h3>
-      <p class="mt-2 text-3xl font-bold"><%= @customers_count %></p>
+    <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-bg-secondary">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Total de Clientes</h3>
+      <p class="mt-2 text-3xl font-bold text-indigo-600 dark:text-indigo-400"><%= @customers_count %></p>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h3 class="text-lg font-medium text-gray-900">Clientes Ativos</h3>
-      <p class="mt-2 text-3xl font-bold"><%= @active_customers %></p>
+    <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-bg-secondary">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Clientes Ativos</h3>
+      <p class="mt-2 text-3xl font-bold text-indigo-600 dark:text-indigo-400"><%= @active_customers %></p>
     </div>
 
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h3 class="text-lg font-medium text-gray-900">Compromissos Hoje</h3>
-      <p class="mt-2 text-3xl font-bold">
+    <div class="bg-white p-6 rounded-lg shadow dark:bg-dark-bg-secondary">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Compromissos Hoje</h3>
+      <p class="mt-2 text-3xl font-bold text-indigo-600 dark:text-indigo-400">
         <%= Appointment.joins(:customer)
                        .where(customers: { user_id: current_user.id })
                        .where('scheduled_at BETWEEN ? AND ?', Time.current.beginning_of_day, Time.current.end_of_day)
@@ -22,33 +22,33 @@
       </p>
     </div>
   </div>
+</div>
 
-  <div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="px-6 py-4 border-b">
-      <h3 class="text-lg font-medium text-gray-900">Próximos Compromissos</h3>
-    </div>
+<div class="bg-white rounded-lg shadow overflow-hidden dark:bg-dark-bg-secondary">
+  <div class="px-6 py-4 border-b dark:border-gray-700">
+    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Próximos Compromissos</h3>
+  </div>
 
-    <div class="divide-y">
-      <% if @upcoming_appointments.any? %>
-        <% @upcoming_appointments.each do |appointment| %>
-          <div class="px-6 py-4">
-            <div class="flex justify-between">
-              <div>
-                <p class="font-medium"><%= appointment.customer.name %></p>
-                <p class="text-sm text-gray-500"><%= appointment.notes %></p>
-              </div>
-              <div class="text-right">
-                <p><%= appointment.scheduled_at.strftime("%d/%m/%Y %H:%M") %></p>
-                <p class="text-sm text-gray-500"><%= appointment.duration %> horas</p>
-              </div>
+  <div class="divide-y dark:divide-gray-700">
+    <% if @upcoming_appointments.any? %>
+      <% @upcoming_appointments.each do |appointment| %>
+        <div class="px-6 py-4">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-medium text-indigo-600 dark:text-indigo-400"><%= appointment.customer.name %></p>
+              <p class="text-sm text-gray-700 dark:text-gray-300"><%= appointment.notes %></p>
+            </div>
+            <div class="text-right">
+              <p class="text-gray-900 dark:text-gray-100"><%= appointment.scheduled_at.strftime("%d/%m/%Y %H:%M") %></p>
+              <p class="text-sm text-indigo-600 dark:text-indigo-400"><%= appointment.duration %> horas</p>
             </div>
           </div>
-        <% end %>
-      <% else %>
-        <div class="px-6 py-4 text-center text-gray-500">
-          Não há compromissos agendados.
         </div>
       <% end %>
-    </div>
+    <% else %>
+      <div class="px-6 py-4 text-center text-gray-700 dark:text-gray-300">
+        Não há compromissos agendados.
+      </div>
+    <% end %>
   </div>
 </div>

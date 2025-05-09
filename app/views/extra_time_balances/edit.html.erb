@@ -1,0 +1,10 @@
+<div class="mb-8">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold">Editar Saldo de Tempo Extra de <%= @customer.name %></h2>
+    <%= link_to "Voltar", customer_extra_time_balances_path(@customer), class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+  </div>
+
+  <div class="bg-white p-6 rounded-lg shadow">
+    <%= render 'form', extra_time_balance: @extra_time_balance %>
+  </div>
+</div>

@@ -1,4 +1,10 @@
-<div>
-  <h1 class="font-bold text-4xl">ServicePackages#edit</h1>
-  <p>Find me in app/views/service_packages/edit.html.erb</p>
+<div class="mb-8">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold">Editar Pacote de Serviço</h2>
+    <%= link_to "Voltar", service_package_path(@service_package), class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+  </div>
+
+  <div class="bg-white p-6 rounded-lg shadow">
+    <%= render 'form', service_package: @service_package %>
+  </div>
 </div>

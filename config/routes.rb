@@ -9,11 +9,11 @@ Rails.application.routes.draw do
     resources :customer_credits, only: [:index, :new, :create]
     resources :subscriptions, only: [:index, :new, :create, :edit, :update]
     resources :appointments, only: [:index, :new, :create]
-    resources :extra_time_balances, only: [:index]
+    resources :extra_time_balances
   end
 
   resources :service_packages
-  resources :appointments, only: [:index, :edit, :update, :destroy]
+  resources :appointments, only: [:index, :new, :create, :edit, :update, :destroy]
   resources :payments, only: [:index, :new, :create]
 
   # Dashboard
