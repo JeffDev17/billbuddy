@@ -1,4 +1,35 @@
-<div>
-  <h1 class="font-bold text-4xl">CustomerCredits#new</h1>
-  <p>Find me in app/views/customer_credits/new.html.erb</p>
+<div class="mb-8">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold">Adicionar Créditos para <%= @customer.name %></h2>
+    <%= link_to "Voltar", customer_customer_credits_path(@customer), class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+  </div>
+
+  <div class="bg-white p-6 rounded-lg shadow">
+    <%= form_with(model: [@customer, @customer_credit]) do |form| %>
+      <% if @customer_credit.errors.any? %>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <h2><%= pluralize(@customer_credit.errors.count, "erro") %> impediram que estes créditos fossem salvos:</h2>
+          <ul>
+            <% @customer_credit.errors.each do |error| %>
+              <li><%= error.full_message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="mb-4">
+        <%= form.label :service_package_id, "Pacote de Serviço", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.collection_select :service_package_id, ServicePackage.active, :id, :name, {}, class: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
+      </div>
+
+      <div class="mb-4">
+        <%= form.label :purchase_date, "Data de Compra", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.date_field :purchase_date, value: Date.today, class: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
+      </div>
+
+      <div class="flex justify-end">
+        <%= form.submit "Adicionar Créditos", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+      </div>
+    <% end %>
+  </div>
 </div>

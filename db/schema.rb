@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_08_171225) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_08_175312) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -57,6 +57,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_08_171225) do
     t.index ["customer_id"], name: "index_extra_time_balances_on_customer_id"
   end
 
+  create_table "payments", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "payment_type", null: false
+    t.decimal "amount", precision: 10, scale: 2, null: false
+    t.date "payment_date", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_payments_on_customer_id"
+  end
+
   create_table "service_packages", force: :cascade do |t|
     t.string "name"
     t.integer "hours"
@@ -93,5 +104,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_08_171225) do
   add_foreign_key "customer_credits", "service_packages"
   add_foreign_key "customers", "users"
   add_foreign_key "extra_time_balances", "customers"
+  add_foreign_key "payments", "customers"
   add_foreign_key "subscriptions", "customers"
 end

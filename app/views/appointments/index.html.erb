@@ -1,4 +1,43 @@
-<div>
-  <h1 class="font-bold text-4xl">Appointments#index</h1>
-  <p>Find me in app/views/appointments/index.html.erb</p>
+<div class="container mx-auto px-4">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Compromissos</h1>
+    <%= link_to "Novo Compromisso", new_appointment_path, class: "bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
+  </div>
+
+  <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-50 dark:bg-dark-bg-tertiary">
+      <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data/Hora</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duração</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notas</th>
+        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+      </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-dark-bg-secondary divide-y divide-gray-200 dark:divide-gray-700">
+      <% @appointments.each do |appointment| %>
+        <tr class="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-indigo-600 dark:text-indigo-400"><%= appointment.customer.name %></div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-gray-900 dark:text-gray-100"><%= appointment.scheduled_at.strftime("%d/%m/%Y %H:%M") %></div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-indigo-600 dark:text-indigo-400"><%= appointment.duration %> horas</div>
+          </td>
+          <td class="px-6 py-4">
+            <div class="text-sm text-gray-700 dark:text-gray-300"><%= appointment.notes %></div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <%= link_to "Ver", appointment_path(appointment), class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
+            <%= link_to "Editar", edit_appointment_path(appointment), class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
+            <%= link_to "Excluir", appointment_path(appointment), method: :delete, data: { confirm: "Tem certeza?" }, class: "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>
