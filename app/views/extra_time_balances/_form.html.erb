@@ -2,12 +2,12 @@
   <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Novo [Recurso]</h1>
 
   <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow p-6">
-    <%= form_with(model: @resource) do |form| %>
-      <% if @resource.errors.any? %>
+    <%= form_with(model: extra_time_balance) do |form| %>
+      <% if extra_time_balance.errors.any? %>
         <div class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
-          <h2 class="text-lg font-medium"><%= pluralize(@resource.errors.count, "erro") %> impediram que este recurso fosse salvo:</h2>
+          <h2 class="text-lg font-medium"><%= pluralize(extra_time_balance.errors.count, "erro") %> impediram que este saldo fosse salvo:</h2>
           <ul class="list-disc pl-5 mt-2">
-            <% @resource.errors.full_messages.each do |message| %>
+            <% extra_time_balance.errors.full_messages.each do |message| %>
               <li><%= message %></li>
             <% end %>
           </ul>
@@ -15,15 +15,18 @@
       <% end %>
 
       <div class="mb-4">
-        <%= form.label :field_name, "Nome do Campo", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-        <%= form.text_field :field_name, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
+        <%= form.label :hours, "Horas", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+        <%= form.number_field :hours, step: 0.5, min: 0.5, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
       </div>
 
-      <!-- Outros campos do formulário -->
+      <div class="mb-4">
+        <%= form.label :expiry_date, "Data de Expiração", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+        <%= form.date_field :expiry_date, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
+      </div>
 
       <div class="flex justify-end mt-6">
-        <%= link_to "Cancelar", resources_path, class: "mr-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-dark-bg-primary" %>
-        <%= form.submit "Salvar", class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
+        <%= link_to "Cancelar", customer_extra_time_balances_path(@customer), class: "mr-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-dark-bg-primary" %>
+        <%= form.submit extra_time_balance.new_record? ? "Adicionar Saldo" : "Atualizar Saldo", class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
       </div>
     <% end %>
   </div>

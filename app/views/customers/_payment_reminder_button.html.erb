@@ -1,0 +1,11 @@
+<% if customer.phone.present? %>
+  <%= button_to "Enviar Lembrete de Pagamento", 
+              notify_payment_reminder_customer_path(customer), 
+              method: :post, 
+              class: "bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded",
+              data: { confirm: "Enviar lembrete de pagamento para #{customer.name}?" } %>
+<% else %>
+  <div class="text-red-500 text-sm mt-2">
+    Cliente não possui telefone cadastrado para notificações.
+  </div>
+<% end %>
