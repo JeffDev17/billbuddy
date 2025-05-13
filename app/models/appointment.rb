@@ -20,7 +20,8 @@ class Appointment < ApplicationRecord
   private
 
   def update_customer_credits
-    # Se o cliente usa créditos, deduzir as horas da sessão
+    return if notes&.start_with?("Débito manual:")
+
     if customer.credit?
       credit = customer.active_credit
       if credit

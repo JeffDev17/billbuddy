@@ -103,6 +103,7 @@
           @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text-primary;
       }
   </style>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 </head>
 
 <body class="h-full bg-gray-100 dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary">
@@ -120,11 +121,13 @@
 
             <%= link_to "Clientes", customers_path, class: "#{controller_name == 'customers' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
 
-            <%= link_to "Compromissos", appointments_path, class: "#{controller_name == 'appointments' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%#= link_to "Compromissos", appointments_path, class: "#{controller_name == 'appointments' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
 
             <%= link_to "Pacotes", service_packages_path, class: "#{controller_name == 'service_packages' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
 
             <%= link_to "Pagamentos", payments_path, class: "#{controller_name == 'payments' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+
+            <%= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
           </div>
         </div>
         <div class="flex items-center">

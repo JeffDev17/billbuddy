@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+
+  rails:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails server -p ${PORT} -b '0.0.0.0'"
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+      - node_modules:/app/node_modules
+    environment:
+      - RAILS_ENV=${RAILS_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - WHATSAPP_API_URL=${WHATSAPP_API_URL}
+    env_file: .env
+    ports:
+      - "${PORT}:${PORT}"
+    depends_on:
+      - db
+
+  whatsapp-api:
+    build:
+      context: ./whatsapp-api
+      dockerfile: Dockerfile
+    command: npm start
+    volumes:
+      - ./whatsapp-api:/app
+      - whatsapp_auth:/app/.wwebjs_auth
+      - whatsapp_node_modules:/app/node_modules
+    environment:
+      - PORT=${WHATSAPP_API_PORT}
+    env_file: .env
+    ports:
+      - "${WHATSAPP_API_PORT}:${WHATSAPP_API_PORT}"
+
+volumes:
+  postgres_data:
+  bundle_cache:
+  node_modules:
+  whatsapp_node_modules:
+  whatsapp_auth: 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_08_175312) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_09_131160) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -57,6 +57,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_08_175312) do
     t.index ["customer_id"], name: "index_extra_time_balances_on_customer_id"
   end
 
+  create_table "failed_notifications", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "notification_type", null: false
+    t.text "error_message", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "notification_type"], name: "index_failed_notifications_on_customer_id_and_notification_type"
+    t.index ["customer_id"], name: "index_failed_notifications_on_customer_id"
+  end
+
   create_table "payments", force: :cascade do |t|
     t.bigint "customer_id", null: false
     t.string "payment_type", null: false
@@ -84,7 +94,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_08_175312) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "service_package_id", null: false
+    t.date "end_date"
+    t.integer "billing_day"
+    t.text "notes"
     t.index ["customer_id"], name: "index_subscriptions_on_customer_id"
+    t.index ["service_package_id"], name: "index_subscriptions_on_service_package_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -104,6 +119,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_08_175312) do
   add_foreign_key "customer_credits", "service_packages"
   add_foreign_key "customers", "users"
   add_foreign_key "extra_time_balances", "customers"
+  add_foreign_key "failed_notifications", "customers"
   add_foreign_key "payments", "customers"
   add_foreign_key "subscriptions", "customers"
+  add_foreign_key "subscriptions", "service_packages"
 end

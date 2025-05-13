@@ -1,4 +1,12 @@
 class ApplicationController < ActionController::Base
-  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
-  allow_browser versions: :modern
+  # Comente ou remova qualquer linha relacionada a authenticate_user!
+  before_action :authenticate_user!
+
+  # Defina um método current_user simples para desenvolvimento
+  helper_method :current_user
+
+  def current_user
+    # Retorna o primeiro usuário ou cria um se não existir
+    @current_user ||= User.first_or_create(email: 'admin@example.com', password: 'password')
+  end
 end

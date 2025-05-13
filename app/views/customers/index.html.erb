@@ -19,7 +19,9 @@
       <% @customers.each do |customer| %>
         <tr class="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary">
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-indigo-600 dark:text-indigo-400"><%= customer.name %></div>
+            <div class="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+              <%= link_to customer.name, customer_path(customer), class: "hover:text-indigo-900 dark:hover:text-indigo-300" %>
+            </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-gray-900 dark:text-gray-100"><%= customer.email %></div>
@@ -35,9 +37,16 @@
             <% end %>
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <%= link_to "Ver", customer_path(customer), class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
             <%= link_to "Editar", edit_customer_path(customer), class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
-            <%= link_to "Excluir", customer_path(customer), method: :delete, data: { confirm: "Tem certeza?" }, class: "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" %>
+            <%= button_to "Excluir", 
+                customer_path(customer), 
+                method: :delete, 
+                form: { class: "inline-block" },
+                class: "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 bg-transparent border-0 p-0 cursor-pointer",
+                data: { 
+                  turbo_confirm: "Tem certeza que deseja excluir #{customer.name}?",
+                  turbo_method: :delete 
+                } %>
           </td>
         </tr>
       <% end %>

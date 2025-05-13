@@ -1,10 +1,19 @@
 <div class="mb-8">
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-semibold">Editar Assinatura de <%= @customer.name %></h2>
-    <%= link_to "Voltar", customer_subscriptions_path(@customer), class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    <h2 class="text-xl font-semibold">
+      <% if @customer %>
+        Editar Assinatura de <%= @customer.name %>
+      <% else %>
+        Editar Assinatura
+      <% end %>
+    </h2>
+
+    <% if @customer %>
+      <%= link_to "Voltar", customer_subscriptions_path(@customer), class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    <% else %>
+      <%= link_to "Voltar", subscriptions_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    <% end %>
   </div>
 
-  <div class="bg-white p-6 rounded-lg shadow">
-    <%= render 'form', subscription: @subscription %>
-  </div>
+  <%= render 'form', subscription: @subscription %>
 </div>

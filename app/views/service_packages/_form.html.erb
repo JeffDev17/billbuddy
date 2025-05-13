@@ -1,38 +1,41 @@
-<%= form_with(model: service_package) do |form| %>
-  <% if service_package.errors.any? %>
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      <h2><%= pluralize(service_package.errors.count, "erro") %> impediram que este pacote fosse salvo:</h2>
-      <ul>
-        <% service_package.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
+<div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow p-6">
+  <%= form_with(model: service_package) do |form| %>
+    <% if service_package.errors.any? %>
+      <div class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+        <h2 class="text-lg font-medium"><%= pluralize(service_package.errors.count, "erro") %> impediram que este pacote fosse salvo:</h2>
+        <ul class="list-disc pl-5 mt-2">
+          <% service_package.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="mb-4">
+      <%= form.label :name, "Nome", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+      <%= form.text_field :name, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+    </div>
+
+    <div class="mb-4">
+      <%= form.label :hours, "Horas", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+      <%= form.number_field :hours, step: 1, min: 1, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+    </div>
+
+    <div class="mb-4">
+      <%= form.label :price, "Preço (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+      <%= form.number_field :price, step: 0.01, min: 0, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+    </div>
+
+    <div class="mb-4">
+      <div class="flex items-center">
+        <%= form.check_box :active, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded dark:border-gray-700 dark:bg-dark-bg-tertiary" %>
+        <%= form.label :active, "Ativo", class: "ml-2 block text-sm text-gray-900 dark:text-dark-text-primary" %>
+      </div>
+    </div>
+
+    <div class="flex justify-end mt-6">
+      <%= link_to "Cancelar", service_packages_path, class: "mr-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-dark-bg-primary" %>
+      <%= form.submit service_package.new_record? ? "Criar Pacote" : "Atualizar Pacote", class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
     </div>
   <% end %>
-
-  <div class="mb-4">
-    <%= form.label :name, "Nome", class: "block text-sm font-medium text-gray-700 mb-1" %>
-    <%= form.text_field :name, class: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
-  </div>
-
-  <div class="mb-4">
-    <%= form.label :hours, "Horas", class: "block text-sm font-medium text-gray-700 mb-1" %>
-    <%= form.number_field :hours, step: 1, min: 1, class: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
-  </div>
-
-  <div class="mb-4">
-    <%= form.label :price, "Preço (R$)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-    <%= form.number_field :price, step: 0.01, min: 0, class: "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" %>
-  </div>
-
-  <div class="mb-4">
-    <div class="flex items-center">
-      <%= form.check_box :active, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
-      <%= form.label :active, "Ativo", class: "ml-2 block text-sm text-gray-900" %>
-    </div>
-  </div>
-
-  <div class="flex justify-end">
-    <%= form.submit service_package.new_record? ? "Criar Pacote" : "Atualizar Pacote", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
-  </div>
-<% end %>
+</div>

@@ -1,0 +1,119 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="text-center">Autenticação do WhatsApp</h3>
+        </div>
+        <div class="card-body text-center">
+          <div id="status-message" class="alert d-none"></div>
+          
+          <div id="qr-container" class="d-none">
+            <p class="mb-3">Escaneie o QR Code com seu WhatsApp:</p>
+            <div id="qr-code"></div>
+          </div>
+
+          <div id="loading" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-2">Inicializando WhatsApp...</p>
+          </div>
+
+          <div id="success-message" class="d-none">
+            <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
+            <h4 class="mt-3">WhatsApp Conectado!</h4>
+            <p>Você já pode fechar esta página.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% content_for :head do %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<% end %>
+
+<% content_for :javascript do %>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const qrContainer = document.getElementById('qr-container');
+  const qrElement = document.getElementById('qr-code');
+  const statusMessage = document.getElementById('status-message');
+  const loading = document.getElementById('loading');
+  const successMessage = document.getElementById('success-message');
+  let qrCode = null;
+
+  function showError(message) {
+    statusMessage.classList.remove('d-none', 'alert-success');
+    statusMessage.classList.add('alert-danger');
+    statusMessage.textContent = message;
+  }
+
+  function checkStatus() {
+    fetch('/whatsapp/status')
+      .then(response => response.json())
+      .then(data => {
+        if (data.authenticated) {
+          loading.classList.add('d-none');
+          qrContainer.classList.add('d-none');
+          successMessage.classList.remove('d-none');
+          return;
+        }
+        
+        // Continua verificando o QR code
+        getQRCode();
+      })
+      .catch(error => {
+        showError('Erro ao verificar status do WhatsApp');
+        setTimeout(checkStatus, 5000);
+      });
+  }
+
+  function getQRCode() {
+    fetch('/whatsapp/qr-code')
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'ready') {
+          loading.classList.add('d-none');
+          qrContainer.classList.add('d-none');
+          successMessage.classList.remove('d-none');
+          return;
+        }
+
+        if (data.status === 'pending' && data.qr) {
+          loading.classList.add('d-none');
+          qrContainer.classList.remove('d-none');
+          
+          // Cria ou atualiza o QR code
+          if (!qrCode) {
+            qrCode = new QRCode(qrElement, {
+              text: data.qr,
+              width: 256,
+              height: 256
+            });
+          } else {
+            qrElement.innerHTML = '';
+            qrCode = new QRCode(qrElement, {
+              text: data.qr,
+              width: 256,
+              height: 256
+            });
+          }
+        }
+
+        // Continua verificando
+        setTimeout(getQRCode, 5000);
+      })
+      .catch(error => {
+        showError('Erro ao obter QR code');
+        setTimeout(getQRCode, 5000);
+      });
+  }
+
+  // Inicia o processo
+  checkStatus();
+});
+</script>
+<% end %> 

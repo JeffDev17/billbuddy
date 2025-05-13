@@ -7,10 +7,6 @@
 # Ignore bundler config.
 /.bundle
 
-# Ignore all environment files (except templates).
-/.env*
-!/.env*.erb
-
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*
@@ -22,17 +18,46 @@
 !/tmp/pids/
 !/tmp/pids/.keep
 
-# Ignore storage (uploaded files in development and any SQLite databases).
+# Ignore uploaded files in development.
 /storage/*
 !/storage/.keep
 /tmp/storage/*
 !/tmp/storage/
 !/tmp/storage/.keep
 
-/public/assets
-
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+/config/credentials.yml.enc
 
-/app/assets/builds/*
-!/app/assets/builds/.keep
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# WhatsApp session data
+/whatsapp-api/.wwebjs_auth/
+/whatsapp-api/session/
+/whatsapp-api/.env
+
+# Node modules
+/whatsapp-api/node_modules/
+
+# Rails specific
+/public/assets
+/public/packs
+/public/packs-test
+/node_modules
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
+
+# macOS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor specific
+.idea/
+.vscode/
+*.swp
+*.swo
