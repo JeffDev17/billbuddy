@@ -6,6 +6,9 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
 
+  <%= javascript_importmap_tags %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -103,7 +106,6 @@
           @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text-primary;
       }
   </style>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 </head>
 
 <body class="h-full bg-gray-100 dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary">

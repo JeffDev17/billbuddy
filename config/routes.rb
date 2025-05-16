@@ -42,6 +42,12 @@ Rails.application.routes.draw do
   # Rotas do Google Calendar
   get "/google/redirect", to: "calendars#redirect", as: :redirect_calendars
   get "/google/oauth2/callback", to: "calendars#callback", as: :callback_calendars
-  resources :calendars, only: [:index]
+  resources :calendars, only: [:index] do
+    collection do
+      post 'create_event'
+      patch 'update_event/:event_id', to: 'calendars#update_event', as: 'update_event'
+      delete 'delete_event/:event_id', to: 'calendars#delete_event', as: 'delete_event'
+    end
+  end
   get "/events/:calendar_id", to: "calendars#events", as: "events", calendar_id: /[^\/]+/
 end

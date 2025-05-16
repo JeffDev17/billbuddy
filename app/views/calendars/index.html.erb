@@ -1,47 +1,503 @@
 <div class="mb-8">
-  <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Eventos de Hoje</h2>
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Eventos de Hoje</h2>
+    <% if session[:authorization].present? %>
+      <button onclick="toggleCreateEventForm()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+        Criar Evento
+      </button>
+    <% end %>
+  </div>
 
-  <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-dark-bg-secondary">
-    <div class="px-6 py-4 border-b dark:border-gray-700">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-        <%= Time.zone.now.strftime("%d/%m/%Y") %>
-      </h3>
-    </div>
+  <!-- Formulário de Criação de Evento (inicialmente oculto) -->
+  <div id="createEventForm" class="hidden mb-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <%= form_tag create_event_calendars_path, method: :post, class: "space-y-4" do %>
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Título</label>
+        <input type="text" name="summary" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+      </div>
 
-    <div class="divide-y dark:divide-gray-700">
-      <% if session[:authorization].blank? %>
-        <div class="px-6 py-4 text-center text-gray-700 dark:text-gray-300">
-          Para ver seus eventos, você precisa autorizar o acesso ao Google Calendar.
-          <%= link_to "Autorizar Acesso", redirect_calendars_path, class: "text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 ml-2" %>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Localização</label>
+        <input type="text" name="location" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Descrição</label>
+        <textarea name="description" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Data</label>
+          <input type="date" 
+                 id="eventDate" 
+                 required 
+                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                 min="<%= Date.today.strftime('%Y-%m-%d') %>">
         </div>
-      <% elsif @todays_events.any? %>
-        <% @todays_events.each do |event| %>
-          <div class="px-6 py-4">
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="font-medium text-indigo-600 dark:text-indigo-400"><%= event.summary %></p>
-                <% if event.description.present? %>
-                  <p class="text-sm text-gray-700 dark:text-gray-300"><%= event.description %></p>
-                <% end %>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  <% start_time = event.start.date_time || event.start.date %>
-                  <% end_time = event.end.date_time || event.end.date %>
-                  <%= start_time.strftime("%H:%M") %> - <%= end_time.strftime("%H:%M") %>
-                </p>
-              </div>
-              <% if event.hangout_link %>
-                <div class="text-right">
-                  <%= link_to "Entrar", event.hangout_link, target: "_blank", class: "text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300" %>
-                </div>
-              <% end %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Horário Início</label>
+          <select id="startTime" 
+                  required 
+                  class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+          </select>
+          <input type="hidden" name="start_time" id="startTimeHidden">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Horário Fim</label>
+          <select id="endTime" 
+                  required 
+                  class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+          </select>
+          <input type="hidden" name="end_time" id="endTimeHidden">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Evento Recorrente?</label>
+        <div class="flex items-center mb-2">
+          <input type="checkbox" 
+                 id="isRecurring" 
+                 class="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded">
+          <label for="isRecurring" class="ml-2 block text-sm text-gray-700 dark:text-gray-200">
+            Repetir este evento
+          </label>
+        </div>
+        
+        <div id="recurringOptions" class="hidden space-y-3 mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Repetir em quais dias?</label>
+            <div class="grid grid-cols-4 gap-2 mt-2">
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="recurring_days[]" value="1" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Seg</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="recurring_days[]" value="2" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Ter</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="recurring_days[]" value="3" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Qua</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="recurring_days[]" value="4" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Qui</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="recurring_days[]" value="5" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sex</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="recurring_days[]" value="6" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sáb</span>
+              </label>
+              <label class="inline-flex items-center">
+                <input type="checkbox" name="recurring_days[]" value="0" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Dom</span>
+              </label>
             </div>
           </div>
-        <% end %>
-      <% else %>
-        <div class="px-6 py-4 text-center text-gray-700 dark:text-gray-300">
-          Nenhum evento para hoje.
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Repetir até</label>
+            <div class="mt-2">
+              <label class="inline-flex items-center">
+                <input type="checkbox" 
+                       id="no_end_date" 
+                       name="no_end_date" 
+                       class="h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                       onchange="toggleEndDateField()">
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Repetir indefinidamente</span>
+              </label>
+            </div>
+            <input type="date" 
+                   id="recurring_until" 
+                   name="recurring_until" 
+                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                   min="<%= Date.today.strftime('%Y-%m-%d') %>">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Participantes (emails separados por vírgula)</label>
+        <input type="text" name="attendees" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+      </div>
+
+      <div class="flex justify-end space-x-3">
+        <button type="button" onclick="toggleCreateEventForm()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded">
+          Cancelar
+        </button>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+          Criar Evento
+        </button>
+      </div>
+    <% end %>
+  </div>
+  
+  <!-- Centralizando e adicionando espaçamento ao iframe -->
+  <div class="flex justify-center mb-8">
+    <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=America%2FSao_Paulo&showPrint=0&mode=WEEK&src=amVmZi5pbmV4dEBnbWFpbC5jb20&src=ZW4uYnJhemlsaWFuI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&src=aW5leHQuaWRpb21hc0BnbWFpbC5jb20&color=%233F51B5&color=%230B8043&color=%23F6BF26"
+      style="border:solid 1px #777" width="1000" height="600" frameborder="0" scrolling="no"></iframe>
+  </div>
+  
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div class="px-6 py-4 border-b dark:border-gray-700">
+      <%= render "date_navigation" %>
+    </div>
+
+    <%= render "events_list" %>
+  </div>
+</div>
+
+<!-- Modal de Edição (inicialmente oculto) -->
+<div id="editEventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Editar Evento</h3>
+      <%= form_tag '', method: :patch, id: 'editEventForm', class: "mt-4 space-y-4" do %>
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Título</label>
+          <input type="text" name="summary" id="editEventSummary" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Localização</label>
+          <input type="text" name="location" id="editEventLocation" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Descrição</label>
+          <textarea name="description" id="editEventDescription" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Data</label>
+          <input type="date" 
+                 id="editEventDate" 
+                 required 
+                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                 min="<%= Date.today.strftime('%Y-%m-%d') %>">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Horário Início</label>
+            <select id="editStartTime" 
+                    required 
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </select>
+            <input type="hidden" name="start_time" id="editStartTimeHidden">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Horário Fim</label>
+            <select id="editEndTime" 
+                    required 
+                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </select>
+            <input type="hidden" name="end_time" id="editEndTimeHidden">
+          </div>
+        </div>
+
+        <div id="editRecurringEventOptions" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Tipo de Atualização</label>
+          <div class="space-y-2">
+            <div class="flex items-center">
+              <input type="radio" name="update_type" value="single" id="updateSingle" checked class="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
+              <label for="updateSingle" class="ml-2 block text-sm text-gray-700 dark:text-gray-200">
+                Atualizar apenas esta ocorrência
+              </label>
+            </div>
+            <div class="flex items-center">
+              <input type="radio" name="update_type" value="all" id="updateAll" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 border-gray-300 dark:border-gray-600">
+              <label for="updateAll" class="ml-2 block text-sm text-gray-700 dark:text-gray-200">
+                Atualizar toda a série
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-5">
+          <button type="button" onclick="closeEditModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded">
+            Cancelar
+          </button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+            Salvar
+          </button>
         </div>
       <% end %>
     </div>
   </div>
 </div>
+
+<!-- Modal de Confirmação de Deleção -->
+<div id="deleteEventModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+    <div class="mt-3">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Confirmar Exclusão</h3>
+      <div class="mt-4">
+        <p class="text-gray-600 dark:text-gray-300">Tem certeza que deseja excluir este evento?</p>
+        
+        <div id="deleteRecurringOptions" class="hidden mt-4">
+          <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Este é um evento recorrente. O que você deseja excluir?</p>
+          <div class="space-y-2">
+            <div class="flex items-center">
+              <input type="radio" name="delete_type" value="single" id="deleteSingle" checked class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+              <label for="deleteSingle" class="ml-2 text-sm text-gray-700 dark:text-gray-200">Apenas esta ocorrência</label>
+            </div>
+            <div class="flex items-center">
+              <input type="radio" name="delete_type" value="all" id="deleteAll" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
+              <label for="deleteAll" class="ml-2 text-sm text-gray-700 dark:text-gray-200">Toda a série</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-5">
+          <button onclick="closeDeleteModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded">
+            Cancelar
+          </button>
+          <button onclick="confirmDelete()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+            Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Função para gerar opções de horário em intervalos de 15 minutos
+function generateTimeOptions() {
+  const times = [];
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const hourStr = hour.toString().padStart(2, '0');
+      const minuteStr = minute.toString().padStart(2, '0');
+      times.push(`${hourStr}:${minuteStr}`);
+    }
+  }
+  return times;
+}
+
+// Função para preencher os selects de horário
+function populateTimeSelects() {
+  const times = generateTimeOptions();
+  const startSelect = document.getElementById('startTime');
+  const endSelect = document.getElementById('endTime');
+  
+  startSelect.innerHTML = '';
+  endSelect.innerHTML = '';
+  
+  times.forEach(time => {
+    startSelect.add(new Option(time, time));
+    endSelect.add(new Option(time, time));
+  });
+}
+
+// Função para atualizar os campos hidden de data/hora
+function updateDateTime() {
+  const date = document.getElementById('eventDate').value;
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+  
+  if (date && startTime) {
+    document.getElementById('startTimeHidden').value = `${date}T${startTime}`;
+  }
+  if (date && endTime) {
+    document.getElementById('endTimeHidden').value = `${date}T${endTime}`;
+  }
+}
+
+// Inicialização e event listeners
+document.addEventListener('DOMContentLoaded', function() {
+  populateTimeSelects();
+  
+  // Definir data mínima como hoje
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('eventDate').min = today;
+  
+  // Event listeners para atualizar os campos hidden
+  document.getElementById('eventDate').addEventListener('change', updateDateTime);
+  document.getElementById('startTime').addEventListener('change', updateDateTime);
+  document.getElementById('endTime').addEventListener('change', updateDateTime);
+  
+  // Toggle das opções de recorrência
+  document.getElementById('isRecurring').addEventListener('change', function() {
+    document.getElementById('recurringOptions').classList.toggle('hidden');
+  });
+});
+
+function toggleCreateEventForm() {
+  const form = document.getElementById('createEventForm');
+  form.classList.toggle('hidden');
+}
+
+function editEvent(eventId) {
+  const modal = document.getElementById('editEventModal');
+  const form = document.getElementById('editEventForm');
+  const recurringOptions = document.getElementById('editRecurringEventOptions');
+  
+  // Atualizar a action do formulário com o ID do evento
+  form.action = `/calendars/update_event/${eventId}`;
+  
+  // Encontrar o evento na lista de eventos
+  const eventDiv = document.querySelector(`[data-event-id="${eventId}"]`);
+  if (eventDiv) {
+    // Preencher o formulário com os dados do evento
+    document.getElementById('editEventSummary').value = eventDiv.dataset.summary;
+    document.getElementById('editEventLocation').value = eventDiv.dataset.location;
+    document.getElementById('editEventDescription').value = eventDiv.dataset.description;
+    
+    // Separar a data e hora do datetime
+    const startDateTime = new Date(eventDiv.dataset.startTime);
+    const endDateTime = new Date(eventDiv.dataset.endTime);
+    
+    // Formatar a data para o campo date
+    const dateStr = startDateTime.toISOString().split('T')[0];
+    document.getElementById('editEventDate').value = dateStr;
+    
+    // Formatar os horários para os selects (considerando UTC-3)
+    const startTimeStr = formatTimeForSelect(startDateTime);
+    const endTimeStr = formatTimeForSelect(endDateTime);
+    
+    // Preencher os selects de horário
+    populateEditTimeSelects();
+    document.getElementById('editStartTime').value = startTimeStr;
+    document.getElementById('editEndTime').value = endTimeStr;
+    
+    // Atualizar os campos hidden
+    updateEditDateTime();
+    
+    // Mostrar opções de evento recorrente se o evento for recorrente
+    if (eventDiv.dataset.recurringEventId) {
+      recurringOptions.classList.remove('hidden');
+    } else {
+      recurringOptions.classList.add('hidden');
+    }
+  }
+  
+  modal.classList.remove('hidden');
+}
+
+// Função para formatar o horário considerando o fuso de Brasília
+function formatTimeForSelect(date) {
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+// Função para preencher os selects de horário na edição
+function populateEditTimeSelects() {
+  const times = generateTimeOptions();
+  const startSelect = document.getElementById('editStartTime');
+  const endSelect = document.getElementById('editEndTime');
+  
+  startSelect.innerHTML = '';
+  endSelect.innerHTML = '';
+  
+  times.forEach(time => {
+    startSelect.add(new Option(time, time));
+    endSelect.add(new Option(time, time));
+  });
+}
+
+// Função para atualizar os campos hidden na edição
+function updateEditDateTime() {
+  const date = document.getElementById('editEventDate').value;
+  const startTime = document.getElementById('editStartTime').value;
+  const endTime = document.getElementById('editEndTime').value;
+  
+  if (date && startTime) {
+    document.getElementById('editStartTimeHidden').value = `${date}T${startTime}`;
+  }
+  if (date && endTime) {
+    document.getElementById('editEndTimeHidden').value = `${date}T${endTime}`;
+  }
+}
+
+// Adicionar event listeners para o formulário de edição
+document.addEventListener('DOMContentLoaded', function() {
+  // Event listeners para atualizar os campos hidden na edição
+  document.getElementById('editEventDate').addEventListener('change', updateEditDateTime);
+  document.getElementById('editStartTime').addEventListener('change', updateEditDateTime);
+  document.getElementById('editEndTime').addEventListener('change', updateEditDateTime);
+});
+
+function closeEditModal() {
+  const modal = document.getElementById('editEventModal');
+  modal.classList.add('hidden');
+}
+
+// Fechar o modal se clicar fora dele
+window.onclick = function(event) {
+  const modal = document.getElementById('editEventModal');
+  if (event.target == modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+let currentEventToDelete = null;
+
+function deleteEvent(eventId, isRecurring) {
+  currentEventToDelete = eventId;
+  const modal = document.getElementById('deleteEventModal');
+  const recurringOptions = document.getElementById('deleteRecurringOptions');
+  
+  if (isRecurring === 'true') {
+    recurringOptions.classList.remove('hidden');
+  } else {
+    recurringOptions.classList.add('hidden');
+  }
+  
+  modal.classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('deleteEventModal');
+  modal.classList.add('hidden');
+  currentEventToDelete = null;
+}
+
+function confirmDelete() {
+  if (!currentEventToDelete) return;
+  
+  const deleteType = document.querySelector('input[name="delete_type"]:checked')?.value || 'single';
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/calendars/delete_event/${currentEventToDelete}`;
+  
+  // Adicionar o token CSRF
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const csrfInput = document.createElement('input');
+  csrfInput.type = 'hidden';
+  csrfInput.name = 'authenticity_token';
+  csrfInput.value = csrfToken;
+  form.appendChild(csrfInput);
+  
+  // Adicionar o método DELETE
+  const methodInput = document.createElement('input');
+  methodInput.type = 'hidden';
+  methodInput.name = '_method';
+  methodInput.value = 'DELETE';
+  form.appendChild(methodInput);
+  
+  // Adicionar o tipo de deleção para eventos recorrentes
+  const deleteTypeInput = document.createElement('input');
+  deleteTypeInput.type = 'hidden';
+  deleteTypeInput.name = 'delete_type';
+  deleteTypeInput.value = deleteType;
+  form.appendChild(deleteTypeInput);
+  
+  document.body.appendChild(form);
+  form.submit();
+}
+
+</script>
