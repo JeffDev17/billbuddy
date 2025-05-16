@@ -39,5 +39,9 @@ Rails.application.routes.draw do
   get 'whatsapp/status', to: 'whatsapp#status'
   get 'whatsapp/qr-code', to: 'whatsapp#qr_code'
 
-  # Outras rotas personalizadas, se necessário
+  # Rotas do Google Calendar
+  get "/google/redirect", to: "calendars#redirect", as: :redirect_calendars
+  get "/google/oauth2/callback", to: "calendars#callback", as: :callback_calendars
+  resources :calendars, only: [:index]
+  get "/events/:calendar_id", to: "calendars#events", as: "events", calendar_id: /[^\/]+/
 end
