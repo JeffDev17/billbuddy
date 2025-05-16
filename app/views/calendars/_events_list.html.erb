@@ -1,0 +1,55 @@
+<%= turbo_frame_tag "events_list" do %>
+  <div class="divide-y dark:divide-gray-700">
+    <% if session[:authorization].blank? %>
+      <div class="px-6 py-4 text-center text-gray-700 dark:text-gray-300">
+        Para ver seus eventos, você precisa autorizar o acesso ao Google Calendar.
+        <%= link_to "Autorizar Acesso", redirect_calendars_path, class: "text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 ml-2" %>
+      </div>
+    <% elsif @events.any? %>
+      <% @events.each do |event| %>
+        <div class="px-6 py-4">
+          <div class="flex justify-between items-start"
+               data-event-id="<%= event.id %>"
+               data-summary="<%= event.summary %>"
+               data-location="<%= event.location %>"
+               data-description="<%= event.description %>"
+               data-start-time="<%= format_datetime_for_input(event.start.date_time || event.start.date) %>"
+               data-end-time="<%= format_datetime_for_input(event.end.date_time || event.end.date) %>"
+               data-attendees="<%= format_attendees_for_input(event.attendees) %>"
+               data-recurring-event-id="<%= event.recurring_event_id %>">
+            <div>
+              <p class="font-medium text-indigo-600 dark:text-indigo-400"><%= event.summary %></p>
+              <% if event.description.present? %>
+                <p class="text-sm text-gray-700 dark:text-gray-300"><%= event.description %></p>
+              <% end %>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <% start_time = event.start.date_time || event.start.date %>
+                <% end_time = event.end.date_time || event.end.date %>
+                <%= start_time.strftime("%H:%M") %> - <%= end_time.strftime("%H:%M") %>
+              </p>
+            </div>
+            <div class="flex space-x-2">
+              <button onclick="editEvent('<%= event.id %>')" class="text-yellow-600 hover:text-yellow-700">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </button>
+              <button onclick="deleteEvent('<%= event.id %>', '<%= event.recurring_event_id.present? %>')" class="text-red-600 hover:text-red-700">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+              <% if event.hangout_link %>
+                <%= link_to "Entrar", event.hangout_link, target: "_blank", class: "text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="px-6 py-4 text-center text-gray-700 dark:text-gray-300">
+        Nenhum evento para este dia.
+      </div>
+    <% end %>
+  </div>
+<% end %> 

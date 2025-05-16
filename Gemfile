@@ -69,3 +69,7 @@ gem 'rails_admin'
 gem 'httparty'
 gem 'sidekiq'
 gem "cssbundling-rails"
+gem 'google-apis-calendar_v3'
+gem 'signet'
+gem 'dotenv-rails'
+gem "sassc-rails"
