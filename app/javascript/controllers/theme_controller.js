@@ -1,19 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["toggle"]
-
   connect() {
-    this.updateToggle()
-
-    // Verificar preferência do usuário
-    if (localStorage.theme === 'dark' ||
-        (!('theme' in localStorage) &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
+    this.updateThemeIcon()
   }
 
   toggle() {
@@ -24,16 +13,17 @@ export default class extends Controller {
       document.documentElement.classList.add('dark')
       localStorage.theme = 'dark'
     }
-
-    this.updateToggle()
+    this.updateThemeIcon()
   }
 
-  updateToggle() {
-    if (this.hasToggleTarget) {
-      const isDark = document.documentElement.classList.contains('dark')
-      this.toggleTarget.innerHTML = isDark ?
-          '<i class="fas fa-sun"></i>' :
-          '<i class="fas fa-moon"></i>'
+  updateThemeIcon() {
+    const themeIcon = document.getElementById('theme-icon')
+    if (themeIcon) {
+      if (document.documentElement.classList.contains('dark')) {
+        themeIcon.className = 'fas fa-sun'
+      } else {
+        themeIcon.className = 'fas fa-moon'
+      }
     }
   }
-}
+} 

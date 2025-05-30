@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const session = require('./persist-session');
@@ -12,7 +13,14 @@ function logWithTimestamp(message, data = null) {
     }
 }
 
+// Configure CORS
 const app = express();
+app.use(cors({
+    origin: 'http://localhost.billbuddy.com.br:3000',
+    methods: ['GET', 'POST'],
+    credentials: true
+}));
+
 app.use(express.json());
 
 // Variáveis de controle
@@ -179,6 +187,6 @@ app.get('/status', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     logWithTimestamp(`Servidor rodando na porta ${PORT}`);
 });

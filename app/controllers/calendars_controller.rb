@@ -1,17 +1,205 @@
+require "ostruct"
+
 class CalendarsController < ApplicationController
-  before_action :set_google_client, except: [:redirect]
-  before_action :set_calendar_service, except: [:redirect]
-  
+  before_action :set_google_client, except: [ :redirect ]
+  before_action :set_calendar_service, except: [ :redirect ]
+
   def index
-    if session[:authorization].blank?
-      @events = []
-      return
+    @selected_date = params[:date].present? ? Date.parse(params[:date]) : Date.today
+    @view_mode = params[:view_mode] || "appointments" # 'appointments' or 'calendar_events'
+
+    if @view_mode == "appointments"
+      setup_appointments_for_date
+    else
+      setup_calendar_events_for_date
     end
 
+    respond_to do |format|
+      format.html
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.update("date_navigation", partial: "date_navigation"),
+          turbo_stream.update("events_list", partial: "events_list")
+        ]
+      end
+    end
+  end
+
+  def redirect
+    client = Signet::OAuth2::Client.new(client_options)
+    redirect_to client.authorization_uri.to_s, allow_other_host: true
+  end
+
+  def callback
+    client = Signet::OAuth2::Client.new(client_options)
+    client.code = params[:code]
+    response = client.fetch_access_token!
+
+    # Store in both session (backward compatibility) and user model (new approach)
+    session[:authorization] = response
+    current_user.update_google_calendar_auth(response) if current_user
+
+    redirect_to calendars_path
+  end
+
+  def create_event
+    event = build_event
+    @service.insert_event("primary", event)
+    message = event.recurrence ? "Evento recorrente criado!" : "Evento criado!"
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, notice: message }
+      format.turbo_stream do
+        @selected_date = params[:event_date].present? ? Date.parse(params[:event_date]) : Date.today
+        @view_mode = params[:view_mode] || "appointments"
+        setup_events_for_selected_mode
+        render turbo_stream: [
+          turbo_stream.update("events_list", partial: "events_list"),
+          turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { notice: message })
+        ]
+      end
+    end
+  rescue Google::Apis::AuthorizationError
+    handle_auth_error
+  end
+
+  def update_event
+    calendar_id = "primary"
+    event = @service.get_event(calendar_id, params[:event_id])
+
+    event_id = handle_recurring_event_update(event, calendar_id)
+    update_event_attributes(event)
+
+    @service.update_event(calendar_id, event_id, event)
+    message = event.recurring_event_id.present? ? "Série atualizada!" : "Evento atualizado!"
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, notice: message }
+      format.turbo_stream do
+        @selected_date = params[:date].present? ? Date.parse(params[:date]) : Date.today
+        @view_mode = params[:view_mode] || "appointments"
+        setup_events_for_selected_mode
+        render turbo_stream: [
+          turbo_stream.update("events_list", partial: "events_list"),
+          turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { notice: message })
+        ]
+      end
+    end
+  rescue Google::Apis::AuthorizationError
+    handle_auth_error
+  end
+
+  def delete_event
+    calendar_id = "primary"
+    event = @service.get_event(calendar_id, params[:event_id])
+
+    if event.recurring_event_id.present? || event.recurrence.present?
+      delete_type = params[:delete_type] || "single"
+
+      if delete_type == "all"
+        # Delete the entire series
+        event_id = event.recurring_event_id || params[:event_id]
+        @service.delete_event(calendar_id, event_id)
+      else
+        # Delete only this instance
+        @service.delete_event(calendar_id, params[:event_id])
+      end
+    else
+      @service.delete_event(calendar_id, params[:event_id])
+    end
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, notice: "Evento excluído!" }
+      format.turbo_stream do
+        @selected_date = params[:date].present? ? Date.parse(params[:date]) : Date.today
+        @view_mode = params[:view_mode] || "appointments"
+        setup_events_for_selected_mode
+        render turbo_stream: [
+          turbo_stream.update("events_list", partial: "events_list"),
+          turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { notice: "Evento excluído!" })
+        ]
+      end
+    end
+  rescue Google::Apis::AuthorizationError
+    handle_auth_error
+  end
+
+  # New actions for appointment sync
+  def sync_appointment
+    appointment = current_user.customers
+                             .joins(:appointments)
+                             .merge(Appointment.where(id: params[:appointment_id]))
+                             .first&.appointments&.find(params[:appointment_id])
+
+    if appointment&.sync_to_calendar
+      message = "Compromisso sincronizado com Google Calendar!"
+    else
+      message = "Erro ao sincronizar compromisso."
+    end
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, notice: message }
+      format.turbo_stream do
+        @selected_date = appointment&.scheduled_at&.to_date || Date.today
+        @view_mode = "appointments"
+        setup_appointments_for_date
+        render turbo_stream: [
+          turbo_stream.update("events_list", partial: "events_list"),
+          turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { notice: message })
+        ]
+      end
+    end
+  end
+
+  def bulk_sync
+    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : Date.today
+    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : start_date
+
+    sync_service = GoogleCalendarSyncService.new(current_user)
+    synced_count = sync_service.sync_appointments_for_period(start_date, end_date)
+
+    message = "#{synced_count} compromisso(s) sincronizado(s) com Google Calendar!"
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, notice: message }
+      format.turbo_stream do
+        @selected_date = start_date
+        @view_mode = "appointments"
+        setup_appointments_for_date
+        render turbo_stream: [
+          turbo_stream.update("events_list", partial: "events_list"),
+          turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { notice: message })
+        ]
+      end
+    end
+  end
+
+  def metrics
+    @metrics_service = AppointmentMetricsService.new(current_user)
+    @monthly_summary = @metrics_service.monthly_summary
+    @daily_schedule = @metrics_service.daily_schedule(@selected_date || Date.today)
+  end
+
+  private
+
+  def setup_appointments_for_date
+    @appointments = Appointment.joins(:customer)
+                               .where(customers: { user_id: current_user.id })
+                               .scheduled_for_date(@selected_date)
+                               .includes(:customer)
+                               .order(:scheduled_at)
+
+    # For backward compatibility, convert appointments to event-like objects
+    @events = @appointments.map do |appointment|
+      appointment_to_event_object(appointment)
+    end
+  end
+
+  def setup_calendar_events_for_date
+    return @events = [] if authorization_unavailable?
+
     begin
-      Time.zone = 'America/Sao_Paulo'
-      
-      @selected_date = params[:date].present? ? Date.parse(params[:date]) : Date.today
+      Time.zone = "America/Sao_Paulo"
       time_min = @selected_date.beginning_of_day.iso8601
       time_max = @selected_date.end_of_day.iso8601
 
@@ -23,142 +211,88 @@ class CalendarsController < ApplicationController
           time_min: time_min,
           time_max: time_max,
           single_events: true,
-          order_by: 'startTime'
+          order_by: "startTime"
         )
         @events.concat(events.items) if events.items.any?
       end
 
       @events.sort_by! { |event| event.start.date_time || event.start.date }
-
-      respond_to do |format|
-        format.html
-        format.turbo_stream do
-          render turbo_stream: [
-            turbo_stream.replace("events_list", partial: "events_list"),
-            turbo_stream.replace("date_navigation", partial: "date_navigation")
-          ]
-        end
-      end
-    rescue Google::Apis::AuthorizationError, Signet::AuthorizationError
-      handle_authorization_error
-    rescue => e
-      handle_calendar_error(e)
-    end
-  end
-
-  def redirect
-    client = Signet::OAuth2::Client.new(client_options)
-    
-    respond_to do |format|
-      format.json { render json: { url: client.authorization_uri.to_s } }
-      format.html { redirect_to client.authorization_uri.to_s, allow_other_host: true }
-    end
-  rescue => e
-    handle_calendar_error(e)
-  end
-
-  def callback
-    client = Signet::OAuth2::Client.new(client_options)
-    client.code = params[:code]
-    response = client.fetch_access_token!
-    session[:authorization] = response
-
-    redirect_to calendars_path
-  end
-
-  def events
-    @event_list = @service.list_events(params[:calendar_id])
-  rescue Google::Apis::AuthorizationError
-    response = @client.refresh!
-    session[:authorization] = session[:authorization].merge(response)
-    retry
-  end
-
-  def create_event
-    begin
-      event = build_event
-      result = @service.insert_event(params[:calendar_id] || 'primary', event)
-
-      respond_to do |format|
-        format.json { render json: result }
-        format.html { 
-          notice_msg = event.recurrence ? 'Evento recorrente criado com sucesso!' : 'Evento criado com sucesso!'
-          redirect_to calendars_path, notice: notice_msg 
-        }
-      end
-    rescue Google::Apis::ClientError => e
-      handle_client_error(e)
     rescue Google::Apis::AuthorizationError
-      handle_authorization_error
-    rescue => e
-      handle_calendar_error(e)
+      handle_auth_error
     end
   end
 
-  def update_event
-    begin
-      calendar_id = params[:calendar_id] || 'primary'
-      event = @service.get_event(calendar_id, params[:event_id])
-      
-      event_id = handle_recurring_event_update(event, calendar_id)
-      update_event_attributes(event)
-      
-      result = @service.update_event(calendar_id, event_id, event)
-
-      respond_to do |format|
-        format.json { render json: result }
-        format.html { 
-          message = get_update_success_message(event.recurring_event_id.present?, params[:update_type])
-          redirect_to calendars_path, notice: message 
-        }
-      end
-    rescue Google::Apis::ClientError => e
-      handle_client_error(e)
-    rescue Google::Apis::AuthorizationError
-      handle_authorization_error
-    rescue => e
-      handle_calendar_error(e)
+  def setup_events_for_selected_mode
+    if @view_mode == "appointments"
+      setup_appointments_for_date
+    else
+      setup_calendar_events_for_date
     end
   end
 
-  def delete_event
-    begin
-      calendar_id = params[:calendar_id] || 'primary'
-      event = @service.get_event(calendar_id, params[:event_id])
-      
-      delete_options = {}
-      
-      if event.recurring_event_id.present? || event.recurrence.present?
-        delete_type = params[:delete_type] || 'single'
-        
-        if delete_type == 'all'
-          event_id = event.recurring_event_id.presence || params[:event_id]
-        else
-          event_id = params[:event_id]
-          delete_options[:instance_id] = event.id if event.recurring_event_id.present?
-        end
-      else
-        event_id = params[:event_id]
-      end
-
-      @service.delete_event(calendar_id, event_id, **delete_options)
-
-      respond_to do |format|
-        format.json { head :no_content }
-        format.html { redirect_to calendars_path, notice: 'Evento excluído com sucesso!' }
-      end
-    rescue Google::Apis::AuthorizationError
-      handle_authorization_error
-    rescue => e
-      handle_calendar_error(e)
-    end
+  # Legacy method for backward compatibility
+  def setup_events_for_date
+    setup_events_for_selected_mode
   end
 
-  private
+  def appointment_to_event_object(appointment)
+    # Create an object that mimics Google Calendar event structure
+    # for backward compatibility with existing views
+    customer = appointment.customer
+    start_time = appointment.scheduled_at
+    end_time = start_time + appointment.duration.hours
+
+    OpenStruct.new(
+      id: "appointment_#{appointment.id}",
+      summary: customer.name,
+      description: build_appointment_description(appointment),
+      start: OpenStruct.new(
+        date_time: start_time,
+        date: start_time.to_date
+      ),
+      end: OpenStruct.new(
+        date_time: end_time,
+        date: end_time.to_date
+      ),
+      attendees: customer.email.present? ? [ OpenStruct.new(email: customer.email) ] : [],
+      # Additional appointment-specific data
+      appointment: appointment,
+      customer: customer,
+      synced_to_calendar: appointment.synced_to_calendar?,
+      billbuddy_event: true
+    )
+  end
+
+  def build_appointment_description(appointment)
+    customer = appointment.customer
+    description = []
+
+    description << "Cliente: #{customer.name}"
+    description << "Email: #{customer.email}" if customer.email.present?
+    description << "Telefone: #{customer.phone}" if customer.phone.present?
+    description << "Duração: #{appointment.duration} hora(s)"
+
+    if customer.credit?
+      description << "Tipo: Crédito (#{customer.total_remaining_hours}h restantes)"
+    elsif customer.subscription?
+      description << "Tipo: Assinatura"
+    end
+
+    description << "Notas: #{appointment.notes}" if appointment.notes.present?
+
+    description.join("\n")
+  end
+
+  def authorization_unavailable?
+    (session[:authorization].blank? && !current_user&.google_calendar_authorized?)
+  end
 
   def set_google_client
     @client = Signet::OAuth2::Client.new(client_options)
-    @client.update!(session[:authorization]) if session[:authorization].present?
+
+    # Try user's stored authorization first, fall back to session
+    authorization = current_user&.session_authorization || session[:authorization]
+    @client.update!(authorization) if authorization.present?
   end
 
   def set_calendar_service
@@ -168,36 +302,32 @@ class CalendarsController < ApplicationController
 
   def client_options
     base_url = Rails.env.production? ? "https://billbuddy.com.br" : "http://localhost.billbuddy.com.br:3000"
-
     {
-      client_id: ENV['GOOGLE_CLIENT_ID'],
-      client_secret: ENV['GOOGLE_CLIENT_SECRET'],
-      authorization_uri: 'https://accounts.google.com/o/oauth2/auth',
-      token_credential_uri: 'https://oauth2.googleapis.com/token',
+      client_id: ENV["GOOGLE_CLIENT_ID"],
+      client_secret: ENV["GOOGLE_CLIENT_SECRET"],
+      authorization_uri: "https://accounts.google.com/o/oauth2/auth",
+      token_credential_uri: "https://oauth2.googleapis.com/token",
       scope: Google::Apis::CalendarV3::AUTH_CALENDAR,
       redirect_uri: "#{base_url}/google/oauth2/callback",
-      additional_parameters: {
-        access_type: 'offline',
-        prompt: 'consent'
-      }
+      additional_parameters: { access_type: "offline", prompt: "consent" }
     }
   end
 
   def build_event
-    attendees_array = params[:attendees].present? ? 
-      params[:attendees].split(',').map(&:strip).map { |email| Google::Apis::CalendarV3::EventAttendee.new(email: email) } : 
+    attendees = params[:attendees].present? ?
+      params[:attendees].split(",").map(&:strip).map { |email| Google::Apis::CalendarV3::EventAttendee.new(email: email) } :
       []
 
     start_time = parse_datetime(params[:start_time])
     end_time = parse_datetime(params[:end_time])
 
     event = Google::Apis::CalendarV3::Event.new(
-      summary: params[:summary].presence || 'Sem título',
+      summary: params[:summary].presence || "Sem título",
       location: params[:location],
       description: params[:description],
       start: create_event_datetime(start_time),
       end: create_event_datetime(end_time),
-      attendees: attendees_array,
+      attendees: attendees,
       reminders: { use_default: true }
     )
 
@@ -206,33 +336,32 @@ class CalendarsController < ApplicationController
   end
 
   def parse_datetime(datetime_str)
-    ActiveSupport::TimeZone['America/Sao_Paulo'].parse(datetime_str)
+    ActiveSupport::TimeZone["America/Sao_Paulo"].parse(datetime_str)
   end
 
   def create_event_datetime(time)
     Google::Apis::CalendarV3::EventDateTime.new(
       date_time: time.iso8601,
-      time_zone: 'America/Sao_Paulo'
+      time_zone: "America/Sao_Paulo"
     )
   end
 
   def add_recurrence_rule(event)
-    days_of_week = params[:recurring_days].map { |day| %w(SU MO TU WE TH FR SA)[day.to_i] }.join(',')
-    rrule = "RRULE:FREQ=WEEKLY;BYDAY=#{days_of_week}"
-    
+    days = params[:recurring_days].map { |day| %w[SU MO TU WE TH FR SA][day.to_i] }.join(",")
+    rrule = "RRULE:FREQ=WEEKLY;BYDAY=#{days}"
+
     if params[:recurring_until].present? && params[:no_end_date] != "true"
-      until_date = Date.parse(params[:recurring_until]).strftime('%Y%m%d')
+      until_date = Date.parse(params[:recurring_until]).strftime("%Y%m%d")
       rrule += ";UNTIL=#{until_date}T235959Z"
     end
-    
-    event.recurrence = [rrule]
+
+    event.recurrence = [ rrule ]
   end
 
   def handle_recurring_event_update(event, calendar_id)
     return event.id unless event.recurring_event_id.present?
 
-    update_type = params[:update_type] || 'single'
-    if update_type == 'all'
+    if params[:update_type] == "all"
       event_id = event.recurring_event_id
       event = @service.get_event(calendar_id, event_id)
     else
@@ -255,7 +384,7 @@ class CalendarsController < ApplicationController
     end
 
     if params[:attendees].present?
-      event.attendees = params[:attendees].split(',').map(&:strip).map { |email| 
+      event.attendees = params[:attendees].split(",").map(&:strip).map { |email|
         Google::Apis::CalendarV3::EventAttendee.new(email: email)
       }
     end
@@ -263,39 +392,9 @@ class CalendarsController < ApplicationController
     add_recurrence_rule(event) if params[:recurring_days].present?
   end
 
-  def get_update_success_message(is_recurring, update_type)
-    if is_recurring
-      update_type == 'single' ? 'Instância do evento atualizada com sucesso!' : 'Série de eventos atualizada com sucesso!'
-    else
-      'Evento atualizado com sucesso!'
-    end
-  end
-
-  def handle_authorization_error
+  def handle_auth_error
     session[:authorization] = nil
-    @events = [] if action_name == 'index'
-    respond_to do |format|
-      format.json { render json: { error: 'Autorização expirada' }, status: :unauthorized }
-      format.html { redirect_to redirect_calendars_path, alert: 'Autorização expirada. Por favor, faça login novamente.' }
-    end
-  end
-
-  def handle_client_error(error)
-    Rails.logger.error "Google Calendar API Error: #{error.message}"
-    Rails.logger.error "Response body: #{error.body}"
-    respond_to do |format|
-      format.json { render json: { error: error.message }, status: :unprocessable_entity }
-      format.html { redirect_to calendars_path, alert: "Erro ao processar evento: #{error.message}" }
-    end
-  end
-
-  def handle_calendar_error(error)
-    Rails.logger.error "Google Calendar Error: #{error.message}"
-    Rails.logger.error error.backtrace.join("\n")
-    @events = [] if action_name == 'index'
-    respond_to do |format|
-      format.json { render json: { error: error.message }, status: :unprocessable_entity }
-      format.html { redirect_back(fallback_location: calendars_path, alert: "Erro ao processar sua solicitação: #{error.message}") }
-    end
+    current_user&.clear_google_calendar_auth
+    redirect_to redirect_calendars_path, alert: "Sessão expirada. Por favor, faça login novamente."
   end
 end
