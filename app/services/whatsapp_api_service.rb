@@ -5,7 +5,25 @@ class WhatsappApiService
     new.send_message(phone, message)
   end
 
+  def self.ensure_service_running!
+    unless WhatsappProcessManager.running?
+      Rails.logger.info "WhatsApp service not running, starting..."
+      unless WhatsappProcessManager.start!
+        raise WhatsappError, "Falha ao iniciar o serviço WhatsApp"
+      end
+    end
+  end
+
+  def self.status
+    new.get_status
+  end
+
+  def self.qr_code
+    new.get_qr_code
+  end
+
   def send_message(phone, message)
+    ensure_service_running!
     validate_phone!(phone)
     validate_message!(message)
 
@@ -16,7 +34,29 @@ class WhatsappApiService
     raise WhatsappError, "Falha ao enviar mensagem WhatsApp: #{e.message}"
   end
 
+  def get_status
+    ensure_service_running!
+    response = HTTParty.get("#{whatsapp_api_url}/status", timeout: 10)
+    JSON.parse(response.body)
+  rescue => e
+    Rails.logger.error("WhatsApp Status Error: #{e.message}")
+    { status: "error", error: e.message }
+  end
+
+  def get_qr_code
+    ensure_service_running!
+    response = HTTParty.get("#{whatsapp_api_url}/qr-code", timeout: 10)
+    JSON.parse(response.body)
+  rescue => e
+    Rails.logger.error("WhatsApp QR Code Error: #{e.message}")
+    { status: "error", error: e.message }
+  end
+
   private
+
+  def ensure_service_running!
+    self.class.ensure_service_running!
+  end
 
   def validate_phone!(phone)
     # Validação básica do telefone
@@ -40,7 +80,7 @@ class WhatsappApiService
 
   def request_headers
     {
-      'Content-Type' => 'application/json'
+      "Content-Type" => "application/json"
     }
   end
 
@@ -65,6 +105,6 @@ class WhatsappApiService
   end
 
   def whatsapp_api_url
-    ENV.fetch('WHATSAPP_API_URL', 'http://localhost:3001')
+    WhatsappProcessManager.api_url
   end
-end 
+end

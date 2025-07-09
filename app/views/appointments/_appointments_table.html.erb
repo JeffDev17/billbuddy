@@ -1,0 +1,126 @@
+<div id="appointments-table" class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden mb-20">
+  <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+    <thead class="bg-purple-100 dark:bg-purple-900/30">
+    <tr>
+      <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Cliente</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Data/Hora</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Duração</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Status</th>
+      <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Notas</th>
+      <th class="px-6 py-3 text-right text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Ações</th>
+    </tr>
+    </thead>
+    <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+    <% @appointments.each do |appointment| %>
+      <tr class="hover:bg-purple-50 dark:hover:bg-slate-700/50">
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm font-medium text-purple-600 dark:text-purple-400"><%= appointment.customer.name %></div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm text-gray-900 dark:text-gray-100"><%= format_brazilian_datetime_with_weekday(appointment.scheduled_at) %></div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="text-sm text-purple-600 dark:text-purple-400"><%= appointment.duration %> horas</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <% case appointment.status %>
+          <% when 'scheduled' %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              ⏳ Agendado
+            </span>
+          <% when 'completed' %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              ✅ Concluído
+            </span>
+          <% when 'cancelled' %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              ❌ Cancelado
+            </span>
+          <% when 'no_show' %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+              👻 Não compareceu
+            </span>
+          <% end %>
+        </td>
+        <td class="px-6 py-4">
+          <div class="text-sm text-gray-700 dark:text-gray-300"><%= appointment.notes %></div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+          <% if appointment.status == 'scheduled' %>
+            <div class="inline-flex items-center space-x-1">
+              <!-- Quick complete button for original date -->
+              <%= link_to mark_completed_appointment_path(appointment), 
+                  data: { 
+                    turbo_method: :post, 
+                    turbo_confirm: "Marcar como concluída para #{appointment.scheduled_at.strftime('%d/%m/%Y')}?" 
+                  },
+                  params: { completion_date: appointment.scheduled_at.to_date },
+                  class: "inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700",
+                  title: "Concluir para a data original (#{appointment.scheduled_at.strftime('%d/%m/%Y')})" do %>
+                ✓
+              <% end %>
+              
+              <!-- Date picker for custom completion date -->
+              <div class="relative inline-block">
+                <button type="button" 
+                        class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                        data-action="click->appointments#toggleCompletionForm"
+                        data-appointments-appointment-id-param="<%= appointment.id %>"
+                        title="Escolher data de conclusão">
+                  📅
+                </button>
+                
+                <!-- Mini completion form -->
+                <div id="completion-form-<%= appointment.id %>" class="hidden fixed z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-[200px] max-w-sm">
+                  <%= form_with url: mark_completed_appointment_path(appointment), method: :post, class: "space-y-2" do |f| %>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Conclusão:</label>
+                      <%= f.date_field :completion_date, 
+                          value: appointment.scheduled_at.to_date,
+                          class: "w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        O horário original será mantido
+                      </p>
+                    </div>
+                    <div class="flex space-x-1">
+                      <%= f.submit "✓ Concluir", 
+                          class: "flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs" %>
+                      <button type="button" 
+                              data-action="click->appointments#closeForm"
+                              data-appointments-form-id-param="completion-form-<%= appointment.id %>"
+                              class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-2 py-1 rounded text-xs">
+                        ✕
+                      </button>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% elsif appointment.status == 'completed' %>
+            <span class="text-green-600 text-xs">
+              <% if appointment.completed_at %>
+                Concluída em <%= appointment.completed_at.strftime('%d/%m/%Y às %H:%M') %>
+              <% else %>
+                Concluída
+              <% end %>
+            </span>
+          <% end %>
+          
+          <%= link_to "Editar", edit_appointment_path(appointment), 
+              onclick: "preserveScrollPosition()",
+              class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
+          <%= button_to "Excluir", appointment_path(appointment), 
+              method: :delete,
+              form: { 
+                data: { 
+                  turbo_confirm: "Tem certeza que deseja excluir este compromisso?",
+                  turbo_frame: "_top"
+                }
+              },
+              class: "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 bg-transparent border-none p-0 cursor-pointer inline" %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div> 

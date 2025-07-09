@@ -1,81 +1,85 @@
 <div class="container mx-auto px-4 py-8">
-  <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">
-      Enviar Cobrança via WhatsApp para <%= @customer.name %>
-    </h2>
-
-    <%= form_tag send_payment_reminder_customer_path(@customer), method: :post, class: "space-y-6" do %>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Valor da Cobrança (R$)
-        </label>
-        <%= number_field_tag :amount, nil, 
-            step: '0.01', 
-            required: true,
-            class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" %>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Mensagem Personalizada (opcional)
-        </label>
-        <%= text_area_tag :message, nil,
-            rows: 4,
-            placeholder: "Digite uma mensagem personalizada adicional...",
-            class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" %>
-      </div>
-
-      <div class="preview-box p-4 bg-gray-50 dark:bg-gray-900 rounded-md">
-        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Preview da Mensagem:
-        </h3>
-        <div class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
-          Olá <%= @customer.name %>!
-
-          Este é um lembrete de pagamento no valor de R$ 0,00.
-
-          [Sua mensagem personalizada aparecerá aqui].
-
-          Att,
-          BillBuddy
+  <div class="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+       data-controller="payment-reminder-form"
+       data-payment-reminder-form-customer-name-value="<%= @customer.name %>">
+    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">
+        💰 Enviar Cobrança Personalizada via WhatsApp
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        Cliente: <strong><%= @customer.name %></strong> | 📞 <%= @customer.phone %>
+      </p>
+    </div>
+    
+    <div class="p-6">
+      <%= form_tag send_payment_reminder_customer_path(@customer), method: :post, class: "space-y-6" do %>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              💵 Valor da Cobrança (R$) *
+            </label>
+            <%= number_field_tag :amount, nil, 
+                id: 'amount',
+                step: '0.01', 
+                required: true,
+                placeholder: "0.00",
+                data: { 
+                  payment_reminder_form_target: "amount",
+                  action: "input->payment-reminder-form#updatePreview blur->payment-reminder-form#formatAmount"
+                },
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" %>
+          </div>
+          
+          <div class="flex items-end">
+            <button type="button" 
+                    data-payment-reminder-form-target="loadTemplate"
+                    data-action="click->payment-reminder-form#loadDefaultTemplate"
+                    class="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200">
+              📝 Carregar Template Padrão
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="flex justify-end space-x-4">
-        <%= link_to "Cancelar", customer_path(@customer), 
-            class: "px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" %>
-        
-        <%= submit_tag "Enviar Cobrança", 
-            class: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-800",
-            data: { confirm: "Confirma o envio da cobrança via WhatsApp?" } %>
-      </div>
-    <% end %>
+        <div>
+          <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            📝 Mensagem Completa (Totalmente Editável) *
+          </label>
+          <%= text_area_tag :message, "",
+              id: 'message',
+              rows: 8,
+              required: true,
+              placeholder: "Digite a mensagem completa ou clique em 'Carregar Template Padrão' para começar com um modelo...",
+              data: { 
+                payment_reminder_form_target: "message",
+                action: "input->payment-reminder-form#updatePreview"
+              },
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm" %>
+          <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            💡 <strong>Dica:</strong> Use {VALOR} para inserir automaticamente o valor informado acima
+          </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+            👁️ Preview da Mensagem Final:
+          </h3>
+          <div id="preview-container" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+            <div data-payment-reminder-form-target="preview" class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
+              <em class="text-gray-400">Digite uma mensagem para ver o preview...</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <%= link_to customer_path(@customer), class: "px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200" do %>
+            ❌ Cancelar
+          <% end %>
+          
+          <%= submit_tag "📱 Enviar Cobrança WhatsApp", 
+              class: "px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200",
+              data: { confirm: "Confirma o envio da cobrança via WhatsApp para #{@customer.name}?" } %>
+        </div>
+      <% end %>
+    </div>
   </div>
-</div>
-
-<%= javascript_tag do %>
-  document.addEventListener('DOMContentLoaded', function() {
-    const amountField = document.getElementById('amount');
-    const messageField = document.getElementById('message');
-    const previewBox = document.querySelector('.preview-box');
-
-    function updatePreview() {
-      const amount = amountField.value || '0,00';
-      const customMessage = messageField.value || '[Sua mensagem personalizada aparecerá aqui]';
-      
-      const previewText = `Olá <%= @customer.name %>!
-
-Este é um lembrete de pagamento no valor de R$ ${amount}.
-
-${customMessage}
-
-Att,
-BillBuddy`;
-
-      previewBox.querySelector('.text-sm.text-gray-600').innerText = previewText;
-    }
-
-    amountField.addEventListener('input', updatePreview);
-    messageField.addEventListener('input', updatePreview);
-  });
-<% end %> 
+</div> 

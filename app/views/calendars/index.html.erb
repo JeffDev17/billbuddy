@@ -1,350 +1,453 @@
-<div class="mb-8" data-controller="calendar-page" data-calendar-page-selected-date-value="<%= @selected_date.strftime('%Y-%m-%d') %>">
-  <div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-      <% if @view_mode == 'appointments' %>
-        Compromissos de <%= @selected_date.strftime('%d/%m/%Y') %>
-      <% else %>
-        Eventos de <%= @selected_date.strftime('%d/%m/%Y') %>
-      <% end %>
-    </h2>
+<% content_for :title, "Agenda" %>
+
+<!-- FullCalendar CSS -->
+<%= content_for :head do %>
+  <style>
+    .fc {
+      font-family: inherit;
+    }
     
-    <!-- View Mode Toggle -->
-    <div class="flex space-x-2">
-      <%= link_to calendars_path(view_mode: 'appointments', date: @selected_date), 
-          data: { turbo_frame: "_top" },
-          class: "px-3 py-2 rounded-md text-sm font-medium #{'bg-indigo-600 text-white' if @view_mode == 'appointments'} #{'bg-gray-200 text-gray-700 hover:bg-gray-300' if @view_mode != 'appointments'}" do %>
-        📅 Compromissos
+    /* ========== TOOLBAR / HEADER ========== */
+    .fc-toolbar {
+      margin-bottom: 1rem;
+      background-color: #f9fafb;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .dark .fc-toolbar {
+      background-color: #1f2937;
+      border-color: #374151;
+    }
+    
+    .fc-toolbar-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #111827;
+    }
+    
+    .dark .fc-toolbar-title {
+      color: #f9fafb;
+    }
+    
+    .fc-button {
+      background-color: #4f46e5;
+      border-color: #4f46e5;
+      color: white;
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .fc-button:hover {
+      background-color: #4338ca;
+      border-color: #4338ca;
+    }
+    
+    .fc-button:focus {
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+    }
+    
+    .fc-button-active {
+      background-color: #3730a3 !important;
+      border-color: #3730a3 !important;
+    }
+    
+    /* ========== CALENDAR GRID ========== */
+    .fc-scrollgrid {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .dark .fc-scrollgrid {
+      border-color: #374151;
+    }
+    
+    /* Day headers (days of the week) */
+    .fc-col-header {
+      background-color: #f3f4f6;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .dark .fc-col-header {
+      background-color: #374151;
+      border-bottom-color: #4b5563;
+    }
+    
+    .fc-col-header-cell {
+      padding: 0.75rem 0.5rem;
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    .dark .fc-col-header-cell {
+      color: #d1d5db;
+    }
+    
+    /* Calendar body */
+    .fc-daygrid-body, .fc-timegrid-body {
+      background-color: #ffffff;
+    }
+    
+    .dark .fc-daygrid-body,
+    .dark .fc-timegrid-body {
+      background-color: #1f2937;
+    }
+    
+    /* Day cells */
+    .fc-daygrid-day {
+      border-right: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+      background-color: #ffffff;
+    }
+    
+    .dark .fc-daygrid-day {
+      border-right-color: #374151;
+      border-bottom-color: #374151;
+      background-color: #1f2937;
+    }
+    
+    .fc-daygrid-day-number {
+      color: #374151;
+      font-weight: 500;
+      padding: 0.5rem;
+    }
+    
+    .dark .fc-daygrid-day-number {
+      color: #d1d5db;
+    }
+    
+    /* Time grid day cells */
+    .fc-timegrid-col {
+      background-color: #ffffff;
+    }
+    
+    .dark .fc-timegrid-col {
+      background-color: #1f2937;
+    }
+    
+    /* Today highlight */
+    .fc-day-today {
+      background-color: #eff6ff !important;
+    }
+    
+    .dark .fc-day-today {
+      background-color: #1e3a8a !important;
+    }
+    
+    /* Fix for all calendar content background */
+    .fc-daygrid-day-frame,
+    .fc-daygrid-day-bg,
+    .fc-daygrid-day-events {
+      background-color: transparent;
+    }
+    
+    .dark .fc-daygrid-day-frame,
+    .dark .fc-daygrid-day-bg,
+    .dark .fc-daygrid-day-events {
+      background-color: transparent;
+    }
+    
+    /* Basic FullCalendar styling - Dark theme is handled by fullcalendar-dark.css */
+    
+    /* Time slots */
+    .fc-timegrid-slot {
+      border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .dark .fc-timegrid-slot {
+      border-bottom-color: #374151;
+    }
+    
+    .fc-timegrid-slot-label {
+      color: #6b7280;
+      font-size: 0.75rem;
+    }
+    
+    .dark .fc-timegrid-slot-label {
+      color: #9ca3af;
+    }
+    
+    /* ========== EVENTS ========== */
+    .fc-daygrid-event {
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      padding: 0.125rem 0.25rem;
+      border: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .fc-timegrid-event {
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      border: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .fc-daygrid-event,
+    .dark .fc-timegrid-event {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    
+    .fc-event-title {
+      font-weight: 500;
+    }
+    
+    .fc-event.status-completed {
+      opacity: 0.8;
+    }
+    
+    .fc-event.status-cancelled {
+      opacity: 0.7;
+      text-decoration: line-through;
+    }
+    
+    .fc-event.unsynced {
+      border-left: 3px solid #f59e0b;
+    }
+    
+    .fc-event.synced {
+      border-left: 3px solid #10b981;
+    }
+    
+    /* ========== LIST VIEW ========== */
+    .fc-list-table {
+      background-color: #ffffff;
+    }
+    
+    .dark .fc-list-table {
+      background-color: #1f2937;
+    }
+    
+    .fc-list-day-cushion {
+      background-color: #f9fafb;
+      color: #374151;
+    }
+    
+    .dark .fc-list-day-cushion {
+      background-color: #374151;
+      color: #d1d5db;
+    }
+    
+    .fc-list-event {
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .dark .fc-list-event {
+      border-bottom-color: #374151;
+    }
+    
+    .fc-list-event-title {
+      font-weight: 500;
+      color: #111827;
+    }
+    
+    .dark .fc-list-event-title {
+      color: #f9fafb;
+    }
+    
+    .fc-list-event-time {
+      color: #6b7280;
+    }
+    
+    .dark .fc-list-event-time {
+      color: #9ca3af;
+    }
+    
+    /* ========== LOADING ========== */
+    .calendar-loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.9);
+      z-index: 1000;
+    }
+    
+    .dark .calendar-loading {
+      background-color: rgba(31, 41, 55, 0.9);
+    }
+    
+    /* Legend styling is handled by fullcalendar-dark.css */
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      .fc-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem;
+      }
+      
+      .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+      }
+      
+      .fc-button-group .fc-button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+      }
+      
+      .fc-col-header-cell {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+<% end %>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+      📅 Agenda Interativa
+    </h1>
+    <div class="flex flex-wrap gap-3">
+      <%= link_to daily_completion_calendars_path(date: Date.current), 
+          class: "bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition-colors" do %>
+        ✅ Concluir Aulas
       <% end %>
-      <%= link_to calendars_path(view_mode: 'calendar_events', date: @selected_date), 
-          data: { turbo_frame: "_top" },
-          class: "px-3 py-2 rounded-md text-sm font-medium #{'bg-indigo-600 text-white' if @view_mode == 'calendar_events'} #{'bg-gray-200 text-gray-700 hover:bg-gray-300' if @view_mode != 'calendar_events'}" do %>
-        🗓️ Google Calendar
-      <% end %>
+      <%= link_to "👥 Clientes", customers_path, 
+          class: "bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors" %>
+      <%= link_to "📊 Métricas", metrics_calendars_path, 
+          class: "bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition-colors" %>
     </div>
   </div>
 
-  <!-- Sync Controls (only show in appointments mode) -->
-  <% if @view_mode == 'appointments' %>
-    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
-      <div class="flex justify-between items-center">
+  <!-- Quick Actions -->
+  <div class="mb-6">
+    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Sincronização com Google Calendar</h3>
+          <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">Ações Rápidas</h3>
           <p class="text-xs text-blue-600 dark:text-blue-300 mt-1">
-            Sincronize seus compromissos com o Google Calendar para melhor organização
+            Clique em um horário vazio para criar compromisso • Clique em um evento para editar • Arraste para mover
           </p>
         </div>
+        <div class="flex flex-wrap gap-3">
+          <%= link_to new_appointment_path, 
+              class: "bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm transition-colors" do %>
+            ➕ Novo Compromisso
+          <% end %>
+          <%= link_to bulk_create_appointments_path, 
+              class: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition-colors" do %>
+            📅 Criação em Lote
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Google Calendar Sync Section (Optional) -->
+  <% if current_user.google_calendar_authorized? %>
+    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm">✓</span>
+            </div>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
+              Google Calendar Conectado
+            </h3>
+            <p class="text-xs text-green-600 dark:text-green-300">
+              Seus compromissos podem ser sincronizados opcionalmente com o Google Calendar
+            </p>
+          </div>
+        </div>
         <div class="flex space-x-2">
-          <%= link_to "📊 Métricas", metrics_calendars_path, class: "bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm" %>
-          <%= form_with url: bulk_sync_calendars_path, method: :post, local: false, class: "inline-flex" do |form| %>
-            <%= form.hidden_field :start_date, value: @selected_date %>
-            <%= form.hidden_field :end_date, value: @selected_date %>
-            <%= form.submit "🔄 Sincronizar Hoje", class: "bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 rounded text-sm cursor-pointer" %>
+          <%= form_with url: bulk_sync_calendars_path, method: :post, local: false, class: "inline" do |form| %>
+            <%= form.hidden_field :sync_all, value: "true" %>
+            <%= form.submit "🔄 Sincronizar", 
+                class: "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs transition-colors" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-sm">🔗</span>
+            </div>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Sincronização Opcional com Google Calendar
+            </h3>
+            <p class="text-xs text-yellow-600 dark:text-yellow-300">
+              Conecte para espelhar seus compromissos no Google Calendar (opcional)
+            </p>
+          </div>
+        </div>
+        <div class="flex-shrink-0">
+          <%= link_to redirect_calendars_path, 
+              class: "bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-1 px-3 rounded text-xs transition-colors" do %>
+            🔗 Conectar
           <% end %>
         </div>
       </div>
     </div>
   <% end %>
 
-  <!-- Formulário de Criação de Evento (inicialmente oculto) -->
-  <div data-controller="calendar-toggle">
-    <button data-action="click->calendar-toggle#toggle" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded mb-4">
-      Criar Novo Evento
-    </button>
-
-    <div data-calendar-toggle-target="form" class="hidden mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Criar Novo Evento</h3>
-      
-      <%= form_with url: create_event_calendars_path, method: :post, local: false, data: { controller: "calendar-form" } do |form| %>
-        <%= form.hidden_field :view_mode, value: @view_mode %>
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <%= form.label :summary, "Título", class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
-            <%= form.text_field :summary, required: true, class: "mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" %>
-          </div>
-          
-          <div>
-            <%= form.label :location, "Local", class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
-            <%= form.text_field :location, class: "mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" %>
-          </div>
-          
-          <div>
-            <%= form.label :event_date, "Data", class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
-            <%= form.date_field :event_date, data: { calendar_form_target: "eventDate", action: "change->calendar-form#updateDateTime" }, required: true, class: "mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" %>
-          </div>
-          
-          <div>
-            <%= form.label :start_time, "Horário de Início", class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
-            <select data-calendar-form-target="startTime" data-action="change->calendar-form#updateDateTime" required class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </select>
-          </div>
-          
-          <div>
-            <%= form.label :end_time, "Horário de Fim", class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
-            <select data-calendar-form-target="endTime" data-action="change->calendar-form#updateDateTime" required class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </select>
-          </div>
-          
-          <!-- Hidden fields for datetime -->
-          <%= form.hidden_field :start_time, data: { calendar_form_target: "startTimeHidden" } %>
-          <%= form.hidden_field :end_time, data: { calendar_form_target: "endTimeHidden" } %>
-          
-          <div class="sm:col-span-2">
-            <%= form.label :description, "Descrição", class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
-            <%= form.text_area :description, rows: 3, class: "mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" %>
-          </div>
-          
-          <div class="sm:col-span-2">
-            <label class="flex items-center">
-              <%= form.check_box :is_recurring, data: { calendar_form_target: "isRecurring", action: "change->calendar-form#toggleRecurring" }, class: "rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %>
-              <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Evento recorrente</span>
-            </label>
-          </div>
-          
-          <div data-calendar-form-target="recurringOptions" class="hidden sm:col-span-2">
-            <div class="space-y-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Repetir em quais dias?</label>
-                <div class="grid grid-cols-4 gap-2 mt-2">
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" name="recurring_days[]" value="1" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Seg</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" name="recurring_days[]" value="2" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Ter</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" name="recurring_days[]" value="3" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Qua</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" name="recurring_days[]" value="4" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Qui</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" name="recurring_days[]" value="5" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sex</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" name="recurring_days[]" value="6" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sáb</span>
-                  </label>
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" name="recurring_days[]" value="0" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Dom</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Repetir até</label>
-                <div class="mt-2">
-                  <label class="inline-flex items-center">
-                    <input type="checkbox" 
-                           id="no_end_date" 
-                           name="no_end_date" 
-                           data-action="change->calendar-form#toggleEndDateField"
-                           class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Repetir indefinidamente</span>
-                  </label>
-                </div>
-                <input type="date" 
-                       id="recurring_until" 
-                       name="recurring_until" 
-                       class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                       min="<%= Date.today.strftime('%Y-%m-%d') %>">
-              </div>
-            </div>
-          </div>
-          
-          <div class="sm:col-span-2">
-            <%= form.label :attendees, "Participantes (emails separados por vírgula)", class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
-            <%= form.text_field :attendees, class: "mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500" %>
-          </div>
-        </div>
-        
-        <div class="flex justify-end space-x-3 mt-6">
-          <button type="button" data-action="click->calendar-toggle#toggle" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded">
-            Cancelar
-          </button>
-          <%= form.submit "Criar Evento", class: "bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded" %>
-        </div>
-      <% end %>
+  <!-- Calendar Container -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 relative">
+    <!-- Loading indicator -->
+    <div class="calendar-loading hidden items-center justify-center">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Carregando agenda...</p>
+      </div>
+    </div>
+    
+    <!-- FullCalendar -->
+    <div data-controller="fullcalendar" 
+         data-fullcalendar-events-url-value="<%= events_calendars_path %>"
+         data-fullcalendar-selected-date-value="<%= Date.current.iso8601 %>"
+         data-fullcalendar-locale-value="pt-br">
+      <div data-fullcalendar-target="calendar"></div>
     </div>
   </div>
-  
-  <!-- Centralizando e adicionando espaçamento ao iframe -->
-  <% if @view_mode == 'calendar_events' %>
-    <div class="flex justify-center mb-8">
-      <iframe id="google-calendar-iframe" src="https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=America%2FSao_Paulo&showPrint=0&mode=WEEK&src=amVmZi5pbmV4dEBnbWFpbC5jb20&src=ZW4uYnJhemlsaWFuI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&src=aW5leHQuaWRpb21hc0BnbWFpbC5jb20&color=%233F51B5&color=%230B8043&color=%23F6BF26"
-        style="border:solid 1px #777" width="1000" height="600" frameborder="0" scrolling="no"></iframe>
-    </div>
-  <% end %>
-  
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-    <div class="px-6 py-4 border-b dark:border-gray-700">
-      <%= render "date_navigation" %>
-    </div>
 
-    <%= render "events_list" %>
-  </div>
-</div>
-
-<!-- Edit Modal - Moved outside main content for global access -->
-<div data-controller="calendar-edit" data-calendar-edit-target="modal" data-action="click->calendar-edit#closeOnOutsideClick" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
-    <div class="mt-3">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Editar Evento</h3>
-      <%= form_tag '', method: :patch, data: { calendar_edit_target: "form" }, remote: true, class: "mt-4 space-y-4" do %>
-        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
-        <%= hidden_field_tag :view_mode, @view_mode %>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Título</label>
-          <input type="text" name="summary" data-calendar-edit-target="eventSummary" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Localização</label>
-          <input type="text" name="location" data-calendar-edit-target="eventLocation" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Descrição</label>
-          <textarea name="description" data-calendar-edit-target="eventDescription" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Data</label>
-          <input type="date" 
-                 data-calendar-edit-target="eventDate" 
-                 data-action="change->calendar-edit#updateEditDateTime"
-                 required 
-                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                 min="<%= Date.today.strftime('%Y-%m-%d') %>">
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Horário Início</label>
-            <select data-calendar-edit-target="startTime" 
-                    data-action="change->calendar-edit#updateEditDateTime"
-                    required 
-                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            </select>
-            <input type="hidden" name="start_time" data-calendar-edit-target="startTimeHidden">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Horário Fim</label>
-            <select data-calendar-edit-target="endTime" 
-                    data-action="change->calendar-edit#updateEditDateTime"
-                    required 
-                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            </select>
-            <input type="hidden" name="end_time" data-calendar-edit-target="endTimeHidden">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Participantes (emails separados por vírgula)</label>
-          <input type="text" name="attendees" data-calendar-edit-target="eventAttendees" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-        </div>
-
-        <!-- Options for recurring events -->
-        <div data-calendar-edit-target="recurringOptions" class="hidden space-y-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Para eventos recorrentes, escolha:</label>
-            <div class="mt-2 space-y-2">
-              <label class="inline-flex items-center">
-                <input type="radio" name="update_type" value="single" checked class="form-radio">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Apenas este evento</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="radio" name="update_type" value="all" class="form-radio">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Toda a série</span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">Repetir em quais dias?</label>
-            <div class="grid grid-cols-4 gap-2 mt-2">
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="1" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Seg</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="2" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Ter</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="3" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Qua</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="4" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Qui</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="5" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sex</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="6" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sáb</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="0" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Dom</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex justify-end space-x-3">
-          <button type="button" data-action="click->calendar-edit#closeModal" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded">
-            Cancelar
-          </button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-            Salvar
-          </button>
-        </div>
-      <% end %>
-    </div>
-  </div>
-</div>
-
-<!-- Delete Modal - Moved outside main content for global access -->
-<div data-controller="calendar-delete" data-calendar-delete-target="modal" data-action="click->calendar-delete#closeOnOutsideClick" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
-    <div class="mt-3">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Confirmar Exclusão</h3>
-      <div class="mt-4">
-        <p class="text-gray-600 dark:text-gray-300">Tem certeza que deseja excluir este evento?</p>
-        
-        <div data-calendar-delete-target="recurringOptions" class="hidden mt-4">
-          <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Este é um evento recorrente. O que você deseja excluir?</p>
-          <div class="space-y-2">
-            <div class="flex items-center">
-              <input type="radio" name="delete_type" value="single" id="deleteSingle" checked class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-              <label for="deleteSingle" class="ml-2 text-sm text-gray-700 dark:text-gray-200">Apenas esta ocorrência</label>
-            </div>
-            <div class="flex items-center">
-              <input type="radio" name="delete_type" value="all" id="deleteAll" class="h-4 w-4 text-indigo-600 dark:text-indigo-400">
-              <label for="deleteAll" class="ml-2 text-sm text-gray-700 dark:text-gray-200">Toda a série</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex justify-end space-x-3 mt-5">
-          <button data-action="click->calendar-delete#closeModal" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded">
-            Cancelar
-          </button>
-          <button data-action="click->calendar-delete#confirmDelete" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-            Excluir
-          </button>
-        </div>
+  <!-- Legend -->
+  <div class="mt-6 calendar-legend rounded-lg p-4">
+    <h3 class="text-sm font-medium mb-3">Legenda</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+        <span>Crédito Agendado</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+        <span>Assinatura Agendada</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-emerald-600 rounded mr-2"></div>
+        <span>Concluído</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+        <span>Cancelado</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-2 h-4 bg-yellow-500 rounded mr-3"></div>
+        <span>Não Sincronizado</span>
+      </div>
+      <div class="flex items-center">
+        <div class="w-2 h-4 bg-green-500 rounded mr-3"></div>
+        <span>Sincronizado</span>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Flash Messages Container -->
+<div id="flash-messages" class="fixed top-4 right-4 z-50 space-y-2"></div>

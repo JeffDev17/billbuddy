@@ -1,10 +1,9 @@
-<div class="mb-8">
+<div class="container mx-auto px-4 py-6">
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-semibold">Editar Compromisso</h2>
-    <%= link_to "Voltar", appointments_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Editar Compromisso</h2>
+    <%= link_to "← Voltar", navigation_service.determine_return_path(appointments_path), 
+        class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" %>
   </div>
 
-  <div class="bg-white p-6 rounded-lg shadow">
-    <%= render 'form', appointment: @appointment %>
-  </div>
+  <%= render 'form', appointment: @appointment %>
 </div>

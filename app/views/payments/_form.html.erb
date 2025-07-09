@@ -1,5 +1,5 @@
 <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow p-6">
-  <%= form_with(model: payment) do |form| %>
+  <%= form_with(model: [@customer, payment], local: true) do |form| %>
     <% if payment.errors.any? %>
       <div class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
         <h2 class="text-lg font-medium"><%= pluralize(payment.errors.count, "erro") %> impediram que este pagamento fosse salvo:</h2>
@@ -11,34 +11,202 @@
       </div>
     <% end %>
 
-    <div class="mb-4">
-      <%= form.label :customer_id, "Cliente", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
-      <%= form.collection_select :customer_id, current_user.customers.order(name: :asc), :id, :name, { prompt: "Selecione um cliente" }, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Basic Information -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+          📝 Informações Básicas
+        </h3>
+
+        <div>
+          <%= form.label :payment_type, "Tipo de Pagamento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.select :payment_type, 
+              options_for_select([
+                ['📅 Assinatura/Mensalidade', 'subscription'],
+                ['💳 Crédito', 'credit']
+              ], payment.payment_type), 
+              {}, 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div>
+          <%= form.label :amount, "Valor (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.number_field :amount, step: 0.01, min: 0, 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div>
+          <%= form.label :payment_date, "Data do Pagamento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.date_field :payment_date, 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div>
+          <%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.select :status, 
+              options_for_select([
+                ['⏳ Pendente', 'pending'],
+                ['✅ Pago', 'paid'],
+                ['❌ Cancelado', 'cancelled']
+              ], payment.status), 
+              {}, 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+      </div>
+
+      <!-- Payment Details -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+          💳 Detalhes do Pagamento
+        </h3>
+
+        <div>
+          <%= form.label :payment_method, "Método de Pagamento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.select :payment_method, 
+              options_for_select(Payment::PAYMENT_METHODS, payment.payment_method), 
+              { prompt: "Selecione o método" },
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div>
+          <%= form.label :transaction_reference, "Referência/ID da Transação", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.text_field :transaction_reference, 
+              placeholder: "Ex: PIX12345, TED987654, etc.", 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Opcional: ID único da transação para controle</p>
+        </div>
+
+        <div>
+          <%= form.label :bank_name, "Banco", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.text_field :bank_name, 
+              placeholder: "Ex: Banco do Brasil, Nubank, etc.", 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <%= form.label :installments, "Parcelas", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+            <%= form.number_field :installments, min: 1, max: 24, value: payment.installments || 1,
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          </div>
+
+          <div>
+            <%= form.label :fees, "Taxas (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+            <%= form.number_field :fees, step: 0.01, min: 0, value: payment.fees || 0,
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :received_at, "Data/Hora de Recebimento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.datetime_local_field :received_at, 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Deixe vazio se ainda não foi recebido</p>
+        </div>
+      </div>
     </div>
 
-    <div class="mb-4">
-      <%= form.label :payment_type, "Tipo de Pagamento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
-      <%= form.select :payment_type, Payment.payment_types.keys.map { |type| [type.humanize, type] }, {}, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
-    </div>
-
-    <div class="mb-4">
-      <%= form.label :amount, "Valor (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
-      <%= form.number_field :amount, step: 0.01, min: 0, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
-    </div>
-
-    <div class="mb-4">
-      <%= form.label :payment_date, "Data do Pagamento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
-      <%= form.date_field :payment_date, value: Date.today, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
-    </div>
-
-    <div class="mb-4">
+    <!-- Notes Section -->
+    <div class="mt-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+        📝 Observações
+      </h3>
       <%= form.label :notes, "Observações", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
-      <%= form.text_area :notes, rows: 3, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+      <%= form.text_area :notes, rows: 3, 
+          placeholder: "Informações adicionais sobre o pagamento...",
+          class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
     </div>
 
-    <div class="flex justify-end mt-6">
-      <%= link_to "Cancelar", payments_path, class: "mr-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-dark-bg-primary" %>
-      <%= form.submit payment.new_record? ? "Registrar Pagamento" : "Atualizar Pagamento", class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
+    <!-- Summary Card (if editing) -->
+    <% if payment.persisted? %>
+      <div class="mt-6 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">📊 Resumo</h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Valor Bruto:</span>
+            <span class="font-medium text-gray-900 dark:text-gray-100">R$ <%= number_with_precision(payment.amount || 0, precision: 2) %></span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Taxas:</span>
+            <span class="font-medium text-red-600 dark:text-red-400">- R$ <%= number_with_precision(payment.fees || 0, precision: 2) %></span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Valor Líquido:</span>
+            <span class="font-medium text-green-600 dark:text-green-400">R$ <%= number_with_precision(payment.net_amount, precision: 2) %></span>
+          </div>
+          <div>
+            <span class="text-gray-500 dark:text-gray-400">Status:</span>
+            <span class="font-medium"><%= payment.status_display %></span>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex space-x-4">
+        <%= link_to "Cancelar", @customer ? customer_payments_path(@customer) : payments_path, 
+            class: "px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-dark-bg-primary transition-colors" %>
+        
+        <% if payment.persisted? && @customer %>
+          <%= link_to "📊 Histórico", payment_history_customer_payments_path(@customer), 
+              class: "px-4 py-2 border border-blue-300 dark:border-blue-700 rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors" %>
+        <% end %>
+      </div>
+
+      <div class="flex space-x-3">
+        <% if payment.persisted? && payment.status == 'pending' %>
+          <%= form.submit "💰 Salvar e Marcar como Pago", 
+              name: "mark_as_paid",
+              class: "px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors" %>
+        <% end %>
+        
+        <%= form.submit payment.new_record? ? "📝 Registrar Pagamento" : "✏️ Atualizar Pagamento", 
+            class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800 transition-colors" %>
+      </div>
     </div>
   <% end %>
-</div> 
+</div>
+
+<script>
+  // Auto-fill features
+  document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethodSelect = document.querySelector('select[name="payment[payment_method]"]');
+    const bankNameField = document.querySelector('input[name="payment[bank_name]"]');
+    const statusSelect = document.querySelector('select[name="payment[status]"]');
+    const receivedAtField = document.querySelector('input[name="payment[received_at]"]');
+
+    // Auto-suggest bank names based on payment method
+    if (paymentMethodSelect && bankNameField) {
+      paymentMethodSelect.addEventListener('change', function() {
+        const method = this.value;
+        const suggestions = {
+          'pix': 'PIX',
+          'bank_transfer': 'Transferência Bancária',
+          'credit_card': 'Cartão de Crédito',
+          'debit_card': 'Cartão de Débito',
+          'boleto': 'Boleto Bancário',
+          'cash': 'Dinheiro',
+          'paypal': 'PayPal'
+        };
+        
+        if (suggestions[method] && !bankNameField.value) {
+          bankNameField.placeholder = `Ex: ${suggestions[method]}`;
+        }
+      });
+    }
+
+    // Auto-set received_at when marking as paid
+    if (statusSelect && receivedAtField) {
+      statusSelect.addEventListener('change', function() {
+        if (this.value === 'paid' && !receivedAtField.value) {
+          const now = new Date();
+          const localDateTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+          receivedAtField.value = localDateTime;
+        } else if (this.value !== 'paid') {
+          receivedAtField.value = '';
+        }
+      });
+    }
+  });
+</script> 

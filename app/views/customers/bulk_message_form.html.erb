@@ -1,0 +1,287 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden mb-6">
+      <div class="px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 dark:from-green-600 dark:to-green-700">
+        <h2 class="text-2xl font-bold text-white">
+          <i class="fas fa-bullhorn mr-3"></i>Envio em Massa via WhatsApp
+        </h2>
+        <p class="text-green-100 mt-2">
+          Envie mensagens para todos os seus clientes ou grupos específicos
+        </p>
+      </div>
+    </div>
+
+    <!-- Customer Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 text-center">
+          <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <%= @customers_count %>
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Total de Clientes
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 text-center">
+          <div class="text-3xl font-bold text-green-600 dark:text-green-400">
+            <%= @active_customers_count %>
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Clientes Ativos
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 text-center">
+          <div class="text-3xl font-bold text-purple-600 dark:text-purple-400">
+            <%= @credit_customers_count %>
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Plano de Créditos
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 text-center">
+          <div class="text-3xl font-bold text-orange-600 dark:text-orange-400">
+            <%= @subscription_customers_count %>
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Plano de Assinatura
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk Message Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+      <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+          <i class="fas fa-edit mr-2"></i>Configurar Mensagem
+        </h3>
+      </div>
+      
+      <div class="p-6">
+                 <%= form_tag send_bulk_message_customers_path, method: :post, 
+             class: "space-y-6", 
+             data: { controller: "bulk-message-form" } do %>
+          
+          <!-- Message Type -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <i class="fas fa-tag mr-2"></i>Tipo de Mensagem
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                <%= radio_button_tag :message_type, 'custom', true, 
+                    class: "text-blue-600 focus:ring-blue-500 mr-3",
+                    data: { action: "change->bulk-message-form#messageTypeChanged" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Mensagem Personalizada</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Escreva sua própria mensagem</div>
+                </div>
+              </label>
+              
+              <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                <%= radio_button_tag :message_type, 'payment_reminder', false, 
+                    class: "text-blue-600 focus:ring-blue-500 mr-3",
+                    data: { action: "change->bulk-message-form#messageTypeChanged" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Lembrete de Pagamento</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Cobrança ou lembrete</div>
+                </div>
+              </label>
+              
+              <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
+                <%= radio_button_tag :message_type, 'general_announcement', false, 
+                    class: "text-blue-600 focus:ring-blue-500 mr-3",
+                    data: { action: "change->bulk-message-form#messageTypeChanged" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Comunicado Geral</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Notícias ou avisos</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Target Audience -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <i class="fas fa-users mr-2"></i>Público Alvo
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+              <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
+                <%= radio_button_tag :target_audience, 'all', true, 
+                    class: "text-green-600 focus:ring-green-500 mr-3",
+                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Todos</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400"><%= @customers_count %> clientes</div>
+                </div>
+              </label>
+              
+              <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
+                <%= radio_button_tag :target_audience, 'active', false, 
+                    class: "text-green-600 focus:ring-green-500 mr-3",
+                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Apenas Ativos</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400"><%= @active_customers_count %> clientes</div>
+                </div>
+              </label>
+              
+              <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
+                <%= radio_button_tag :target_audience, 'credit', false, 
+                    class: "text-green-600 focus:ring-green-500 mr-3",
+                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Plano Créditos</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400"><%= @credit_customers_count %> clientes</div>
+                </div>
+              </label>
+              
+              <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
+                <%= radio_button_tag :target_audience, 'subscription', false, 
+                    class: "text-green-600 focus:ring-green-500 mr-3",
+                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Plano Assinatura</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400"><%= @subscription_customers_count %> clientes</div>
+                </div>
+              </label>
+              
+              <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 dark:has-[:checked]:bg-purple-900/20">
+                <%= radio_button_tag :target_audience, 'specific', false, 
+                    class: "text-purple-600 focus:ring-purple-500 mr-3",
+                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Clientes Específicos</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Escolher da lista</div>
+                </div>
+              </label>
+            </div>
+            
+            <!-- Specific Customers Selection -->
+            <div data-bulk-message-form-target="specificCustomersSection" class="hidden mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="text-sm font-medium text-purple-800 dark:text-purple-200">
+                  <i class="fas fa-user-check mr-2"></i>Selecionar Clientes
+                </h4>
+                <div class="flex space-x-2">
+                  <button type="button" 
+                          data-bulk-message-form-target="selectAllBtn"
+                          data-action="click->bulk-message-form#selectAllCustomers"
+                          class="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
+                    Selecionar Todos
+                  </button>
+                  <button type="button" 
+                          data-bulk-message-form-target="clearAllBtn"
+                          data-action="click->bulk-message-form#clearAllCustomers"
+                          class="text-xs px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                    Limpar Todos
+                  </button>
+                </div>
+              </div>
+              
+              <div id="selected-customers-count" class="text-sm text-purple-700 dark:text-purple-300 mb-3">
+                <span data-bulk-message-form-target="selectedCount">0</span> cliente(s) selecionado(s)
+              </div>
+              
+              <div class="max-h-60 overflow-y-auto border border-purple-200 dark:border-purple-700 rounded bg-white dark:bg-gray-800">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 p-2">
+                  <% @customers_with_phone.each do |customer| %>
+                    <label class="flex items-center p-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded cursor-pointer">
+                      <%= check_box_tag "selected_customer_ids[]", customer.id, false, 
+                          class: "text-purple-600 focus:ring-purple-500 mr-2 rounded",
+                          data: { 
+                            bulk_message_form_target: "customerCheckbox",
+                            action: "change->bulk-message-form#customerCheckboxChanged",
+                            customer_name: customer.name 
+                          } %>
+                      <div class="min-w-0 flex-1">
+                        <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <%= customer.name %>
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                          <%= customer.phone %>
+                          <% if customer.active? %>
+                            <span class="text-green-600">● Ativo</span>
+                          <% else %>
+                            <span class="text-red-600">● Inativo</span>
+                          <% end %>
+                        </div>
+                      </div>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message Content -->
+          <div>
+            <label for="custom_message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <i class="fas fa-comment-alt mr-2"></i>Mensagem
+            </label>
+            <%= text_area_tag :custom_message, nil,
+                id: 'custom_message',
+                rows: 6,
+                required: true,
+                placeholder: "Digite sua mensagem aqui...\n\nDica: Use {{nome}} para incluir o nome do cliente automaticamente.",
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
+                data: { 
+                  bulk_message_form_target: "messageField",
+                  action: "input->bulk-message-form#updatePreview"
+                } %>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+              <i class="fas fa-info-circle mr-1 text-blue-500"></i>
+              Você pode usar <code class="bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded text-xs">{{nome}}</code> para incluir o nome do cliente na mensagem.
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div>
+            <h4 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <i class="fas fa-eye mr-2"></i>Preview da Mensagem
+            </h4>
+            <div data-bulk-message-form-target="messagePreview" class="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line bg-white dark:bg-gray-800 p-4 rounded border border-gray-200 dark:border-gray-600">
+                <em>A preview da mensagem aparecerá aqui conforme você digita...</em>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-600">
+            <div class="text-sm text-gray-600 dark:text-gray-400 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-md flex items-start">
+              <i class="fas fa-exclamation-triangle mr-2 text-yellow-500 mt-0.5"></i>
+              <div>
+                <strong>Importante:</strong> Esta ação enviará mensagens para todos os clientes selecionados.
+              </div>
+            </div>
+            
+            <div class="flex space-x-4 ml-6">
+              <%= link_to customers_path, class: "px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200" do %>
+                <i class="fas fa-times mr-2"></i>Cancelar
+              <% end %>
+              
+              <%= submit_tag "📱 Enviar Mensagens", 
+                  class: "px-6 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 font-medium",
+                  data: { 
+                    confirm: "Tem certeza que deseja enviar esta mensagem para os clientes selecionados? Esta ação não pode ser desfeita." 
+                  } %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+ 

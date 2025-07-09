@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_30_175136) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_11_190827) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -23,6 +23,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_30_175136) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "google_event_id"
+    t.boolean "is_recurring_event"
+    t.datetime "completed_at"
     t.index ["customer_id"], name: "index_appointments_on_customer_id"
   end
 
@@ -46,6 +48,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_30_175136) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.decimal "custom_hourly_rate"
+    t.decimal "package_value"
+    t.decimal "package_hours"
+    t.datetime "cancelled_at"
+    t.text "cancellation_reason"
+    t.string "cancelled_by"
+    t.datetime "activated_at"
+    t.index ["activated_at"], name: "index_customers_on_activated_at"
+    t.index ["cancelled_at"], name: "index_customers_on_cancelled_at"
+    t.index ["status", "cancelled_at"], name: "index_customers_on_status_and_cancelled_at"
+    t.index ["status", "created_at"], name: "index_customers_on_status_and_created_at"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -76,7 +89,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_30_175136) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status"
+    t.string "payment_method"
+    t.string "transaction_reference"
+    t.datetime "received_at"
+    t.string "processed_by"
+    t.string "bank_name"
+    t.integer "installments", default: 1
+    t.decimal "fees", precision: 10, scale: 2, default: "0.0"
+    t.index ["customer_id", "payment_date"], name: "index_payments_on_customer_id_and_payment_date"
+    t.index ["customer_id", "status"], name: "index_payments_on_customer_id_and_status"
     t.index ["customer_id"], name: "index_payments_on_customer_id"
+    t.index ["payment_method"], name: "index_payments_on_payment_method"
+    t.index ["received_at"], name: "index_payments_on_received_at"
+    t.index ["status"], name: "index_payments_on_status"
+    t.index ["transaction_reference"], name: "index_payments_on_transaction_reference"
   end
 
   create_table "service_packages", force: :cascade do |t|

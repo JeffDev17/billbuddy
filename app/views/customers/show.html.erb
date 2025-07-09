@@ -2,23 +2,23 @@
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-dark-text-primary"><%= @customer.name %></h2>
     <div>
-      <%= link_to "Editar", edit_customer_path(@customer), class: "px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 dark:bg-dark-accent dark:hover:bg-dark-accent-hover mr-2" %>
-      <%= link_to "Voltar", customers_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-dark-bg-tertiary dark:hover:bg-gray-700" %>
+      <%= link_to "Editar", edit_customer_path(@customer), class: "px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800 mr-2" %>
+      <%= link_to "Voltar", customers_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-purple-50 dark:bg-slate-700 dark:hover:bg-slate-600" %>
     </div>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-    <div class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text-primary mb-4">Informações do Cliente</h3>
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Informações do Cliente</h3>
 
       <div class="mb-4">
-        <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Email</p>
-        <p class="text-gray-900 dark:text-dark-text-primary"><%= @customer.email %></p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Email</p>
+        <p class="text-gray-900 dark:text-gray-100"><%= @customer.email.present? ? @customer.email : "Não informado" %></p>
       </div>
 
       <div class="mb-4">
-        <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Telefone</p>
-        <p class="text-gray-900 dark:text-dark-text-primary"><%= @customer.phone %></p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Telefone</p>
+        <p class="text-gray-900 dark:text-gray-100"><%= @customer.phone.present? ? @customer.phone : "Não informado" %></p>
       </div>
 
       <div class="mb-4">
@@ -45,6 +45,65 @@
             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">Assinatura</span>
           <% end %>
         </p>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <!-- Valores do Pacote Manual -->
+        <% if @customer.package_value.present? && @customer.package_hours.present? %>
+          <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">📦 Pacote Manual</p>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Valor Total:</span>
+                <strong class="text-blue-800 dark:text-blue-200">R$ <%= number_with_precision(@customer.package_value, precision: 2) %></strong>
+              </div>
+              <div>
+                <span class="text-gray-600 dark:text-gray-400">Total de Horas:</span>
+                <strong class="text-blue-800 dark:text-blue-200"><%= @customer.package_hours %> horas</strong>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        
+        <!-- Valor do Pacote -->
+        <div class="mb-4">
+          <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Valor do Pacote</p>
+          <div class="flex items-center space-x-2">
+            <p class="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
+              R$ <%= number_with_precision(@customer.package_total_value, precision: 2) %><%= @customer.subscription? ? "/mês" : "" %>
+            </p>
+            <% if @customer.package_value.present? %>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                ✏️ Manual
+              </span>
+            <% elsif @customer.has_custom_pricing? %>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                💰 Preço Personalizado
+              </span>
+            <% else %>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                📦 Preço Padrão
+              </span>
+            <% end %>
+          </div>
+        </div>
+        
+        <!-- Preço por Hora (para métricas/aulas) -->
+        <div>
+          <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Preço por Hora (aulas)</p>
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            R$ <%= number_with_precision(@customer.effective_hourly_rate, precision: 2) %>
+            <% if @customer.package_value.present? && @customer.package_hours.present? %>
+              <span class="text-xs text-gray-500 dark:text-gray-400">(calculado automaticamente)</span>
+            <% end %>
+          </p>
+        </div>
+        
+        <% if @customer.has_custom_pricing? %>
+          <p class="text-xs text-gray-500 dark:text-dark-text-secondary mt-2">Este cliente possui um preço personalizado por hora que sobrescreve o cálculo do pacote.</p>
+        <% elsif @customer.package_value.present? %>
+          <p class="text-xs text-gray-500 dark:text-dark-text-secondary mt-2">Preço por hora calculado automaticamente com base no pacote manual.</p>
+        <% end %>
       </div>
     </div>
 
@@ -76,7 +135,6 @@
         <div class="mt-4 flex space-x-2">
           <%= link_to "Adicionar Créditos", new_customer_customer_credit_path(@customer), class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:bg-dark-accent dark:hover:bg-dark-accent-hover" %>
           <button type="button" onclick="openDebitModal()" class="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700">Debitar Horas</button>
-          <%= link_to "Enviar Cobrança WhatsApp", payment_reminder_form_customer_path(@customer), class: "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700" %>
         </div>
 
         <!-- Modal para debitar horas (inicialmente oculto) -->
@@ -161,6 +219,175 @@
     </div>
   </div>
 
+  <!-- Payment History Section -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+          💰 Histórico de Pagamentos
+        </h3>
+        <div class="flex space-x-2">
+          <%= link_to "📊 Ver Histórico Completo", payment_history_customer_payments_path(@customer), 
+              class: "px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-sm transition-colors duration-200" %>
+          <%= link_to "➕ Novo Pagamento", new_customer_payment_path(@customer), 
+              class: "px-3 py-1 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-sm transition-colors duration-200" %>
+        </div>
+      </div>
+    </div>
+    
+    <div class="px-6 py-4">
+      <% recent_payments = @customer.payments.recent_first.limit(5) %>
+      
+      <% if recent_payments.any? %>
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="text-center">
+            <div class="text-lg font-semibold text-green-600 dark:text-green-400">
+              R$ <%= number_with_precision(@customer.payments.paid_payments.sum(:amount), precision: 2) %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Total Pago</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
+              R$ <%= number_with_precision(@customer.payments.pending_payments.sum(:amount), precision: 2) %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Pendente</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-gray-600 dark:text-gray-400">
+              <%= @customer.payments.count %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Total de Registros</div>
+          </div>
+        </div>
+        
+        <!-- Recent Payments List -->
+        <div class="space-y-3">
+          <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Últimos 5 Pagamentos:</h4>
+          
+          <% recent_payments.each do |payment| %>
+            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div class="flex-1">
+                <div class="flex items-center space-x-2">
+                  <span class="<%= case payment.status
+                                  when 'paid' then 'text-green-600 dark:text-green-400'
+                                  when 'pending' then 'text-yellow-600 dark:text-yellow-400'
+                                  when 'cancelled' then 'text-red-600 dark:text-red-400'
+                                  end %>">
+                    <%= payment.status_display %>
+                  </span>
+                  
+                  <span class="text-sm text-gray-500 dark:text-gray-400">
+                    <%= payment.payment_date.strftime("%d/%m/%Y") %>
+                  </span>
+                  
+                  <% if payment.payment_method.present? %>
+                    <span class="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                      <%= payment.payment_method_display %>
+                    </span>
+                  <% end %>
+                </div>
+                
+                <% if payment.notes.present? %>
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                    📝 <%= payment.notes %>
+                  </div>
+                <% end %>
+              </div>
+              
+              <div class="text-right">
+                <div class="font-medium text-gray-900 dark:text-gray-100">
+                  R$ <%= number_with_precision(payment.amount, precision: 2) %>
+                </div>
+                
+                <% if payment.fees.present? && payment.fees > 0 %>
+                  <div class="text-xs text-red-500 dark:text-red-400">
+                    - R$ <%= number_with_precision(payment.fees, precision: 2) %> (taxas)
+                  </div>
+                <% end %>
+                
+                <div class="flex space-x-2 mt-1">
+                  <%= link_to "✏️", edit_customer_payment_path(@customer, payment), 
+                      class: "text-xs text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300", 
+                      title: "Editar pagamento" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <% if @customer.payments.count > 5 %>
+          <div class="mt-4 text-center">
+            <%= link_to "Ver todos os #{@customer.payments.count} pagamentos →", 
+                payment_history_customer_payments_path(@customer), 
+                class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm font-medium" %>
+          </div>
+        <% end %>
+        
+      <% else %>
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div class="text-4xl mb-2">💳</div>
+          <div class="text-lg font-medium mb-2">Nenhum pagamento registrado</div>
+          <div class="text-sm mb-4">Registre o primeiro pagamento deste cliente</div>
+          <%= link_to "Registrar Primeiro Pagamento", new_customer_payment_path(@customer), 
+              class: "px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 transition-colors duration-200" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- WhatsApp Notifications - Global for all customers -->
+  <% if @customer.phone.present? %>
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden mb-6">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+          📱 Notificações WhatsApp
+        </h3>
+      </div>
+      
+      <div class="px-6 py-4">
+        <div class="flex flex-wrap gap-3">
+          <!-- Custom Payment Reminder -->
+          <%= link_to "💰 Enviar Cobrança Personalizada", payment_reminder_form_customer_path(@customer), 
+              class: "px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 transition-colors duration-200" %>
+          
+          <!-- Quick Payment Reminder -->
+          <%= link_to "⚡ Lembrete Rápido", notify_payment_reminder_customer_path(@customer), 
+              class: "px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700 transition-colors duration-200", 
+              data: { turbo_method: :post, confirm: "Enviar lembrete de pagamento para #{@customer.name}?" } %>
+        </div>
+        
+        <div class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+          📞 <strong>Telefone:</strong> <%= @customer.phone %>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            Telefone não cadastrado
+          </h3>
+          <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+            <p>Para enviar notificações WhatsApp, é necessário cadastrar o telefone do cliente no formato internacional (ex: +5519996664088).</p>
+          </div>
+          <div class="mt-4">
+            <%= link_to "Editar Cliente", edit_customer_path(@customer), 
+                class: "text-sm bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-md transition-colors duration-200" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <% if @customer.subscription? && @extra_time_balances.any? %>
     <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow overflow-hidden mb-8">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -186,44 +413,504 @@
     </div>
   <% end %>
 
-  <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text-primary">Próximos Compromissos</h3>
-      <%= link_to "Novo Compromisso", new_customer_appointment_path(@customer), class: "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 dark:bg-dark-success dark:hover:bg-green-700" %>
-    </div>
-
-    <div class="divide-y divide-gray-200 dark:divide-gray-700">
-      <% if @upcoming_appointments.any? %>
-        <% @upcoming_appointments.each do |appointment| %>
-          <div class="px-6 py-4">
-            <div class="flex justify-between">
-              <div>
-                <p class="text-sm text-gray-500 dark:text-dark-text-secondary"><%= appointment.scheduled_at.strftime("%d/%m/%Y %H:%M") %></p>
-                <p class="text-gray-900 dark:text-dark-text-primary"><%= appointment.notes %></p>
-              </div>
-              <div class="text-right">
-                <p class="text-gray-900 dark:text-dark-text-primary"><%= appointment.duration %> horas</p>
-                <p>
-                  <% case appointment.status %>
-                  <% when 'scheduled' %>
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Agendado</span>
-                  <% when 'completed' %>
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Concluído</span>
-                  <% when 'cancelled' %>
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Cancelado</span>
-                  <% when 'no_show' %>
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Não compareceu</span>
+  <!-- Detailed Analytics Section -->
+  <% if @all_appointments.any? %>
+    <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow overflow-hidden mb-6">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text-primary">📊 Análise Detalhada</h3>
+      </div>
+      
+      <!-- Main Stats -->
+      <div class="px-6 py-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+          <div class="text-center">
+            <div class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <%= @appointment_stats[:total] %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Total</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-blue-600 dark:text-blue-400">
+              <%= @appointment_stats[:scheduled] %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Agendados (Futuros)</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-green-600 dark:text-green-400">
+              <%= @appointment_stats[:completed] %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Concluídos</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-red-600 dark:text-red-400">
+              <%= @appointment_stats[:cancelled] %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Cancelados</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
+              <%= @appointment_stats[:no_show] %>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">Não compareceu</div>
+          </div>
+        </div>
+        
+        <!-- Note about rate calculations -->
+        <div class="text-xs text-gray-500 dark:text-gray-400 text-center mb-4">
+          <strong>📊 Taxas baseadas em aulas já realizadas:</strong> <%= @appointment_stats[:past_total] %> aulas (excluindo <%= @appointment_stats[:future_scheduled] %> agendamentos futuros)
+        </div>
+        
+        <!-- Additional Metrics -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
+          <div class="text-center">
+            <div class="text-lg font-semibold text-blue-700 dark:text-blue-300">
+              <%= @all_appointments.sum(:duration).round(1) %>h
+            </div>
+            <div class="text-sm text-blue-600 dark:text-blue-400">Total de Horas</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-green-700 dark:text-green-300">
+              R$ <%= number_with_precision(@appointments_by_status['completed']&.sum { |apt| apt.duration * @customer.effective_hourly_rate } || 0, precision: 2) %>
+            </div>
+            <div class="text-sm text-green-600 dark:text-green-400">Receita Total</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-purple-700 dark:text-purple-300">
+              <%= @appointment_stats[:past_total] > 0 ? ((@appointment_stats[:past_completed].to_f / @appointment_stats[:past_total]) * 100).round(1) : 0 %>%
+            </div>
+            <div class="text-sm text-purple-600 dark:text-purple-400">Taxa de Conclusão</div>
+          </div>
+          
+          <div class="text-center">
+            <div class="text-lg font-semibold text-orange-700 dark:text-orange-300">
+              <%= @appointment_stats[:past_total] > 0 ? (((@appointment_stats[:past_cancelled] + @appointment_stats[:past_no_show]).to_f / @appointment_stats[:past_total]) * 100).round(1) : 0 %>%
+            </div>
+            <div class="text-sm text-orange-600 dark:text-orange-400">Taxa de Cancelamento</div>
+          </div>
+        </div>
+        
+        <!-- Detailed breakdown -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Monthly breakdown -->
+          <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+            <% 
+              # Calculate months since customer started (based on first appointment)
+              first_appointment_date = @all_appointments.min_by(&:scheduled_at)&.scheduled_at&.to_date
+              
+              if first_appointment_date
+                # Calculate actual months from first appointment to now
+                months_since_start = ((Date.current.year - first_appointment_date.year) * 12 + Date.current.month - first_appointment_date.month + 1)
+                months_to_show = [months_since_start, 12].min # Show max 12 months
+                
+                # Generate data for all months since customer started
+                monthly_data = []
+                
+                # Start from the month of first appointment and go chronologically
+                start_month = first_appointment_date.beginning_of_month
+                current_month = Date.current.beginning_of_month
+                
+                month_cursor = start_month
+                while month_cursor <= current_month && monthly_data.length < months_to_show
+                  month_end = month_cursor.end_of_month
+                  month_appointments = @all_appointments.select { |apt| apt.scheduled_at.to_date.between?(month_cursor, month_end) }
+                  
+                  monthly_data << {
+                    month: month_cursor.strftime("%b/%y"),
+                    total: month_appointments.count,
+                    completed: month_appointments.count { |apt| apt.status == 'completed' },
+                    earnings: month_appointments.select { |apt| apt.status == 'completed' }.sum { |apt| apt.duration * @customer.effective_hourly_rate }
+                  }
+                  
+                  month_cursor = month_cursor.next_month
+                end
+                
+                # Reverse to show most recent first
+                monthly_data = monthly_data.reverse
+              else
+                monthly_data = []
+                months_to_show = 0
+              end
+            %>
+            <h5 class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              📅 <%= @all_appointments.any? ? "Histórico mensal (#{months_to_show} meses)" : "Histórico mensal" %>
+            </h5>
+            <% if monthly_data.any? %>
+              <% monthly_data.each do |month| %>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-600 dark:text-gray-400"><%= month[:month] %></span>
+                  <% if month[:total] > 0 %>
+                    <span class="text-gray-900 dark:text-gray-100">
+                      <%= month[:completed] %>/<%= month[:total] %> 
+                      <span class="text-green-600 dark:text-green-400">R$ <%= number_with_precision(month[:earnings], precision: 0) %></span>
+                    </span>
+                  <% else %>
+                    <span class="text-gray-500 dark:text-gray-400 italic">sem agendamentos</span>
                   <% end %>
-                </p>
+                </div>
+              <% end %>
+            <% else %>
+              <p class="text-xs text-gray-500 dark:text-gray-400 italic">Sem agendamentos registrados</p>
+            <% end %>
+          </div>
+          
+          <!-- Performance metrics -->
+          <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+            <h5 class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">⚡ Performance</h5>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Aulas Realizadas:</span>
+                <span class="text-blue-600 dark:text-blue-400 font-medium">
+                  <%= @appointment_stats[:past_total] %> aula<%= @appointment_stats[:past_total] != 1 ? 's' : '' %>
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Receita/hora:</span>
+                <span class="text-purple-600 dark:text-purple-400 font-medium">
+                  R$ <%= number_with_precision(@customer.effective_hourly_rate, precision: 2) %>
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Próximas Aulas:</span>
+                <span class="text-blue-600 dark:text-blue-400 font-medium">
+                  <%= @appointment_stats[:future_scheduled] %> aula<%= @appointment_stats[:future_scheduled] != 1 ? 's' : '' %>
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Tempo Total:</span>
+                <span class="text-gray-600 dark:text-gray-400 font-medium">
+                  <%= @all_appointments.sum(:duration).round(1) %>h
+                </span>
               </div>
             </div>
           </div>
-        <% end %>
-      <% else %>
-        <div class="px-6 py-4 text-center text-gray-500 dark:text-dark-text-secondary">
-          Não há compromissos agendados.
+          
+          <!-- Time insights -->
+          <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+            <h5 class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">🕐 Horários preferidos</h5>
+            <% 
+              time_slots = @all_appointments.group_by { |apt| apt.scheduled_at.hour }.sort_by { |hour, _| -_.count }.first(3)
+            %>
+            <% if time_slots.any? %>
+              <% time_slots.each do |hour, appointments| %>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-600 dark:text-gray-400"><%= "%02d:00" % hour %></span>
+                  <span class="text-indigo-600 dark:text-indigo-400 font-medium">
+                    <%= appointments.count %> aula<%= appointments.count != 1 ? 's' : '' %>
+                  </span>
+                </div>
+              <% end %>
+            <% else %>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Sem dados suficientes</p>
+            <% end %>
+          </div>
+        </div>
+        
+        <!-- Quick action summary -->
+        <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
+          <div class="flex items-center justify-between text-xs">
+            <div class="text-gray-600 dark:text-gray-400">
+              Cliente desde: <strong><%= @all_appointments.any? ? @all_appointments.min_by(&:scheduled_at).scheduled_at.strftime("%m/%Y") : "N/A" %></strong>
+              • Total de tempo: <strong><%= @all_appointments.sum(:duration).round(1) %>h</strong>
+              • Última aula: <strong><%= @all_appointments.any? ? @all_appointments.max_by(&:scheduled_at).scheduled_at.strftime("%d/%m/%Y") : "N/A" %></strong>
+            </div>
+            <div class="text-right">
+              <%= link_to "📋 Relatório Completo", appointments_path(customer_id: @customer.id), 
+                  class: "text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Appointment History Section -->
+  <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow overflow-hidden" data-controller="customer-appointment-filters">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-dark-text-primary">📅 Histórico de Agendamentos</h3>
+        <div class="flex space-x-2">
+          <%= link_to "➕ Novo Compromisso", new_appointment_path(customer_id: @customer.id), 
+              class: "px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 dark:bg-dark-accent dark:hover:bg-dark-accent-hover" %>
+          <%= link_to "📊 Ver com Filtros", appointments_path(customer_id: @customer.id), 
+              class: "px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-sm" %>
+        </div>
+      </div>
+      
+      <!-- Customer Sync Controls -->
+      <% if current_user.google_calendar_authorized? && @customer.unsynced_appointments.any? %>
+        <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                🔄 <%= @customer.unsynced_appointments.count %> compromisso(s) não sincronizado(s)
+              </p>
+              <p class="text-xs text-blue-600 dark:text-blue-300">
+                Sincronize os compromissos deste cliente com o Google Calendar
+              </p>
+            </div>
+            <div class="flex space-x-2">
+              <%= link_to review_sync_appointments_path(scope: 'customer_upcoming', customer_id: @customer.id),
+                  class: "bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm" do %>
+                📅 Revisar Próximos (1 mês)
+              <% end %>
+              <%= link_to review_sync_appointments_path(scope: 'customer', customer_id: @customer.id),
+                  class: "bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm" do %>
+                🔄 Revisar Todos
+              <% end %>
+              
+              <!-- Quick sync option -->
+              <%= link_to sync_upcoming_appointments_customer_path(@customer), method: :post,
+                  class: "bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs",
+                  data: { confirm: "Sincronizar diretamente os próximos compromissos de #{@customer.name}?" },
+                  title: "Sincronização direta sem revisão" do %>
+                ⚡
+              <% end %>
+            </div>
+          </div>
         </div>
       <% end %>
     </div>
+
+    <!-- Filter Options -->
+    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por:</label>
+          <select data-customer-appointment-filters-target="statusSelect" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <option value="all">Todos os Status</option>
+            <option value="scheduled">Agendados</option>
+            <option value="completed">Concluídos</option>
+            <option value="cancelled">Cancelados</option>
+            <option value="no_show">Não compareceu</option>
+          </select>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Período:</label>
+          <select data-customer-appointment-filters-target="periodSelect" class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            <option value="all">Todos os Períodos</option>
+            <option value="this_month">Este Mês</option>
+            <option value="last_month">Mês Passado</option>
+            <option value="this_year">Este Ano</option>
+            <option value="last_year">Ano Passado</option>
+            <option value="last_3_months">Últimos 3 Meses</option>
+            <option value="last_6_months">Últimos 6 Meses</option>
+            <option value="last_12_months">Últimos 12 Meses</option>
+            <% 
+              # Generate options for specific months/years based on appointment history
+              if @all_appointments.any?
+                first_appointment = @all_appointments.min_by(&:scheduled_at).scheduled_at
+                current_date = Date.current
+                
+                # Generate year options
+                (first_appointment.year..current_date.year).reverse_each do |year|
+            %>
+              <option value="year_<%= year %>"><%= year %></option>
+            <%   end %>
+            
+            <%   # Generate month options for the last 24 months
+                 months_to_show = 24
+                 months_to_show.times do |i|
+                   date = i.months.ago.beginning_of_month
+                   next if date < first_appointment.beginning_of_month
+            %>
+              <option value="month_<%= date.strftime('%Y_%m') %>"><%= date.strftime('%B %Y') %></option>
+            <%   end %>
+            <% end %>
+          </select>
+        </div>
+        
+        <button data-customer-appointment-filters-target="clearButton" class="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700">
+          Limpar Filtros
+        </button>
+      </div>
+    </div>
+    
+    <div>
+      <% if @all_appointments.any? %>
+        <!-- Group appointments by status -->
+        <% ['scheduled', 'completed', 'cancelled', 'no_show'].each do |status| %>
+          <% appointments = @appointments_by_status[status] %>
+          <% next unless appointments&.any? %>
+          
+          <div class="border-b border-gray-200 dark:border-gray-700" 
+               data-customer-appointment-filters-target="appointmentSection" 
+               data-status-section="<%= status %>">
+            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700">
+              <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                <% case status %>
+                <% when 'scheduled' %>
+                  🗓️ Agendados (<span data-customer-appointment-filters-target="statusCount"><%= appointments.count %></span>)
+                <% when 'completed' %>
+                  ✅ Concluídos (<span data-customer-appointment-filters-target="statusCount"><%= appointments.count %></span>)
+                <% when 'cancelled' %>
+                  ❌ Cancelados (<span data-customer-appointment-filters-target="statusCount"><%= appointments.count %></span>)
+                <% when 'no_show' %>
+                  👻 Não compareceu (<span data-customer-appointment-filters-target="statusCount"><%= appointments.count %></span>)
+                <% end %>
+              </h4>
+            </div>
+            
+                         <div class="divide-y divide-gray-100 dark:divide-gray-600">
+               <% appointments.each do |appointment| %>
+                 <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors" 
+                      data-customer-appointment-filters-target="appointmentItem"
+                      data-appointment-date="<%= appointment.scheduled_at.iso8601 %>"
+                      data-appointment-status="<%= appointment.status %>">
+                   <div class="flex justify-between items-start">
+                     <div class="flex-1">
+                       <!-- Main appointment info -->
+                       <div class="flex items-center justify-between mb-2">
+                         <div class="flex items-center space-x-3">
+                           <div class="flex flex-col">
+                             <p class="text-sm font-semibold text-gray-900 dark:text-dark-text-primary">
+                               <%= appointment.scheduled_at.strftime("%A, %d/%m/%Y") %>
+                             </p>
+                             <p class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                               <%= appointment.scheduled_at.strftime("%H:%M") %>
+                             </p>
+                           </div>
+                           
+                           <div class="flex flex-col">
+                             <span class="text-xs px-3 py-1 rounded-full font-medium
+                               <% case appointment.status %>
+                               <% when 'scheduled' %>
+                                 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                               <% when 'completed' %>
+                                 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                               <% when 'cancelled' %>
+                                 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                               <% when 'no_show' %>
+                                 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                               <% end %>">
+                               <%= appointment.status.humanize %>
+                             </span>
+                           </div>
+                         </div>
+                         
+                         <!-- Earnings display -->
+                         <div class="text-right">
+                           <% earnings = appointment.duration * @customer.effective_hourly_rate %>
+                           <div class="text-lg font-bold 
+                             <% if appointment.status == 'completed' %>
+                               text-green-600 dark:text-green-400
+                             <% else %>
+                               text-gray-500 dark:text-gray-400
+                             <% end %>">
+                             <%= appointment.status == 'completed' ? '✅' : '💰' %> R$ <%= number_with_precision(earnings, precision: 2) %>
+                           </div>
+                           <div class="text-xs text-gray-500 dark:text-gray-400">
+                             <%= appointment.status == 'completed' ? 'Recebido' : 'Potencial' %>
+                           </div>
+                         </div>
+                       </div>
+                       
+                       <!-- Duration and details -->
+                       <div class="flex items-center space-x-4 mb-2">
+                         <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                           ⏱️ <%= appointment.duration %> hora<%= appointment.duration != 1 ? 's' : '' %>
+                         </span>
+                         
+                         <% if appointment.completed_at.present? %>
+                           <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                             ✅ Finalizado em <%= appointment.completed_at.strftime('%d/%m às %H:%M') %>
+                           </span>
+                         <% end %>
+                         
+                         <% if appointment.synced_to_calendar? %>
+                           <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                             🔄 Sincronizado
+                           </span>
+                         <% else %>
+                           <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                             ⏳ Não sincronizado
+                           </span>
+                         <% end %>
+                       </div>
+                       
+                       <!-- Notes -->
+                       <% if appointment.notes.present? %>
+                         <div class="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                           <p class="text-sm text-gray-700 dark:text-gray-300">
+                             📝 <strong>Notas:</strong> <%= appointment.notes %>
+                           </p>
+                         </div>
+                       <% end %>
+                       
+                       <!-- Time calculations -->
+                       <% if appointment.status == 'scheduled' && appointment.scheduled_at < Time.current %>
+                         <div class="mt-2 text-xs text-orange-600 dark:text-orange-400">
+                           ⚠️ Agendamento em atraso - <%= time_ago_in_words(appointment.scheduled_at) %> atrás
+                         </div>
+                       <% elsif appointment.status == 'scheduled' %>
+                         <div class="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                           🕒 <%= appointment.scheduled_at > Time.current ? "Em #{time_ago_in_words(appointment.scheduled_at)}" : "Hoje" %>
+                         </div>
+                       <% end %>
+                     </div>
+                     
+                     <!-- Action buttons -->
+                     <div class="flex flex-col space-y-1 ml-4">
+                       <% if appointment.status == 'scheduled' %>
+                         <%= link_to edit_appointment_path(appointment), 
+                             class: "inline-flex items-center px-2 py-1 border border-indigo-300 text-xs font-medium rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-600",
+                             title: "Editar compromisso" do %>
+                           ✏️ Editar
+                         <% end %>
+                         
+                         <%= link_to mark_completed_appointment_path(appointment), 
+                             class: "inline-flex items-center px-2 py-1 border border-green-300 text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-600",
+                             title: "Marcar como concluído",
+                             data: { turbo_method: :post, turbo_confirm: "Marcar como concluído?" } do %>
+                           ✅ Concluir
+                         <% end %>
+                         
+                         <%= link_to mark_cancelled_appointment_path(appointment), 
+                             class: "inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600",
+                             title: "Cancelar compromisso",
+                             data: { turbo_method: :post, turbo_confirm: "Cancelar este compromisso?" } do %>
+                           ❌ Cancelar
+                         <% end %>
+                       <% else %>
+                         <%= link_to edit_appointment_path(appointment), 
+                             class: "inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600",
+                             title: "Editar compromisso" do %>
+                           ✏️ Ver/Editar
+                         <% end %>
+                       <% end %>
+                     </div>
+                   </div>
+                 </div>
+               <% end %>
+              
+                             <% if appointments.count > 0 %>
+                 <div class="px-6 py-2 text-center bg-gray-50 dark:bg-gray-700">
+                   <p class="text-xs text-gray-400 dark:text-gray-500">
+                     Total: <%= appointments.count %> compromisso<%= appointments.count != 1 ? 's' : '' %> nesta categoria
+                   </p>
+                 </div>
+               <% end %>
+            </div>
+          </div>
+        <% end %>
+        
+            <% else %>
+         <div class="px-6 py-8 text-center text-gray-500 dark:text-dark-text-secondary">
+           <div class="text-4xl mb-2">📅</div>
+           <div class="text-lg font-medium mb-2">Nenhum compromisso registrado</div>
+           <div class="text-sm mb-4">Crie o primeiro compromisso para este cliente</div>
+           <%= link_to "Criar Primeiro Compromisso", new_appointment_path(customer_id: @customer.id), 
+               class: "px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 transition-colors duration-200" %>
+         </div>
+       <% end %>
+    </div>
+
   </div>
 </div>
+

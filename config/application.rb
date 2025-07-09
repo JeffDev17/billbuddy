@@ -21,8 +21,18 @@ module Billbuddy
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    config.time_zone = "America/Sao_Paulo"
+    config.active_record.default_timezone = :local
     # config.eager_load_paths << Rails.root.join("extras")
     # config.action_controller.allow_other_host = true
+
+    # Temporarily disable calendar invites for testing
+    # This prevents customers from receiving Google Calendar notifications
+    config.disable_calendar_invites = ENV.fetch("DISABLE_CALENDAR_INVITES", "false") == "true"
+
+    # Only loads a smaller set of middleware suitable for API only apps.
+    # Middleware like session, flash, cookies can be added back manually.
+    # Skip views, helpers and assets when generating a new resource.
+    # config.api_only = true
   end
 end

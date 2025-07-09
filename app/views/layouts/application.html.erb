@@ -1,43 +1,33 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html class="h-full">
 <head>
   <title>BillBuddy</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= action_cable_meta_tag %>
-
+  
+  <!-- Favicon -->
+  <%= favicon_link_tag "/icon.png", type: "image/png" %>
+  <%= favicon_link_tag "/icon.svg", type: "image/svg+xml" %>
+  <link rel="apple-touch-icon" href="/icon.png">
+  
+  <!-- Stylesheet -->
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_importmap_tags %>
-
+  
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-      tailwind.config = {
-          darkMode: 'class',
-          theme: {
-              extend: {
-                  colors: {
-                      dark: {
-                          'bg-primary': '#121212',
-                          'bg-secondary': '#1e1e1e',
-                          'bg-tertiary': '#2d2d2d',
-                          'text-primary': '#e0e0e0',
-                          'text-secondary': '#a0a0a0',
-                          'accent': '#6366f1',
-                          'accent-hover': '#4f46e5',
-                          'success': '#10b981',
-                          'warning': '#f59e0b',
-                          'danger': '#ef4444',
-                      }
-                  }
-              }
-          }
-      }
+    tailwind.config = {
+      darkMode: 'class'
+    }
   </script>
 
   <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <!-- JavaScript - Load AFTER CSS -->
+  <%= javascript_importmap_tags %>
 
   <style>
       /* Componentes personalizados */
@@ -46,23 +36,31 @@
       }
 
       .btn-primary {
-          @apply bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-dark-accent dark:hover:bg-dark-accent-hover;
+          @apply bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-purple-600 dark:hover:bg-purple-700;
       }
 
       .btn-secondary {
-          @apply bg-gray-500 text-white hover:bg-gray-600 dark:bg-dark-bg-tertiary dark:hover:bg-gray-700;
+          @apply bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700;
       }
 
       .btn-danger {
-          @apply bg-red-600 text-white hover:bg-red-700 dark:bg-dark-danger dark:hover:bg-red-800;
+          @apply bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700;
       }
 
       .card {
-          @apply bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md overflow-hidden;
+          @apply bg-white rounded-lg shadow-md overflow-hidden;
+      }
+      
+      .dark .card {
+          background-color: #1a1a1a;
       }
 
       .card-header {
-          @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+          @apply px-6 py-4 border-b border-gray-200;
+      }
+      
+      .dark .card-header {
+          border-color: #333333;
       }
 
       .card-body {
@@ -70,13 +68,27 @@
       }
 
       .form-input {
-          @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md
-          focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-dark-accent
-          bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary;
+          @apply w-full px-3 py-2 border border-gray-300 rounded-md
+          focus:outline-none focus:ring-2 focus:ring-indigo-500
+          bg-white text-gray-900;
+      }
+      
+      .dark .form-input {
+          background-color: #2a2a2a;
+          border-color: #444444;
+          color: #f5f5f5;
+      }
+      
+      .dark .form-input:focus {
+          ring-color: #8b5cf6;
       }
 
       .form-label {
-          @apply block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1;
+          @apply block text-sm font-medium text-gray-700 mb-1;
+      }
+      
+      .dark .form-label {
+          color: #d1d5db;
       }
 
       .table-container {
@@ -84,68 +96,139 @@
       }
 
       .table {
-          @apply min-w-full divide-y divide-gray-200 dark:divide-gray-700;
+          @apply min-w-full divide-y divide-gray-200;
+      }
+      
+      .dark .table {
+          divide-color: #333333;
       }
 
       .table-header {
-          @apply bg-gray-50 dark:bg-dark-bg-tertiary;
+          @apply bg-gray-50;
+      }
+      
+      .dark .table-header {
+          background-color: #2a2a2a;
       }
 
       .table-header-cell {
-          @apply px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-text-secondary uppercase tracking-wider;
+          @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+      }
+      
+      .dark .table-header-cell {
+          color: #9ca3af;
       }
 
       .table-body {
-          @apply bg-white dark:bg-dark-bg-secondary divide-y divide-gray-200 dark:divide-gray-700;
+          @apply bg-white divide-y divide-gray-200;
+      }
+      
+      .dark .table-body {
+          background-color: #1a1a1a;
+          divide-color: #333333;
       }
 
       .table-row {
-          @apply hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary;
+          @apply hover:bg-gray-50;
+      }
+      
+      .dark .table-row:hover {
+          background-color: #2a2a2a;
       }
 
       .table-cell {
-          @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text-primary;
+          @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+      }
+      
+      .dark .table-cell {
+          color: #f5f5f5;
+      }
+
+      /* Fix for scrolling background */
+      body {
+          background-color: #f9fafb; /* gray-50 */
+      }
+      
+      .dark body {
+          background-color: #0f0f0f; /* Very dark gray, almost black */
+      }
+      
+      /* Dark theme overrides for white components */
+      .dark .bg-white {
+          background-color: #1a1a1a !important;
+      }
+      
+      .dark .bg-gray-50 {
+          background-color: #2a2a2a !important;
+      }
+      
+      .dark .bg-gray-100 {
+          background-color: #2a2a2a !important;
+      }
+      
+      .dark .text-gray-900 {
+          color: #f5f5f5 !important;
+      }
+      
+      .dark .text-gray-600 {
+          color: #d1d5db !important;
+      }
+      
+      .dark .text-gray-500 {
+          color: #9ca3af !important;
+      }
+      
+      .dark .border-gray-200 {
+          border-color: #333333 !important;
+      }
+      
+      .dark .border-gray-300 {
+          border-color: #444444 !important;
       }
   </style>
 </head>
 
-<body class="h-full bg-gray-100 dark:bg-dark-bg-primary text-gray-900 dark:text-dark-text-primary" data-controller="theme">
-<div class="min-h-full">
+<body class="h-full text-gray-900 dark:text-gray-100" data-controller="theme">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-950">
   <!-- Navbar -->
-  <nav class="bg-white dark:bg-dark-bg-secondary shadow-sm">
+  <nav class="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 dark:from-slate-900 dark:via-purple-900 dark:to-slate-900 shadow-lg border-b border-slate-700 dark:border-purple-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16">
         <div class="flex">
           <div class="flex-shrink-0 flex items-center">
-            <h1 class="text-xl font-bold text-indigo-600 dark:text-dark-accent">BillBuddy</h1>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 dark:from-purple-300 dark:to-purple-500 bg-clip-text text-transparent">BillBuddy</h1>
           </div>
           <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-            <%= link_to "Dashboard", dashboard_path, class: "#{current_page?(dashboard_path) ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%= link_to "Dashboard", dashboard_path, class: "#{current_page?(dashboard_path) ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%= link_to "Clientes", customers_path, class: "#{controller_name == 'customers' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%= link_to "Clientes", customers_path, class: "#{controller_name == 'customers' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%#= link_to "Compromissos", appointments_path, class: "#{controller_name == 'appointments' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%= link_to "Compromissos", appointments_path, class: "#{controller_name == 'appointments' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%= link_to "Pacotes", service_packages_path, class: "#{controller_name == 'service_packages' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%= link_to "Agenda", calendars_path, class: "#{controller_name == 'calendars' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%= link_to "Pagamentos", payments_path, class: "#{controller_name == 'payments' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%= link_to "Daily Classes", daily_completion_calendars_path, class: "#{action_name == 'daily_completion' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%= link_to "Métricas", metrics_calendars_path, class: "#{action_name == 'metrics' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%= link_to "Agenda", calendars_path, class: "#{controller_name == 'calendars' ? 'border-indigo-500 dark:border-dark-accent text-gray-900 dark:text-dark-text-primary' : 'border-transparent text-gray-500 dark:text-dark-text-secondary hover:border-gray-300 dark:hover:border-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium" %>
+            <%= link_to "Pagamentos", payments_path, class: "#{controller_name == 'payments' && action_name != 'monthly_checklist' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
+
+            <%= link_to "Checklist", monthly_checklist_payments_path, class: "#{controller_name == 'payments' && action_name == 'monthly_checklist' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
+
+            <%= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
           </div>
         </div>
         <div class="flex items-center">
-          <button data-action="theme#toggle" class="p-2 rounded-full text-gray-500 dark:text-dark-text-secondary hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary">
+          <button data-action="theme#toggle" class="p-2 rounded-full text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-800 hover:text-white dark:hover:text-purple-200 transition-colors duration-200">
             <i id="theme-icon" class="fas fa-moon"></i>
           </button>
 
           <div class="ml-3 relative">
             <div>
-              <button type="button" class="max-w-xs bg-white dark:bg-dark-bg-secondary rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-dark-accent" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+              <button type="button" class="max-w-xs bg-slate-700 dark:bg-purple-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 dark:focus:ring-purple-300 ring-offset-slate-800 dark:ring-offset-purple-900 transition-all duration-200" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                 <span class="sr-only">Abrir menu do usuário</span>
-                <span class="h-8 w-8 rounded-full bg-indigo-100 dark:bg-dark-bg-tertiary flex items-center justify-center">
-                    <span class="text-indigo-800 dark:text-dark-accent font-medium"><%= current_user&.email&.first&.upcase || 'U' %></span>
+                <span class="h-8 w-8 rounded-full bg-purple-600 dark:bg-purple-700 flex items-center justify-center border border-purple-500 dark:border-purple-600">
+                    <span class="text-white dark:text-purple-100 font-medium text-sm"><%= current_user&.email&.first&.upcase || 'U' %></span>
                   </span>
               </button>
             </div>
@@ -156,16 +239,24 @@
 
     <!-- Mobile menu -->
     <div class="sm:hidden" id="mobile-menu">
-      <div class="pt-2 pb-3 space-y-1">
-        <%= link_to "Dashboard", dashboard_path, class: "#{current_page?(dashboard_path) ? 'bg-indigo-50 dark:bg-dark-bg-tertiary border-indigo-500 dark:border-dark-accent text-indigo-700 dark:text-dark-accent' : 'border-transparent text-gray-600 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:border-gray-300 dark:hover:border-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium" %>
+      <div class="pt-2 pb-3 space-y-1 bg-slate-800 dark:bg-slate-900 border-t border-slate-700 dark:border-purple-800">
+        <%= link_to "Dashboard", dashboard_path, class: "#{current_page?(dashboard_path) ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
-        <%= link_to "Clientes", customers_path, class: "#{controller_name == 'customers' ? 'bg-indigo-50 dark:bg-dark-bg-tertiary border-indigo-500 dark:border-dark-accent text-indigo-700 dark:text-dark-accent' : 'border-transparent text-gray-600 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:border-gray-300 dark:hover:border-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium" %>
+        <%= link_to "Clientes", customers_path, class: "#{controller_name == 'customers' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
-        <%= link_to "Compromissos", appointments_path, class: "#{controller_name == 'appointments' ? 'bg-indigo-50 dark:bg-dark-bg-tertiary border-indigo-500 dark:border-dark-accent text-indigo-700 dark:text-dark-accent' : 'border-transparent text-gray-600 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:border-gray-300 dark:hover:border-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium" %>
+        <%= link_to "Compromissos", appointments_path, class: "#{controller_name == 'appointments' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
-        <%= link_to "Pacotes", service_packages_path, class: "#{controller_name == 'service_packages' ? 'bg-indigo-50 dark:bg-dark-bg-tertiary border-indigo-500 dark:border-dark-accent text-indigo-700 dark:text-dark-accent' : 'border-transparent text-gray-600 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:border-gray-300 dark:hover:border-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium" %>
+        <%= link_to "Agenda", calendars_path, class: "#{controller_name == 'calendars' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
-        <%= link_to "Pagamentos", payments_path, class: "#{controller_name == 'payments' ? 'bg-indigo-50 dark:bg-dark-bg-tertiary border-indigo-500 dark:border-dark-accent text-indigo-700 dark:text-dark-accent' : 'border-transparent text-gray-600 dark:text-dark-text-secondary hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary hover:border-gray-300 dark:hover:border-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium" %>
+        <%= link_to "Daily Classes", daily_completion_calendars_path, class: "#{action_name == 'daily_completion' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
+
+        <%= link_to "Métricas", metrics_calendars_path, class: "#{action_name == 'metrics' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
+
+        <%= link_to "Pagamentos", payments_path, class: "#{controller_name == 'payments' && action_name != 'monthly_checklist' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
+
+        <%= link_to "Checklist", monthly_checklist_payments_path, class: "#{controller_name == 'payments' && action_name == 'monthly_checklist' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
+
+        <%= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
       </div>
     </div>
   </nav>
@@ -190,6 +281,22 @@
       <%= yield %>
     </div>
   </main>
+
+  <!-- Footer -->
+  <footer class="bg-white dark:bg-dark-bg-secondary border-t border-gray-200 dark:border-gray-700 mt-16">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col items-center justify-center space-y-4">
+        <div class="flex items-center space-x-2">
+          <h1 class="text-lg font-bold text-indigo-600 dark:text-dark-accent">BillBuddy</h1>
+          <span class="text-gray-500 dark:text-dark-text-secondary">•</span>
+          <span class="text-sm text-gray-500 dark:text-dark-text-secondary">Sistema de Gestão de Aulas</span>
+        </div>
+        <div class="text-xs text-gray-400 dark:text-gray-500">
+          © <%= Date.current.year %> BillBuddy. Desenvolvido para professores e profissionais autônomos.
+        </div>
+      </div>
+    </div>
+  </footer>
 </div>
 
 <script>

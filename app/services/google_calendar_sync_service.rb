@@ -41,173 +41,176 @@ class GoogleCalendarSyncService
     @service = setup_calendar_service(user)
   end
 
-  # Sync a single appointment to Google Calendar
+  # Main sync methods
   def sync_appointment(appointment)
     return false unless @service
-
-    begin
-      event = build_event_from_appointment(appointment)
-      google_event = @service.insert_event("primary", event)
-
-      # Store the Google event ID in the appointment
-      appointment.update!(google_event_id: google_event.id)
-
-      true
-    rescue Google::Apis::Error => e
-      Rails.logger.error "Failed to sync appointment #{appointment.id}: #{e.message}"
-      false
-    end
+    execute_sync { create_individual_event(appointment) }
   end
 
-  # Sync all scheduled appointments for a customer
   def sync_customer_appointments(customer)
-    appointments = customer.appointments.where(status: "scheduled", google_event_id: nil)
-    synced_count = 0
-
-    appointments.each do |appointment|
-      if sync_appointment(appointment)
-        synced_count += 1
-      end
-    end
-
-    synced_count
+    sync_appointments_collection(customer.unsynced_appointments)
   end
 
-  # Sync all scheduled appointments for the user
   def sync_all_scheduled_appointments
-    appointments = @user.customers
-                        .joins(:appointments)
-                        .merge(Appointment.where(status: "scheduled", google_event_id: nil))
-
-    synced_count = 0
-    appointments.each do |customer|
-      synced_count += sync_customer_appointments(customer)
-    end
-
-    synced_count
+    sync_appointments_collection(user_unsynced_appointments)
   end
 
-  # Update an existing Google Calendar event
+  def sync_all_appointments
+    sync_appointments_collection(user_unsynced_all_appointments)
+  end
+
+  def sync_appointments_for_period(start_date, end_date)
+    appointments = period_appointments(start_date, end_date)
+    sync_appointments_collection(appointments)
+  end
+
+  def sync_all_appointments_for_period(start_date, end_date)
+    appointments = period_all_appointments(start_date, end_date)
+    sync_appointments_collection(appointments)
+  end
+
+  # Recurring sync methods
+  def sync_customer_recurring_appointments(customer, date_range = nil)
+    appointments = customer.unsynced_appointments
+    appointments = appointments.where(scheduled_at: date_range) if date_range
+    sync_as_recurring_events(appointments)
+  end
+
+  def sync_all_scheduled_appointments_as_recurring
+    customer_groups = user_unsynced_appointments.includes(:customer).group_by(&:customer)
+    customer_groups.sum { |customer, appointments| sync_as_recurring_events(appointments) }
+  end
+
+  def sync_all_appointments_as_recurring
+    customer_groups = user_unsynced_all_appointments.includes(:customer).group_by(&:customer)
+    customer_groups.sum { |customer, appointments| sync_as_recurring_events(appointments) }
+  end
+
+  def sync_appointments_for_period_as_recurring(start_date, end_date)
+    appointments = period_appointments(start_date, end_date)
+    sync_as_recurring_events(appointments)
+  end
+
+  def sync_all_appointments_for_period_as_recurring(start_date, end_date)
+    appointments = period_all_appointments(start_date, end_date)
+    customer_groups = appointments.includes(:customer).group_by(&:customer)
+    customer_groups.sum { |customer, appointments| sync_as_recurring_events(appointments) }
+  end
+
+  # CRUD operations
   def update_appointment_event(appointment)
     return false unless @service && appointment.google_event_id
-
-    begin
-      event = @service.get_event("primary", appointment.google_event_id)
-      update_event_from_appointment(event, appointment)
-      @service.update_event("primary", appointment.google_event_id, event)
-
-      true
-    rescue Google::Apis::Error => e
-      Rails.logger.error "Failed to update appointment #{appointment.id}: #{e.message}"
-      false
-    end
+    execute_sync { update_existing_event(appointment) }
   end
 
-  # Delete an event from Google Calendar
   def delete_appointment_event(appointment)
     return false unless @service && appointment.google_event_id
-
-    begin
-      @service.delete_event("primary", appointment.google_event_id)
-      appointment.update!(google_event_id: nil)
-
-      true
-    rescue Google::Apis::Error => e
-      Rails.logger.error "Failed to delete appointment #{appointment.id}: #{e.message}"
-      false
-    end
+    execute_sync { delete_single_event(appointment) }
   end
 
-  # Batch sync appointments for a date range
-  def sync_appointments_for_period(start_date, end_date)
-    appointments = @user.customers
-                        .joins(:appointments)
-                        .merge(
-                          Appointment.where(
-                            status: "scheduled",
-                            google_event_id: nil,
-                            scheduled_at: start_date.beginning_of_day..end_date.end_of_day
-                          )
-                        )
-
-    synced_count = 0
-    appointments.find_each do |customer|
-      customer.appointments
-              .where(status: "scheduled", google_event_id: nil, scheduled_at: start_date.beginning_of_day..end_date.end_of_day)
-              .each do |appointment|
-        if sync_appointment(appointment)
-          synced_count += 1
-        end
-      end
-    end
-
-    synced_count
+  def delete_recurring_event_series(appointment)
+    return false unless @service && appointment.google_event_id && appointment.part_of_recurring_series?
+    execute_sync { delete_recurring_series(appointment) }
   end
 
   private
 
-  def build_event_from_appointment(appointment)
-    customer = appointment.customer
-    start_time = appointment.scheduled_at
-    end_time = start_time + appointment.duration.hours
-
-    Google::Apis::CalendarV3::Event.new(
-      summary: customer.name,
-      description: build_event_description(appointment),
-      start: Google::Apis::CalendarV3::EventDateTime.new(
-        date_time: start_time.iso8601,
-        time_zone: "America/Sao_Paulo"
-      ),
-      end: Google::Apis::CalendarV3::EventDateTime.new(
-        date_time: end_time.iso8601,
-        time_zone: "America/Sao_Paulo"
-      ),
-      attendees: customer.email.present? ? [
-        Google::Apis::CalendarV3::EventAttendee.new(email: customer.email)
-      ] : [],
-      reminders: { use_default: true },
-      extended_properties: {
-        private: {
-          billbuddy_appointment_id: appointment.id.to_s,
-          customer_id: customer.id.to_s,
-          duration: appointment.duration.to_s
-        }
-      }
-    )
+  # Core sync logic
+  def sync_appointments_collection(appointments)
+    appointments.sum { |appointment| sync_appointment(appointment) ? 1 : 0 }
   end
 
-  def update_event_from_appointment(event, appointment)
-    customer = appointment.customer
-    start_time = appointment.scheduled_at
-    end_time = start_time + appointment.duration.hours
+    def sync_as_recurring_events(appointments)
+    grouped_appointments = RecurringAppointmentGrouper.new(appointments).group_by_pattern
 
-    event.summary = customer.name
-    event.description = build_event_description(appointment)
-    event.start.date_time = start_time.iso8601
-    event.end.date_time = end_time.iso8601
-
-    if customer.email.present?
-      event.attendees = [ Google::Apis::CalendarV3::EventAttendee.new(email: customer.email) ]
+    synced_count = 0
+    grouped_appointments.each do |group_key, appointment_group|
+      if appointment_group.size >= 2
+        synced_count += sync_recurring_group(appointment_group)
+      else
+        # Single appointments - sync individually
+        synced_count += sync_appointments_collection(appointment_group)
+      end
     end
+    synced_count
   end
 
-  def build_event_description(appointment)
-    customer = appointment.customer
-    description = []
+    def sync_recurring_group(appointments)
+    pattern = RecurringPatternDetector.new(appointments).detect
+    return sync_appointments_collection(appointments) unless pattern
 
-    description << "Cliente: #{customer.name}"
-    description << "Email: #{customer.email}" if customer.email.present?
-    description << "Telefone: #{customer.phone}" if customer.phone.present?
-    description << "Duração: #{appointment.duration} hora(s)"
+    execute_sync do
+      create_recurring_event(appointments, pattern)
+      appointments.size
+    end || sync_appointments_collection(appointments) # Fallback to individual
+  end
 
-    if customer.credit?
-      description << "Tipo: Crédito (#{customer.total_remaining_hours}h restantes)"
-    elsif customer.subscription?
-      description << "Tipo: Assinatura"
+  # Event creation
+  def create_individual_event(appointment)
+    event = GoogleCalendarEventBuilder.individual(appointment)
+    google_event = @service.insert_event("primary", event)
+    appointment.update!(google_event_id: google_event.id)
+    true
+  end
+
+  def create_recurring_event(appointments, pattern)
+    event = GoogleCalendarEventBuilder.recurring(appointments, pattern)
+    google_event = @service.insert_event("primary", event)
+
+    appointments.each do |appointment|
+      appointment.update!(google_event_id: google_event.id, is_recurring_event: true)
     end
+    true
+  end
 
-    description << "Notas: #{appointment.notes}" if appointment.notes.present?
+  def update_existing_event(appointment)
+    event = @service.get_event("primary", appointment.google_event_id)
+    GoogleCalendarEventBuilder.update_from_appointment(event, appointment)
+    @service.update_event("primary", appointment.google_event_id, event)
+    true
+  end
 
-    description.join("\n")
+  def delete_single_event(appointment)
+    @service.delete_event("primary", appointment.google_event_id)
+    appointment.update!(google_event_id: nil)
+    true
+  end
+
+  def delete_recurring_series(appointment)
+    @service.delete_event("primary", appointment.google_event_id)
+
+    appointment.customer.appointments
+               .where(google_event_id: appointment.google_event_id, is_recurring_event: true)
+               .update_all(google_event_id: nil, is_recurring_event: false)
+    true
+  end
+
+  # Query helpers
+  def user_unsynced_appointments
+    Appointment.joins(:customer)
+               .where(customers: { user_id: @user.id })
+               .unsynced_scheduled
+  end
+
+  def user_unsynced_all_appointments
+    Appointment.joins(:customer)
+               .where(customers: { user_id: @user.id })
+               .unsynced_all
+  end
+
+  def period_appointments(start_date, end_date)
+    user_unsynced_appointments.where(scheduled_at: start_date.beginning_of_day..end_date.end_of_day)
+  end
+
+  def period_all_appointments(start_date, end_date)
+    user_unsynced_all_appointments.where(scheduled_at: start_date.beginning_of_day..end_date.end_of_day)
+  end
+
+  # Error handling wrapper
+  def execute_sync
+    yield
+  rescue Google::Apis::Error => e
+    Rails.logger.error "Google Calendar sync failed: #{e.message}"
+    false
   end
 end

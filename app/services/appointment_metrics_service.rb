@@ -1,7 +1,18 @@
 class AppointmentMetricsService
-  def initialize(user, period = nil)
+  def initialize(user, month = nil, year = nil)
     @user = user
-    @period = period || (Date.current.beginning_of_month..Date.current.end_of_month)
+
+    if month && year
+      # Se month e year foram fornecidos, criar período baseado neles
+      date = Date.new(year, month, 1)
+      @period = date.beginning_of_month..date.end_of_month
+    elsif month.is_a?(Range)
+      # Se month é na verdade um período (Range), usar diretamente
+      @period = month
+    else
+      # Usar mês atual como padrão
+      @period = Date.current.beginning_of_month..Date.current.end_of_month
+    end
   end
 
   # Earnings calculations
@@ -14,14 +25,10 @@ class AppointmentMetricsService
   end
 
   def earnings_by_customer
-    Appointment.joins(:customer)
-               .where(customers: { user_id: @user.id })
-               .where(status: "completed")
-               .where(scheduled_at: @period)
-               .joins("LEFT JOIN customer_credits ON customers.id = customer_credits.customer_id")
-               .joins("LEFT JOIN service_packages ON customer_credits.service_package_id = service_packages.id")
-               .group("customers.name")
-               .sum("appointments.duration * COALESCE(service_packages.price / NULLIF(service_packages.hours, 0), 50)")
+    completed_appointments.includes(:customer).group_by(&:customer).map do |customer, appointments|
+      total_earnings = appointments.sum { |appointment| appointment.duration * customer.effective_hourly_rate }
+      [ customer.name, total_earnings ]
+    end.sort_by { |name, earnings| -earnings }  # Sort by earnings descending
   end
 
   # Class distribution
@@ -141,14 +148,28 @@ class AppointmentMetricsService
     }
   end
 
-  private
-
-  def appointments_in_period
-    @appointments_in_period ||= Appointment.joins(:customer)
-                                           .where(customers: { user_id: @user.id })
-                                           .where(scheduled_at: @period)
+  # Métodos adicionais requeridos pelo controller
+  def total_appointments
+    appointments_in_period
   end
 
+  def monthly_forecast
+    monthly_class_forecast
+  end
+
+  def total_hours
+    appointments_in_period.sum(:duration)
+  end
+
+  def busiest_days_of_week
+    busiest_days
+  end
+
+  def customers_with_low_credits
+    customers_needing_credits_soon
+  end
+
+  # Métodos públicos para acessar appointments
   def completed_appointments
     appointments_in_period.where(status: "completed")
   end
@@ -157,11 +178,19 @@ class AppointmentMetricsService
     appointments_in_period.where(status: "scheduled")
   end
 
+  private
+
+  def appointments_in_period
+    @appointments_in_period ||= Appointment.joins(:customer)
+                                           .where(customers: { user_id: @user.id })
+                                           .where(scheduled_at: @period)
+  end
+
   def calculate_earnings_for_appointments(appointments_relation)
-    # Calculate earnings by dividing package price by hours to get hourly rate
-    appointments_relation.joins("LEFT JOIN customer_credits ON customers.id = customer_credits.customer_id")
-                        .joins("LEFT JOIN service_packages ON customer_credits.service_package_id = service_packages.id")
-                        .sum("appointments.duration * COALESCE(service_packages.price / NULLIF(service_packages.hours, 0), 50)") # 50 as default rate
+    # Calculate earnings using customer's effective hourly rate (custom pricing or service package rate)
+    appointments_relation.includes(:customer).sum do |appointment|
+      appointment.duration * appointment.customer.effective_hourly_rate
+    end
   end
 
   def calculate_last_month_consumption
@@ -192,9 +221,12 @@ class AppointmentMetricsService
   end
 
   def calculate_average_hourly_rate
-    # This would depend on your pricing structure
-    # For now, return a default or calculate from service packages
-    50.0 # Default rate - should be calculated from actual data
+    # Calculate average hourly rate based on actual customer rates
+    customers = @user.customers.includes(:customer_credits, :subscriptions)
+    return 50.0 if customers.empty?
+
+    total_rate = customers.sum(&:effective_hourly_rate)
+    (total_rate / customers.count).round(2)
   end
 
   def calculate_average_duration

@@ -1,43 +1,352 @@
-<div class="container mx-auto px-4">
-<!--  <div class="flex justify-between items-center mb-6">-->
-<!--    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Compromissos</h1>-->
-    <%#= link_to "Novo Compromisso", new_appointment_path, class: "bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
-<!--  </div>-->
-
-  <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead class="bg-gray-50 dark:bg-dark-bg-tertiary">
-      <tr>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data/Hora</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duração</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notas</th>
-        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
-      </tr>
-      </thead>
-      <tbody class="bg-white dark:bg-dark-bg-secondary divide-y divide-gray-200 dark:divide-gray-700">
-      <% @appointments.each do |appointment| %>
-        <tr class="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary">
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-indigo-600 dark:text-indigo-400"><%= appointment.customer.name %></div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900 dark:text-gray-100"><%= appointment.scheduled_at.strftime("%d/%m/%Y %H:%M") %></div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-indigo-600 dark:text-indigo-400"><%= appointment.duration %> horas</div>
-          </td>
-          <td class="px-6 py-4">
-            <div class="text-sm text-gray-700 dark:text-gray-300"><%= appointment.notes %></div>
-          </td>
-<!--          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">-->
-            <%#= link_to "Ver", appointment_path(appointment), class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
-            <%#= link_to "Editar", edit_appointment_path(appointment), class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
-            <%#= link_to "Excluir", appointment_path(appointment), method: :delete, data: { confirm: "Tem certeza?" }, class: "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" %>
-<!--          </td>-->
-        </tr>
+<div class="container mx-auto px-4" data-controller="appointments">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Compromissos</h1>
+    <div class="flex space-x-3">
+      <%= link_to bulk_create_appointments_path, 
+          class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" do %>
+        📅 Criação em Lote
       <% end %>
-      </tbody>
-    </table>
+      <%= link_to new_appointment_path, 
+          class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" do %>
+        + Novo Compromisso
+      <% end %>
+    </div>
   </div>
+
+  <!-- Sync Controls Section -->
+  <% if current_user.google_calendar_authorized? %>
+    <div class="mb-6">
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">🔄 Sincronização do Google Calendar</h3>
+            <p class="text-xs text-blue-600 dark:text-blue-300 mt-1">
+              Sincronize compromissos não sincronizados com o Google Calendar
+            </p>
+          </div>
+          <div class="flex space-x-3">
+            <%= link_to review_sync_appointments_path(scope: 'upcoming'),
+                class: "bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm" do %>
+              📅 Revisar Próximos (1 mês)
+            <% end %>
+            <%= link_to review_sync_appointments_path(scope: 'all'),
+                class: "bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm" do %>
+              🔄 Revisar Todos
+            <% end %>
+            <%= link_to manage_auto_generation_appointments_path,
+                class: "bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm" do %>
+              🤖 Auto-Geração
+            <% end %>
+            
+            <!-- Quick sync options (smaller buttons) -->
+            <div class="border-l border-blue-300 pl-3 ml-3 flex space-x-2">
+              <%= link_to sync_upcoming_appointments_appointments_path, method: :post,
+                  class: "bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs",
+                  data: { confirm: "Sincronizar diretamente os próximos compromissos (1 mês)?" },
+                  title: "Sincronização direta sem revisão" do %>
+                ⚡ Direto
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Filters Section -->
+  <div class="mb-6">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
+              <div class="p-4 border-b border-gray-200 dark:border-slate-700">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+            🔍 Filtros de Busca
+          </h3>
+          <button type="button" 
+                  onclick="document.getElementById('filters-form').classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')"
+                  class="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+            <span class="mr-1">Mostrar/Ocultar</span>
+            <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <div id="filters-form" class="p-4 <%= @current_filters.values.any?(&:present?) ? '' : 'hidden' %>">
+        <%= form_with url: appointments_path, method: :get, local: true, data: { controller: "appointment-filters", appointment_filters_target: "form" }, class: "space-y-4" do |form| %>
+          
+                     <!-- Quick Date Filters -->
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros Rápidos:</span>
+              <div class="flex space-x-2">
+                <%= link_to appointments_path(sort_order: 'earliest_first', **@current_filters.except(:sort_order)), 
+                    class: "text-xs px-2 py-1 rounded-md border #{@current_filters[:sort_order] == 'earliest_first' || @current_filters[:sort_order].blank? ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}" do %>
+                  ⬆️ Antigos → Recentes
+                <% end %>
+                <%= link_to appointments_path(sort_order: 'latest_first', **@current_filters.except(:sort_order)), 
+                    class: "text-xs px-2 py-1 rounded-md border #{@current_filters[:sort_order] == 'latest_first' ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}" do %>
+                  ⬇️ Recentes → Antigos
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <%= link_to "Hoje", appointments_path(start_date: Date.current, end_date: Date.current), 
+                class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.to_s && @current_filters[:end_date] == Date.current.to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+            
+            <%= link_to "Esta Semana", appointments_path(start_date: Date.current.beginning_of_week, end_date: Date.current.end_of_week), 
+                class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.beginning_of_week.to_s && @current_filters[:end_date] == Date.current.end_of_week.to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+            
+            <%= link_to "Este Mês", appointments_path(start_date: Date.current.beginning_of_month, end_date: Date.current.end_of_month), 
+                class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.beginning_of_month.to_s && @current_filters[:end_date] == Date.current.end_of_month.to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+            
+            <%= link_to "Próximos 7 dias", appointments_path(start_date: Date.current, end_date: Date.current + 7.days), 
+                class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.to_s && @current_filters[:end_date] == (Date.current + 7.days).to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+            
+            <%= link_to "Próximos 30 dias", appointments_path(start_date: Date.current, end_date: Date.current + 30.days), 
+                class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.to_s && @current_filters[:end_date] == (Date.current + 30.days).to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+            
+                          <%= link_to "Limpar", appointments_path, 
+                  class: "px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400" %>
+            </div>
+          </div>
+
+                     <!-- Search Bar -->
+          <div class="mb-4">
+            <%= form.text_field :search, 
+                placeholder: "🔍 Buscar por nome do cliente ou notas...",
+                value: @current_filters[:search],
+                class: "w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 text-sm",
+                data: { appointment_filters_target: "searchField" } %>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 mb-4 text-xs">
+            <div class="bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-blue-700 dark:text-blue-300"><%= @filter_stats[:total] %></div>
+              <div class="text-blue-600 dark:text-blue-400">Total</div>
+            </div>
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-yellow-700 dark:text-yellow-300"><%= @filter_stats[:scheduled] %></div>
+              <div class="text-yellow-600 dark:text-yellow-400">Agendados</div>
+            </div>
+            <div class="bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-green-700 dark:text-green-300"><%= @filter_stats[:completed] %></div>
+              <div class="text-green-600 dark:text-green-400">Concluídos</div>
+            </div>
+            <div class="bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-red-700 dark:text-red-300"><%= @filter_stats[:cancelled] %></div>
+              <div class="text-red-600 dark:text-red-400">Cancelados</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-gray-700 dark:text-gray-300"><%= @filter_stats[:no_show] %></div>
+              <div class="text-gray-600 dark:text-gray-400">Não Compareceu</div>
+            </div>
+            <div class="bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-indigo-700 dark:text-indigo-300"><%= @filter_stats[:today] %></div>
+              <div class="text-indigo-600 dark:text-indigo-400">Hoje</div>
+            </div>
+            <div class="bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-purple-700 dark:text-purple-300"><%= @filter_stats[:this_week] %></div>
+              <div class="text-purple-600 dark:text-purple-400">Esta Semana</div>
+            </div>
+            <div class="bg-teal-50 dark:bg-teal-900/20 px-2 py-1 rounded text-center">
+              <div class="font-semibold text-teal-700 dark:text-teal-300"><%= @filter_stats[:future] %></div>
+              <div class="text-teal-600 dark:text-teal-400">Futuros</div>
+            </div>
+          </div>
+
+          <!-- Detailed Filters -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            
+            <!-- Status Filter -->
+            <div>
+              <%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+              <%= form.select :status, 
+                  options_for_select([
+                    ['Todos os status', ''],
+                    ['⏳ Agendado', 'scheduled'],
+                    ['✅ Concluído', 'completed'],
+                    ['❌ Cancelado', 'cancelled'],
+                    ['👻 Não compareceu', 'no_show']
+                  ], @current_filters[:status]),
+                  {},
+                  { class: "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100", 
+                    data: { appointment_filters_target: "statusSelect" } } %>
+            </div>
+
+            <!-- Customer Filter -->
+            <div>
+              <%= form.label :customer_id, "Cliente", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+              <%= form.select :customer_id, 
+                  options_from_collection_for_select(@customers_for_filter, :id, :name, @current_filters[:customer_id]),
+                  { prompt: "Todos os clientes" },
+                  { class: "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100", 
+                    data: { appointment_filters_target: "customerSelect" } } %>
+            </div>
+
+            <!-- Start Date -->
+            <div>
+              <%= form.label :start_date, "Data Inicial", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+              <%= form.date_field :start_date, 
+                  value: @current_filters[:start_date],
+                  class: "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100",
+                  data: { appointment_filters_target: "startDate" } %>
+            </div>
+
+            <!-- End Date -->
+            <div>
+              <%= form.label :end_date, "Data Final", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+              <%= form.date_field :end_date, 
+                  value: @current_filters[:end_date],
+                  class: "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100",
+                  data: { appointment_filters_target: "endDate" } %>
+            </div>
+
+            <!-- Sort Order -->
+            <div>
+              <%= form.label :sort_order, "Ordenar por", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+              <%= form.select :sort_order, 
+                  options_for_select([
+                    ['📅 Mais Antigos Primeiro', 'earliest_first'],
+                    ['📅 Mais Recentes Primeiro', 'latest_first'],
+                    ['👤 Nome do Cliente', 'customer_name'],
+                    ['📊 Status', 'status']
+                  ], @current_filters[:sort_order] || 'earliest_first'),
+                  {},
+                  { class: "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100", 
+                    data: { appointment_filters_target: "sortSelect" } } %>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex space-x-3">
+              <%= form.submit "🔍 Aplicar Filtros", 
+                  class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-purple-400",
+                  data: { appointment_filters_target: "submitButton" } %>
+              
+              <%= link_to "🗑️ Limpar Filtros", appointments_path, 
+                  class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 hover:bg-purple-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-purple-400" %>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                <%= pluralize(@appointments.count, 'compromisso', 'compromissos') %> encontrado<%= @appointments.count == 1 ? '' : 's' %>
+              </div>
+              
+              <!-- Active Filters Display -->
+              <% if @current_filters.values.any?(&:present?) %>
+                <div class="flex items-center space-x-2 text-xs">
+                  <span class="text-gray-400">Filtros ativos:</span>
+                  <% @current_filters.each do |key, value| %>
+                    <% if value.present? %>
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">
+                        <% case key %>
+                        <% when :status %>
+                          Status: <%= {
+                            'scheduled' => '⏳ Agendado',
+                            'completed' => '✅ Concluído', 
+                            'cancelled' => '❌ Cancelado',
+                            'no_show' => '👻 Não compareceu'
+                          }[value] || value %>
+                        <% when :customer_id %>
+                          Cliente: <%= @customers_for_filter.find { |c| c.id.to_s == value.to_s }&.name || value %>
+                        <% when :start_date %>
+                          De: <%= begin; format_brazilian_date_with_weekday_short(Date.parse(value)); rescue; value; end %>
+                        <% when :end_date %>
+                          Até: <%= begin; format_brazilian_date_with_weekday_short(Date.parse(value)); rescue; value; end %>
+                                                 <% when :search %>
+                           🔍 "<%= value %>"
+                         <% when :sort_order %>
+                           <% sort_labels = {
+                             'latest_first' => '📅 Mais Recentes Primeiro',
+                             'earliest_first' => '📅 Mais Antigos Primeiro', 
+                             'customer_name' => '👤 Nome do Cliente',
+                             'status' => '📊 Status'
+                           } %>
+                           <%= sort_labels[value] || value %>
+                         <% end %>
+                      </span>
+                    <% end %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Filter for Bulk Delete - Collapsible Section -->
+  <div class="mb-6">
+    <button type="button" 
+            onclick="document.getElementById('bulk-delete-section').classList.toggle('hidden')"
+            class="w-full flex items-center justify-between p-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 rounded-lg hover:bg-purple-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500">
+      <span>🗑️ Opções Avançadas - Deletar Compromissos por Cliente</span>
+      <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
+    
+    <div id="bulk-delete-section" class="hidden mt-2 bg-gray-50 dark:bg-slate-800 rounded-lg p-4" data-controller="bulk-delete">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+        🗑️ Deletar Compromissos por Cliente
+      </h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Selecione um cliente para deletar todos os seus compromissos. Esta ação não pode ser desfeita.
+      </p>
+      <%= form_with url: "", method: :get, local: true, class: "space-y-4" do |form| %>
+        <div class="flex flex-wrap items-end gap-4">
+          <div class="min-w-0 flex-1">
+            <label for="customer_select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Selecionar Cliente
+            </label>
+            <select id="customer_select" 
+                    data-bulk-delete-target="customerSelect"
+                    data-action="change->bulk-delete#updateDeleteButton"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">
+              <option value="">Selecione um cliente...</option>
+              <% current_user.customers.joins(:appointments).distinct.order(:name).each do |customer| %>
+                <option value="<%= customer.id %>" 
+                        data-count="<%= customer.appointments.count %>"
+                        data-future-count="<%= customer.appointments.future.count %>">
+                  <%= customer.name %> (<%= customer.appointments.count %> compromissos, <%= customer.appointments.future.count %> futuros)
+                </option>
+              <% end %>
+            </select>
+          </div>
+          <div>
+            <button type="button" 
+                    data-bulk-delete-target="deleteButton"
+                    data-action="click->bulk-delete#confirmDelete"
+                    disabled
+                    class="disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+              Deletar Todos
+            </button>
+          </div>
+        </div>
+        
+        <div class="flex items-center">
+          <input type="checkbox" 
+                 id="future_only_checkbox" 
+                 data-bulk-delete-target="futureOnlyCheckbox"
+                 data-action="change->bulk-delete#updateDeleteButton"
+                 class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+          <label for="future_only_checkbox" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+            🚀 Deletar apenas compromissos futuros (a partir de agora)
+          </label>
+        </div>
+        
+        <div class="text-xs text-gray-500 dark:text-gray-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+          💡 <strong>Dica:</strong> Marque a opção acima para deletar apenas os compromissos futuros do cliente, 
+          preservando o histórico de compromissos já realizados ou passados.
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "appointments_table" %>
 </div>

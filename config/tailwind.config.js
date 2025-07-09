@@ -1,8 +1,9 @@
 module.exports = {
     content: [
+        './app/views/**/*.{erb,haml,html,slim}',
         './app/helpers/**/*.rb',
-        './app/javascript/**/*.js',
-        './app/views/**/*.{erb,haml,html,slim}'
+        './app/assets/stylesheets/**/*.css',
+        './app/javascript/**/*.js'
     ],
     darkMode: 'class',
     theme: {
@@ -16,7 +17,7 @@ module.exports = {
                     'text-secondary': '#a0a0a0',
                     'accent': '#6366f1',
                     'accent-hover': '#4f46e5',
-                    'success': '#10b981',
+                    'success': '#059669',
                     'warning': '#f59e0b',
                     'danger': '#ef4444',
                 }
