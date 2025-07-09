@@ -1,119 +1,110 @@
-<div class="container mt-5">
+<div class="container mt-5" data-controller="whatsapp-manager">
   <div class="row justify-content-center">
     <div class="col-md-8">
+      <!-- Service Management Panel -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">🔧 Gerenciamento do Serviço WhatsApp</h5>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <div id="service-status">
+                <span data-whatsapp-manager-target="statusText">🔄 Verificando status...</span>
+              </div>
+            </div>
+            <div class="col-md-4 text-end">
+              <div class="btn-group" role="group">
+                <button type="button" 
+                        data-action="click->whatsapp-manager#startService"
+                        class="btn btn-success btn-sm">
+                  ▶️ Iniciar
+                </button>
+                <button type="button" 
+                        data-action="click->whatsapp-manager#restartService"
+                        class="btn btn-warning btn-sm">
+                  🔄 Reiniciar
+                </button>
+                <button type="button" 
+                        data-action="click->whatsapp-manager#stopService"
+                        class="btn btn-danger btn-sm">
+                  ⏹️ Parar
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2">
+            <small class="text-muted">Status do serviço será atualizado automaticamente.</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- WhatsApp Authentication Panel -->
       <div class="card">
         <div class="card-header">
-          <h3 class="text-center">Autenticação do WhatsApp</h3>
+          <h3 class="text-center">🔗 Autenticação do WhatsApp</h3>
         </div>
         <div class="card-body text-center">
-          <div id="status-message" class="alert d-none"></div>
+          <!-- Messages -->
+          <div data-whatsapp-manager-target="messages"></div>
           
-          <div id="qr-container" class="d-none">
-            <p class="mb-3">Escaneie o QR Code com seu WhatsApp:</p>
-            <div id="qr-code"></div>
-          </div>
-
-          <div id="loading" class="text-center">
-            <div class="spinner-border text-primary" role="status">
+          <!-- Loading State -->
+          <div data-whatsapp-manager-target="loadingState">
+            <div class="spinner-border text-primary mb-3" role="status">
               <span class="visually-hidden">Carregando...</span>
             </div>
-            <p class="mt-2">Inicializando WhatsApp...</p>
+            <p>Inicializando WhatsApp...</p>
           </div>
 
-          <div id="success-message" class="d-none">
-            <i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
-            <h4 class="mt-3">WhatsApp Conectado!</h4>
-            <p>Você já pode fechar esta página.</p>
+          <!-- QR Code Container -->
+          <div data-whatsapp-manager-target="qrContainer" style="display: none;">
+            <div class="alert alert-info">
+              <i class="fas fa-mobile-alt"></i>
+              <strong>Escaneie o QR Code com seu WhatsApp</strong><br>
+              <small>Abra o WhatsApp → Menu (⋮) → Dispositivos conectados → Conectar um dispositivo</small>
+            </div>
+            <div data-whatsapp-manager-target="qrCode" class="d-flex justify-content-center mb-3"></div>
+            <button data-action="click->whatsapp-manager#refreshQRCode" 
+                    class="btn btn-outline-primary btn-sm">
+              🔄 Gerar novo QR Code
+            </button>
+          </div>
+
+          <!-- Success State -->
+          <div data-whatsapp-manager-target="successState" style="display: none;">
+            <div class="text-success mb-3">
+              <i class="fas fa-check-circle" style="font-size: 48px;"></i>
+            </div>
+            <h4 class="text-success">WhatsApp Conectado com Sucesso!</h4>
+            <p class="text-muted">Você já pode usar o sistema. Esta página pode ser fechada.</p>
+          </div>
+
+          <!-- Error State -->
+          <div data-whatsapp-manager-target="errorState" style="display: none;">
+            <div class="text-danger mb-3">
+              <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+            </div>
+            <h4 class="text-danger">Erro na Conexão</h4>
+            <p data-whatsapp-manager-target="errorMessage" class="text-muted"></p>
+            <button data-action="click->whatsapp-manager#restart" 
+                    class="btn btn-primary">
+              🔄 Tentar Novamente
+            </button>
+          </div>
+
+          <!-- Debug Info -->
+          <div class="mt-4">
+            <details>
+              <summary class="btn btn-link btn-sm">🔍 Informações de Debug</summary>
+              <div class="mt-2">
+                <pre data-whatsapp-manager-target="debugInfo" 
+                     class="text-start bg-light p-2 rounded" 
+                     style="font-size: 0.8rem;"></pre>
+              </div>
+            </details>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
-
-<% content_for :head do %>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<% end %>
-
-<% content_for :javascript do %>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const qrContainer = document.getElementById('qr-container');
-  const qrElement = document.getElementById('qr-code');
-  const statusMessage = document.getElementById('status-message');
-  const loading = document.getElementById('loading');
-  const successMessage = document.getElementById('success-message');
-  let qrCode = null;
-
-  function showError(message) {
-    statusMessage.classList.remove('d-none', 'alert-success');
-    statusMessage.classList.add('alert-danger');
-    statusMessage.textContent = message;
-  }
-
-  function checkStatus() {
-    fetch('/whatsapp/status')
-      .then(response => response.json())
-      .then(data => {
-        if (data.authenticated) {
-          loading.classList.add('d-none');
-          qrContainer.classList.add('d-none');
-          successMessage.classList.remove('d-none');
-          return;
-        }
-        
-        // Continua verificando o QR code
-        getQRCode();
-      })
-      .catch(error => {
-        showError('Erro ao verificar status do WhatsApp');
-        setTimeout(checkStatus, 5000);
-      });
-  }
-
-  function getQRCode() {
-    fetch('/whatsapp/qr-code')
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'ready') {
-          loading.classList.add('d-none');
-          qrContainer.classList.add('d-none');
-          successMessage.classList.remove('d-none');
-          return;
-        }
-
-        if (data.status === 'pending' && data.qr) {
-          loading.classList.add('d-none');
-          qrContainer.classList.remove('d-none');
-          
-          // Cria ou atualiza o QR code
-          if (!qrCode) {
-            qrCode = new QRCode(qrElement, {
-              text: data.qr,
-              width: 256,
-              height: 256
-            });
-          } else {
-            qrElement.innerHTML = '';
-            qrCode = new QRCode(qrElement, {
-              text: data.qr,
-              width: 256,
-              height: 256
-            });
-          }
-        }
-
-        // Continua verificando
-        setTimeout(getQRCode, 5000);
-      })
-      .catch(error => {
-        showError('Erro ao obter QR code');
-        setTimeout(getQRCode, 5000);
-      });
-  }
-
-  // Inicia o processo
-  checkStatus();
-});
-</script>
-<% end %> 
+</div> 

@@ -11,12 +11,16 @@ class Appointment < ApplicationRecord
 
   # Scopes
   scope :scheduled_for_date, ->(date) { where(scheduled_at: date.beginning_of_day..date.end_of_day) }
+  scope :today, -> { where(scheduled_at: Date.current.beginning_of_day..Date.current.end_of_day) }
   scope :synced_to_calendar, -> { where.not(google_event_id: nil) }
   scope :not_synced_to_calendar, -> { where(google_event_id: nil) }
   scope :for_sync, -> { where(status: "scheduled", google_event_id: nil) }
+  scope :unsynced_scheduled, -> { where(status: "scheduled", google_event_id: nil) }
+  scope :unsynced_all, -> { where(google_event_id: nil) } # All appointments not synced (scheduled, completed, etc.)
+  scope :recurring_events, -> { where(is_recurring_event: true) }
+  scope :single_events, -> { where(is_recurring_event: false) }
+  scope :future, -> { where("scheduled_at >= ?", Time.current) }
 
-  # Callbacks
-  after_save :update_customer_credits, if: :completed?
   after_update :sync_to_calendar_if_needed, if: :should_sync_to_calendar?
 
   # Métodos
@@ -26,6 +30,10 @@ class Appointment < ApplicationRecord
 
   def synced_to_calendar?
     google_event_id.present?
+  end
+
+  def part_of_recurring_series?
+    is_recurring_event?
   end
 
   def sync_to_calendar
@@ -43,7 +51,14 @@ class Appointment < ApplicationRecord
     return false unless synced_to_calendar? && customer.user.google_calendar_authorized?
 
     sync_service = GoogleCalendarSyncService.new(customer.user)
-    sync_service.delete_appointment_event(self)
+
+    if part_of_recurring_series?
+      # For recurring events, we need to handle deletion differently
+      # This will delete the entire series - consider adding option for single instance
+      sync_service.delete_recurring_event_series(self)
+    else
+      sync_service.delete_appointment_event(self)
+    end
   end
 
   private

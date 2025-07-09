@@ -1,51 +1,104 @@
 <div class="container mx-auto px-4 py-8">
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">📊 Métricas & Analytics</h1>
-    <p class="text-gray-600 dark:text-gray-400 mt-2">Insights sobre seus compromissos e faturamento</p>
+  <div class="mb-8 flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">📊 Analytics Dashboard</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">Insights completos sobre seus compromissos e performance</p>
+    </div>
+    
+    <!-- Global Sensitive Data Toggle -->
+    <div data-controller="global-sensitive-data">
+      <button type="button" 
+              data-action="click->global-sensitive-data#toggle"
+              class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+        <span data-global-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
+        <span>Mostrar Valores</span>
+      </button>
+    </div>
   </div>
 
-  <!-- Summary Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Total Earnings -->
-    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+  <!-- Authorization Check -->
+  <% if @authorization_unavailable %>
+    <div class="mb-8 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+              <span class="text-white text-lg">🔑</span>
+            </div>
+          </div>
+          <div class="ml-4">
+            <h3 class="text-lg font-medium text-yellow-800 dark:text-yellow-200">
+              Google Calendar não conectado
+            </h3>
+            <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+              Conecte sua conta do Google Calendar para sincronizar compromissos e obter métricas completas.
+            </p>
+          </div>
+        </div>
+        <div class="flex-shrink-0">
+          <%= link_to redirect_calendars_path, 
+              class: "bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200" do %>
+            🔗 Autorizar Google Calendar
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Main Metrics Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <!-- Earnings -->
+    <div class="bg-gradient-to-br from-green-400 to-green-600 overflow-hidden shadow-lg rounded-lg text-white">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+            <div class="w-8 h-8 bg-white bg-opacity-30 rounded-md flex items-center justify-center">
               <span class="text-white text-sm">💰</span>
             </div>
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Faturamento Realizado
+              <dt class="text-sm font-medium text-green-100 truncate">
+                Ganhos do Mês
               </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                R$ <%= @monthly_summary[:earnings][:completed] %>
+              <dd class="text-2xl font-bold" data-controller="sensitive-data">
+                <span data-sensitive-data-target="content">
+                  R$ <%= @monthly_summary[:earnings][:completed] %>
+                </span>
               </dd>
+              <dt class="text-xs text-green-200 mt-1" data-controller="sensitive-data">
+                <span data-sensitive-data-target="content">
+                  Meta: R$ <%= @monthly_summary[:earnings][:projected] %>
+                </span>
+              </dt>
             </dl>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Projected Earnings -->
-    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+    <!-- Average Ticket -->
+    <div class="bg-gradient-to-br from-emerald-400 to-emerald-600 overflow-hidden shadow-lg rounded-lg text-white">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-              <span class="text-white text-sm">📈</span>
+            <div class="w-8 h-8 bg-white bg-opacity-30 rounded-md flex items-center justify-center">
+              <span class="text-white text-sm">🎫</span>
             </div>
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Projeção Total
+              <dt class="text-sm font-medium text-emerald-100 truncate">
+                Ticket Médio
               </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                R$ <%= @monthly_summary[:earnings][:projected] %>
+              <dd class="text-2xl font-bold" data-controller="sensitive-data">
+                <span data-sensitive-data-target="content">
+                  R$ <%= sprintf('%.2f', @comprehensive_stats&.dig(:average_ticket) || 0) %>
+                </span>
               </dd>
+              <dt class="text-xs text-emerald-200 mt-1">
+                Por aula concluída
+              </dt>
             </dl>
           </div>
         </div>
@@ -53,45 +106,77 @@
     </div>
 
     <!-- Total Classes -->
-    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+    <div class="bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden shadow-lg rounded-lg text-white">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+            <div class="w-8 h-8 bg-white bg-opacity-30 rounded-md flex items-center justify-center">
               <span class="text-white text-sm">📚</span>
             </div>
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Aulas do Mês
+              <dt class="text-sm font-medium text-blue-100 truncate">
+                Total de Aulas
               </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">
+              <dd class="text-2xl font-bold">
                 <%= @monthly_summary[:classes][:total] %>
               </dd>
+              <dt class="text-xs text-blue-200 mt-1">
+                <%= @monthly_summary[:classes][:completed] %> concluídas | <%= @monthly_summary[:classes][:scheduled] %> agendadas
+              </dt>
             </dl>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Sync Status -->
-    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+    <!-- Cancellation Rate -->
+    <div class="bg-gradient-to-br from-red-400 to-red-600 overflow-hidden shadow-lg rounded-lg text-white">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
-              <span class="text-white text-sm">🔄</span>
+            <div class="w-8 h-8 bg-white bg-opacity-30 rounded-md flex items-center justify-center">
+              <span class="text-white text-sm">❌</span>
             </div>
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                Sincronização
+              <dt class="text-sm font-medium text-red-100 truncate">
+                Taxa de Cancelamento
               </dt>
-              <dd class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                <%= @monthly_summary[:sync_status][:sync_percentage] %>%
+                             <dd class="text-2xl font-bold">
+                <%= @comprehensive_stats&.dig(:cancellation_rate) || 0 %>%
               </dd>
+              <dt class="text-xs text-red-200 mt-1">
+                <%= @comprehensive_stats&.dig(:cancelled) || 0 %> canceladas | <%= @comprehensive_stats&.dig(:no_show) || 0 %> faltas
+              </dt>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Rate -->
+    <div class="bg-gradient-to-br from-purple-400 to-purple-600 overflow-hidden shadow-lg rounded-lg text-white">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-white bg-opacity-30 rounded-md flex items-center justify-center">
+              <span class="text-white text-sm">✅</span>
+            </div>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-purple-100 truncate">
+                Taxa de Realização
+              </dt>
+                             <dd class="text-2xl font-bold">
+                <%= @comprehensive_stats&.dig(:completion_rate) || 0 %>%
+              </dd>
+              <dt class="text-xs text-purple-200 mt-1">
+                Das aulas passadas do mês
+              </dt>
             </dl>
           </div>
         </div>
@@ -99,135 +184,311 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Class Distribution -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📊 Distribuição de Aulas</h3>
-      <div class="space-y-4">
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Concluídas</span>
-          <span class="text-sm font-medium text-green-600 dark:text-green-400">
-            <%= @monthly_summary[:classes][:completed] %>
-          </span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Agendadas</span>
-          <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
-            <%= @monthly_summary[:classes][:scheduled] %>
-          </span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Previsão Mensal</span>
-          <span class="text-sm font-medium text-purple-600 dark:text-purple-400">
-            <%= @monthly_summary[:classes][:forecast] %>
-          </span>
+  <!-- Explanation Section -->
+  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <span class="text-blue-500 text-lg">ℹ️</span>
+      </div>
+      <div class="ml-3">
+        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+          Sobre as Taxas de Performance
+        </h3>
+        <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
+          <p><strong>Taxa de Realização:</strong> Percentual de aulas concluídas dentre as que já passaram da data agendada.</p>
+          <p><strong>Taxa de Cancelamento:</strong> Percentual de aulas canceladas dentre as que já passaram da data agendada.</p>
+          <p><strong>Ticket Médio:</strong> Valor médio ganho por aula concluída (duração × taxa horária do cliente).</p>
+          <p class="mt-1 text-xs">
+            📊 As taxas somam até 100% considerando apenas aulas que já passaram (concluídas + canceladas + faltas).
+          </p>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Workload Analysis -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">⏰ Análise de Carga de Trabalho</h3>
-      <div class="space-y-4">
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Total de Horas</span>
-          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-            <%= @monthly_summary[:workload][:total_hours] %>h
-          </span>
-        </div>
-        
-        <div class="mt-4">
-          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dias mais ocupados:</h4>
-          <% @monthly_summary[:workload][:busiest_days].each do |day, count| %>
-            <div class="flex justify-between items-center mb-1">
-              <span class="text-xs text-gray-600 dark:text-gray-400"><%= day %></span>
-              <span class="text-xs font-medium text-gray-900 dark:text-gray-100"><%= count %> aulas</span>
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Appointment Status Distribution Chart -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📊 Distribuição de Status</h3>
+
+      <div class="relative h-64">
+        <%= pie_chart({
+          "Concluídas" => @monthly_summary[:classes][:completed] || 0,
+          "Agendadas" => @monthly_summary[:classes][:scheduled] || 0,
+          "Canceladas" => @monthly_summary[:classes][:cancelled] || 0,
+          "Faltas" => @monthly_summary[:classes][:no_show] || 0
+        }, colors: ["#059669", "#6366f1", "#ef4444", "#f59e0b"],
+           donut: true,
+           legend: "bottom",
+           height: "250px") %>
+      </div>
+    </div>
+
+    <!-- Monthly Trends Chart -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📈 Tendência dos Últimos 6 Meses</h3>
+      <div class="relative h-64">
+        <% if @monthly_trends.present? %>
+          <%= line_chart @monthly_trends.map { |t| [t[:month_name], t[:completed]] },
+              label: "Aulas Concluídas",
+              colors: ["#3b82f6"],
+              curve: false,
+              height: "250px",
+              library: {
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                fill: true
+              } %>
+        <% else %>
+          <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Dados não disponíveis
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Weekly Performance Chart -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📅 Performance Semanal</h3>
+      <div class="relative h-64">
+        <% if @weekly_performance.present? %>
+          <%= column_chart @weekly_performance.map { |w| [w[:week_label], w[:completed]] },
+              label: "Aulas Concluídas",
+              colors: ["#059669"],
+              height: "250px" %>
+        <% else %>
+          <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Dados não disponíveis
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Earnings Trend Chart -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">💰 Evolução do Faturamento</h3>
+      <div class="relative h-64" data-controller="sensitive-data">
+        <div data-sensitive-data-target="content">
+          <% if @monthly_trends.present? %>
+            <%= area_chart @monthly_trends.map { |t| [t[:month_name], t[:earnings]] },
+                prefix: "R$ ",
+                colors: ["#059669"],
+                curve: false,
+                height: "250px",
+                library: {
+                  backgroundColor: "rgba(5, 150, 105, 0.1)",
+                  fill: true
+                } %>
+          <% else %>
+            <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              Dados não disponíveis
             </div>
           <% end %>
         </div>
       </div>
     </div>
 
-    <!-- Credit Analysis -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">💳 Análise de Créditos</h3>
+    <!-- Top Customers by Revenue Chart -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🏆 Top 5 Clientes por Faturamento</h3>
+      <div class="relative h-64" data-controller="sensitive-data">
+        <div data-sensitive-data-target="content">
+          <% top_customers_data = @monthly_summary[:earnings][:by_customer].first(5).to_h %>
+          <% if top_customers_data.present? %>
+            <%= bar_chart top_customers_data,
+                prefix: "R$ ",
+                colors: ["#7c3aed"],
+                height: "250px" %>
+          <% else %>
+            <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              Dados não disponíveis
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Busiest Days Chart -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📅 Dias da Semana Mais Ocupados</h3>
+      <div class="relative h-64">
+        <% busiest_days_data = @monthly_summary[:workload][:busiest_days].to_h %>
+        <% if busiest_days_data.present? %>
+          <%= column_chart busiest_days_data,
+              label: "Número de Aulas",
+              colors: ["#f59e0b"],
+              height: "250px" %>
+        <% else %>
+          <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Dados não disponíveis
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Metrics Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Detailed Status Breakdown -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📋 Detalhamento de Status</h3>
       <div class="space-y-4">
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Clientes com poucos créditos</span>
-          <span class="text-sm font-medium text-red-600 dark:text-red-400">
-            <%= @monthly_summary[:credits][:customers_low_credits] %>
+        <div class="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Concluídas</span>
+          </div>
+          <span class="text-lg font-bold text-green-600 dark:text-green-400">
+            <%= @monthly_summary[:classes][:completed] %>
           </span>
         </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Taxa de consumo</span>
-          <span class="text-sm font-medium <%= @monthly_summary[:credits][:consumption_rate] > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' %>">
-            <%= @monthly_summary[:credits][:consumption_rate] > 0 ? '+' : '' %><%= @monthly_summary[:credits][:consumption_rate] %>%
+        
+        <div class="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Agendadas</span>
+          </div>
+          <span class="text-lg font-bold text-blue-600 dark:text-blue-400">
+            <%= @monthly_summary[:classes][:scheduled] %>
+          </span>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Canceladas</span>
+          </div>
+          <span class="text-lg font-bold text-red-600 dark:text-red-400">
+            <%= @monthly_summary[:classes][:cancelled] %>
+          </span>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Não Compareceu</span>
+          </div>
+          <span class="text-lg font-bold text-orange-600 dark:text-orange-400">
+            <%= @monthly_summary[:classes][:no_show] %>
           </span>
         </div>
       </div>
     </div>
 
-    <!-- Sync Status Detail -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🔄 Status de Sincronização</h3>
+    <!-- Workload Analysis -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">⏰ Análise de Carga</h3>
       <div class="space-y-4">
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Total de compromissos</span>
-          <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-            <%= @monthly_summary[:sync_status][:total_appointments] %>
-          </span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Sincronizados</span>
-          <span class="text-sm font-medium text-green-600 dark:text-green-400">
-            <%= @monthly_summary[:sync_status][:synced_appointments] %>
-          </span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400">Pendentes</span>
-          <span class="text-sm font-medium text-yellow-600 dark:text-yellow-400">
-            <%= @monthly_summary[:sync_status][:pending_sync] %>
-          </span>
+        <div class="text-center p-4 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg">
+          <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+            <%= @monthly_summary[:workload][:total_hours] %>h
+          </div>
+          <div class="text-sm text-indigo-500 dark:text-indigo-300">Total de Horas</div>
         </div>
         
-        <!-- Progress Bar -->
-        <div class="mt-4">
-          <div class="flex justify-between text-xs mb-1">
-            <span class="text-gray-600 dark:text-gray-400">Progresso de sincronização</span>
-            <span class="text-gray-900 dark:text-gray-100"><%= @monthly_summary[:sync_status][:sync_percentage] %>%</span>
+        <div>
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">📈 Dias mais ocupados:</h4>
+          <% @monthly_summary[:workload][:busiest_days].first(3).each do |day, count| %>
+            <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
+              <span class="text-sm text-gray-600 dark:text-gray-400"><%= day %></span>
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <%= count %> aulas
+              </span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sync Status -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🔄 Status de Sincronização</h3>
+      <div class="space-y-4">
+        <div class="text-center">
+          <div class="text-4xl font-bold text-indigo-600 dark:text-indigo-400">
+            <%= @monthly_summary[:sync_status][:sync_percentage] %>%
           </div>
-          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-            <div class="bg-green-600 h-2 rounded-full" style="width: <%= @monthly_summary[:sync_status][:sync_percentage] %>%"></div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Sincronizado</div>
+        </div>
+        
+        <!-- Progress Ring -->
+        <div class="flex justify-center">
+          <div class="relative w-24 h-24">
+            <svg class="transform -rotate-90 w-24 h-24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="transparent" 
+                     class="text-gray-200 dark:text-gray-700" transform="translate(36, 36)"/>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="transparent"
+                     stroke-dasharray="<%= 2 * Math::PI * 10 %>" 
+                     stroke-dashoffset="<%= 2 * Math::PI * 10 * (1 - @monthly_summary[:sync_status][:sync_percentage] / 100.0) %>"
+                     class="text-indigo-500" transform="translate(36, 36)"/>
+            </svg>
+          </div>
+        </div>
+        
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Sincronizados:</span>
+            <span class="font-medium text-green-600 dark:text-green-400">
+              <%= @monthly_summary[:sync_status][:synced_appointments] %>
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600 dark:text-gray-400">Pendentes:</span>
+            <span class="font-medium text-yellow-600 dark:text-yellow-400">
+              <%= @monthly_summary[:sync_status][:pending_sync] %>
+            </span>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Top Customers by Earnings -->
+  <!-- Top Customers Table -->
   <% if @monthly_summary[:earnings][:by_customer].any? %>
-    <div class="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🏆 Top Clientes (Faturamento)</h3>
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🏆 Top 10 Clientes (Faturamento)</h3>
       <div class="overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Posição
+              </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Cliente
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Faturamento
               </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Participação
+              </th>
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <% @monthly_summary[:earnings][:by_customer].each do |customer_name, earnings| %>
-              <tr>
+            <% @monthly_summary[:earnings][:by_customer].each_with_index do |(customer_name, earnings), index| %>
+              <tr class="<%= index < 3 ? 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20' : '' %>">
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <% if index == 0 %>
+                    <span class="text-2xl">🥇</span>
+                  <% elsif index == 1 %>
+                    <span class="text-2xl">🥈</span>
+                  <% elsif index == 2 %>
+                    <span class="text-2xl">🥉</span>
+                  <% else %>
+                    <span class="font-medium text-gray-500 dark:text-gray-400"><%= index + 1 %>º</span>
+                  <% end %>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                   <%= customer_name %>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm" data-controller="sensitive-data">
+                  <span data-sensitive-data-target="content" class="font-medium text-green-600 dark:text-green-400">
+                    R$ <%= earnings %>
+                  </span>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  R$ <%= earnings %>
+                  <%= @monthly_summary[:earnings][:completed] > 0 ? ((earnings.to_f / @monthly_summary[:earnings][:completed]) * 100).round(1) : 0 %>%
                 </td>
               </tr>
             <% end %>
@@ -238,22 +499,32 @@
   <% end %>
 
   <!-- Daily Schedule -->
-  <div class="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+  <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
     <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📅 Agenda de Hoje</h3>
     <% if @daily_schedule[:appointments].any? %>
       <div class="space-y-3">
         <% @daily_schedule[:appointments].each do |appointment| %>
-          <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg border-l-4 
+            <% case appointment[:status] %>
+            <% when 'completed' %>
+              border-green-500
+            <% when 'scheduled' %>
+              border-blue-500
+            <% when 'cancelled' %>
+              border-red-500
+            <% when 'no_show' %>
+              border-orange-500
+            <% end %>">
             <div>
-              <span class="font-medium text-gray-900 dark:text-gray-100">
+              <span class="font-medium text-gray-900 dark:text-gray-100 text-lg">
                 <%= appointment[:time] %> - <%= appointment[:customer] %>
               </span>
               <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">
                 (<%= appointment[:duration] %>h)
               </span>
             </div>
-            <div class="flex items-center space-x-2">
-              <span class="px-2 py-1 text-xs rounded-full 
+            <div class="flex items-center space-x-3">
+              <span class="px-3 py-1 text-xs rounded-full font-medium
                 <% case appointment[:status] %>
                 <% when 'scheduled' %>
                   bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
@@ -261,39 +532,65 @@
                   bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
                 <% when 'cancelled' %>
                   bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                <% when 'no_show' %>
+                  bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200
                 <% end %>">
                 <%= appointment[:status].humanize %>
               </span>
               <% if appointment[:synced] %>
-                <span class="text-green-500 text-sm">✓</span>
+                <span class="text-green-500 text-lg" title="Sincronizado">✓</span>
               <% else %>
-                <span class="text-yellow-500 text-sm">⏳</span>
+                <span class="text-yellow-500 text-lg" title="Não sincronizado">⏳</span>
               <% end %>
             </div>
           </div>
         <% end %>
       </div>
       
-      <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-        <div class="flex justify-between text-sm">
-          <span class="text-blue-700 dark:text-blue-300">Total de aulas hoje:</span>
-          <span class="font-medium text-blue-900 dark:text-blue-100">
-            <%= @daily_schedule[:total_classes] %> (<%= @daily_schedule[:total_hours] %>h)
-          </span>
+      <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="flex justify-between">
+            <span class="text-blue-700 dark:text-blue-300">Total de aulas:</span>
+            <span class="font-medium text-blue-900 dark:text-blue-100">
+              <%= @daily_schedule[:total_classes] %>
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-blue-700 dark:text-blue-300">Total de horas:</span>
+            <span class="font-medium text-blue-900 dark:text-blue-100">
+              <%= @daily_schedule[:total_hours] %>h
+            </span>
+          </div>
         </div>
       </div>
     <% else %>
-      <p class="text-gray-500 dark:text-gray-400 text-center py-4">
-        Nenhum compromisso agendado para hoje.
-      </p>
+      <div class="text-center py-12">
+        <div class="text-6xl mb-4">📅</div>
+        <p class="text-gray-500 dark:text-gray-400 text-lg">
+          Nenhum compromisso agendado para hoje.
+        </p>
+        <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">
+          Que tal aproveitar para planejar a semana?
+        </p>
+      </div>
     <% end %>
   </div>
 
   <!-- Action Buttons -->
-  <div class="mt-8 flex justify-center space-x-4">
-    <%= link_to "📅 Voltar para Calendário", calendars_path(view_mode: 'appointments'), 
-        class: "bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded" %>
-    <%= link_to "👥 Ver Clientes", customers_path, 
-        class: "bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" %>
+  <div class="flex justify-center space-x-4">
+    <%= link_to calendars_path(view_mode: 'appointments'), 
+        class: "bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all hover:shadow-xl" do %>
+      📅 Voltar para Calendário
+    <% end %>
+    <%= link_to customers_path, 
+        class: "bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all hover:shadow-xl" do %>
+      👥 Ver Clientes
+    <% end %>
+    <%= link_to appointments_path, 
+        class: "bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all hover:shadow-xl" do %>
+      📋 Ver Compromissos
+    <% end %>
   </div>
-</div> 
+</div>
+
+

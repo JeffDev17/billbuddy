@@ -1,0 +1,105 @@
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Importar Clientes via CSV</h2>
+      <%= link_to "← Voltar", customers_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    </div>
+
+    <!-- Instructions -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-medium text-blue-900 dark:text-blue-100 mb-3">📋 Como usar</h3>
+      <ol class="list-decimal list-inside space-y-2 text-blue-800 dark:text-blue-200">
+        <li>Baixe o template CSV clicando no botão abaixo</li>
+        <li>Preencha o arquivo com os dados dos seus clientes</li>
+        <li>Faça upload do arquivo preenchido</li>
+        <li>Revise e confirme a importação</li>
+      </ol>
+      
+      <div class="mt-4">
+        <%= link_to "📥 Baixar Template CSV", download_template_customers_path(format: :csv), 
+            class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" %>
+      </div>
+    </div>
+
+    <!-- CSV Format Info -->
+    <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">📝 Formato do CSV</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-300 dark:border-gray-600">
+              <th class="text-left py-2 px-3 font-medium">Coluna</th>
+              <th class="text-left py-2 px-3 font-medium">Obrigatório</th>
+              <th class="text-left py-2 px-3 font-medium">Exemplo</th>
+              <th class="text-left py-2 px-3 font-medium">Observações</th>
+            </tr>
+          </thead>
+          <tbody class="text-gray-700 dark:text-gray-300">
+            <tr class="border-b border-gray-200 dark:border-gray-700">
+              <td class="py-2 px-3 font-mono">nome</td>
+              <td class="py-2 px-3">✅ Sim</td>
+              <td class="py-2 px-3">João Silva</td>
+              <td class="py-2 px-3">Nome completo do cliente</td>
+            </tr>
+            <tr class="border-b border-gray-200 dark:border-gray-700">
+              <td class="py-2 px-3 font-mono">email</td>
+              <td class="py-2 px-3">✅ Sim</td>
+              <td class="py-2 px-3">joao@email.com</td>
+              <td class="py-2 px-3">Deve ser único</td>
+            </tr>
+            <tr class="border-b border-gray-200 dark:border-gray-700">
+              <td class="py-2 px-3 font-mono">telefone</td>
+              <td class="py-2 px-3">❌ Não</td>
+              <td class="py-2 px-3">+5519999888777</td>
+              <td class="py-2 px-3">Formato internacional com +</td>
+            </tr>
+            <tr class="border-b border-gray-200 dark:border-gray-700">
+              <td class="py-2 px-3 font-mono">status</td>
+              <td class="py-2 px-3">❌ Não</td>
+              <td class="py-2 px-3">active</td>
+              <td class="py-2 px-3">active, inactive, on_hold (padrão: active)</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-3 font-mono">tipo_plano</td>
+              <td class="py-2 px-3">❌ Não</td>
+              <td class="py-2 px-3">credit</td>
+              <td class="py-2 px-3">credit, subscription (padrão: credit)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📤 Upload do Arquivo</h3>
+      
+      <%= form_with url: process_csv_import_customers_path, method: :post, multipart: true, local: true, class: "space-y-4" do |form| %>
+        <div>
+          <%= form.label :csv_file, "Arquivo CSV", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+          <%= form.file_field :csv_file, 
+              accept: ".csv", 
+              required: true,
+              class: "block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-200" %>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+          <%= link_to "Cancelar", customers_path, class: "px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" %>
+          <%= form.submit "📥 Importar Clientes", class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Display import errors if any -->
+    <% if defined?(@import_errors) && @import_errors.any? %>
+      <div class="mt-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+        <h3 class="text-lg font-medium text-red-900 dark:text-red-100 mb-3">⚠️ Erros na Importação</h3>
+        <ul class="list-disc list-inside space-y-1 text-red-800 dark:text-red-200 text-sm">
+          <% @import_errors.each do |error| %>
+            <li><%= error %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+</div> 

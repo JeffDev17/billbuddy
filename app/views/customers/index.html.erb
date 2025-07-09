@@ -1,56 +1,296 @@
 <div class="container mx-auto px-4">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Clientes</h1>
-    <%= link_to "Novo Cliente", new_customer_path, class: "bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
+    <div class="flex space-x-3">
+      <!-- CSV Import/Export Actions -->
+      <div class="flex space-x-2">
+        <%= link_to export_csv_customers_path(format: :csv), 
+            class: "inline-flex items-center px-3 py-2 border border-gray-300 dark:border-slate-600 text-sm font-medium rounded text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-700 hover:bg-purple-50 dark:hover:bg-slate-600" do %>
+          📤 Exportar CSV
+        <% end %>
+        <%= link_to import_csv_customers_path, 
+            class: "inline-flex items-center px-3 py-2 border border-purple-300 dark:border-purple-600 text-sm font-medium rounded text-purple-700 dark:text-purple-200 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30" do %>
+          📥 Importar CSV
+        <% end %>
+        <%= link_to bulk_message_form_customers_path, 
+            class: "inline-flex items-center px-3 py-2 border border-green-300 dark:border-green-600 text-sm font-medium rounded text-green-700 dark:text-green-200 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30" do %>
+          📱 WhatsApp em Massa
+        <% end %>
+      </div>
+      <%= link_to "Novo Cliente", new_customer_path, class: "bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded dark:bg-purple-700 dark:hover:bg-purple-800" %>
+    </div>
   </div>
 
-  <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      <thead class="bg-gray-50 dark:bg-dark-bg-tertiary">
+  <% if current_user.google_calendar_authorized? && @customers.any? %>
+    <div class="mb-6">
+      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">🔄 Sincronização por Cliente</h3>
+            <p class="text-xs text-blue-600 dark:text-blue-300 mt-1">
+              Sincronize compromissos de clientes específicos com o Google Calendar
+            </p>
+          </div>
+          <div class="flex space-x-3">
+            <%= link_to review_sync_appointments_path(scope: 'upcoming'),
+                class: "bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm" do %>
+              📅 Revisar Próximos (Todos)
+            <% end %>
+            <%= link_to "#", id: "selectCustomersBtn",
+                class: "bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm" do %>
+              👥 Selecionar Clientes
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @customers.empty? %>
+    <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+      <div class="flex items-start">
+        <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-purple-800 dark:text-purple-200">💡 Dica para começar</h3>
+          <p class="text-sm text-purple-700 dark:text-purple-300 mt-1">
+            Para importar vários clientes de uma vez, use a funcionalidade 
+            <strong>📥 Importar CSV</strong>. Baixe o template, preencha com seus dados e importe!
+          </p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+      <thead class="bg-purple-100 dark:bg-purple-900/30">
       <tr>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nome</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Telefone</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ações</th>
+        <% if current_user.google_calendar_authorized? %>
+          <th class="px-3 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">
+            <input type="checkbox" id="selectAll" class="rounded border-gray-300 dark:border-gray-600" title="Selecionar todos">
+          </th>
+        <% end %>
+        <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Nome</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Email</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Telefone</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Status</th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Valor do Pacote</th>
+        <% if current_user.google_calendar_authorized? %>
+          <th class="px-3 py-3 text-center text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Sync</th>
+        <% end %>
+        <th class="px-6 py-3 text-right text-xs font-medium text-purple-800 dark:text-purple-200 uppercase tracking-wider">Ações</th>
       </tr>
       </thead>
-      <tbody class="bg-white dark:bg-dark-bg-secondary divide-y divide-gray-200 dark:divide-gray-700">
-      <% @customers.each do |customer| %>
-        <tr class="hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary">
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-              <%= link_to customer.name, customer_path(customer), class: "hover:text-indigo-900 dark:hover:text-indigo-300" %>
-            </div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900 dark:text-gray-100"><%= customer.email %></div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900 dark:text-gray-100"><%= customer.phone %></div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <% if customer.active? %>
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Ativo</span>
-            <% else %>
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Inativo</span>
+      <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+      <% if @customers.any? %>
+        <% @customers.each do |customer| %>
+          <tr class="hover:bg-purple-50 dark:hover:bg-slate-700/50">
+            <% if current_user.google_calendar_authorized? %>
+              <td class="px-3 py-4 whitespace-nowrap">
+                <input type="checkbox" class="customer-checkbox rounded border-gray-300 dark:border-gray-600" 
+                       value="<%= customer.id %>" data-customer-name="<%= customer.name %>">
+              </td>
             <% end %>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <%= link_to "Editar", edit_customer_path(customer), class: "text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3" %>
-            <%= button_to "Excluir", 
-                customer_path(customer), 
-                method: :delete, 
-                form: { class: "inline-block" },
-                class: "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 bg-transparent border-0 p-0 cursor-pointer",
-                data: { 
-                  turbo_confirm: "Tem certeza que deseja excluir #{customer.name}?",
-                  turbo_method: :delete 
-                } %>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-purple-600 dark:text-purple-400">
+                <%= link_to customer.name, customer_path(customer), class: "hover:text-purple-900 dark:hover:text-purple-300" %>
+              </div>
+              <% if current_user.google_calendar_authorized? && customer.unsynced_appointments.any? %>
+                <div class="text-xs text-yellow-600 dark:text-yellow-400">
+                  <%= customer.unsynced_appointments.count %> não sincronizado(s)
+                </div>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900 dark:text-gray-100"><%= customer.email.present? ? customer.email : "Não informado" %></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900 dark:text-gray-100"><%= customer.phone.present? ? customer.phone : "Não informado" %></div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <% if customer.active? %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Ativo</span>
+              <% else %>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Inativo</span>
+              <% end %>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center space-x-1">
+                <span class="text-sm text-gray-900 dark:text-gray-100">
+                  R$ <%= number_with_precision(customer.package_total_value, precision: 2) %><%= customer.subscription? ? "/mês" : "" %>
+                </span>
+                <% if customer.has_custom_pricing? %>
+                  <span class="text-orange-500" title="Preço personalizado">💰</span>
+                <% end %>
+              </div>
+            </td>
+            <% if current_user.google_calendar_authorized? %>
+              <td class="px-3 py-4 whitespace-nowrap text-center">
+                <% if customer.unsynced_appointments.any? %>
+                  <%= link_to review_sync_appointments_path(scope: 'customer_upcoming', customer_id: customer.id),
+                      class: "bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs",
+                      title: "Revisar sincronização deste cliente" do %>
+                    🔄
+                  <% end %>
+                <% else %>
+                  <span class="text-gray-400 text-xs" title="Nenhum compromisso para sincronizar">✓</span>
+                <% end %>
+              </td>
+            <% end %>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <%= link_to "Editar", edit_customer_path(customer), class: "text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 mr-3" %>
+              <%= button_to "Excluir", 
+                  customer_path(customer), 
+                  method: :delete, 
+                  form: { class: "inline-block" },
+                  class: "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 bg-transparent border-0 p-0 cursor-pointer",
+                  data: { 
+                    turbo_confirm: "Tem certeza que deseja excluir #{customer.name}?",
+                    turbo_method: :delete 
+                  } %>
+            </td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr>
+          <td colspan="6" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+            Nenhum cliente cadastrado. Use "📥 Importar CSV" para adicionar vários de uma vez ou "Novo Cliente" para adicionar um por vez.
           </td>
         </tr>
       <% end %>
       </tbody>
     </table>
   </div>
+
+  <!-- Selected Customers Sync Section (initially hidden) -->
+  <% if current_user.google_calendar_authorized? %>
+    <div id="selectedCustomersSection" class="hidden mt-6">
+      <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
+              👥 <span id="selectedCount">0</span> cliente(s) selecionado(s)
+            </h3>
+            <p class="text-xs text-green-600 dark:text-green-300 mt-1" id="selectedNames">
+              Nenhum cliente selecionado
+            </p>
+          </div>
+          <div class="flex space-x-3">
+            <button id="reviewSelectedBtn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">
+              📅 Revisar Próximos
+            </button>
+            <button id="reviewAllSelectedBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm">
+              🔄 Revisar Todos
+            </button>
+            <button id="clearSelectionBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm">
+              ✕ Limpar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const customerCheckboxes = document.querySelectorAll('.customer-checkbox');
+        const selectedSection = document.getElementById('selectedCustomersSection');
+        const selectedCount = document.getElementById('selectedCount');
+        const selectedNames = document.getElementById('selectedNames');
+        const selectCustomersBtn = document.getElementById('selectCustomersBtn');
+        const reviewSelectedBtn = document.getElementById('reviewSelectedBtn');
+        const reviewAllSelectedBtn = document.getElementById('reviewAllSelectedBtn');
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+
+        // Toggle selection mode
+        selectCustomersBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const isHidden = selectedSection.classList.contains('hidden');
+          if (isHidden) {
+            selectedSection.classList.remove('hidden');
+            selectCustomersBtn.textContent = '👁️ Ocultar Seleção';
+            selectCustomersBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            selectCustomersBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+          } else {
+            selectedSection.classList.add('hidden');
+            selectCustomersBtn.textContent = '👥 Selecionar Clientes';
+            selectCustomersBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+            selectCustomersBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            clearSelection();
+          }
+        });
+
+        // Select all functionality
+        selectAllCheckbox.addEventListener('change', function() {
+          customerCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+          });
+          updateSelectedDisplay();
+        });
+
+        // Individual checkbox functionality
+        customerCheckboxes.forEach(checkbox => {
+          checkbox.addEventListener('change', updateSelectedDisplay);
+        });
+
+        // Clear selection
+        clearSelectionBtn.addEventListener('click', clearSelection);
+
+        // Review buttons
+        reviewSelectedBtn.addEventListener('click', function() {
+          const selectedIds = getSelectedCustomerIds();
+          if (selectedIds.length > 0) {
+            window.location.href = `/appointments/review_sync?scope=selected_customers&customer_ids[]=${selectedIds.join('&customer_ids[]=')}`;
+          }
+        });
+
+        reviewAllSelectedBtn.addEventListener('click', function() {
+          const selectedIds = getSelectedCustomerIds();
+          if (selectedIds.length > 0) {
+            window.location.href = `/appointments/review_sync?scope=selected_customers_all&customer_ids[]=${selectedIds.join('&customer_ids[]=')}`;
+          }
+        });
+
+        function updateSelectedDisplay() {
+          const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
+          const count = checkedBoxes.length;
+          
+          selectedCount.textContent = count;
+          
+          if (count === 0) {
+            selectedNames.textContent = 'Nenhum cliente selecionado';
+            reviewSelectedBtn.disabled = true;
+            reviewAllSelectedBtn.disabled = true;
+          } else {
+            const names = Array.from(checkedBoxes).map(cb => cb.dataset.customerName).slice(0, 3);
+            const namesList = names.join(', ');
+            selectedNames.textContent = count > 3 ? `${namesList} e mais ${count - 3}` : namesList;
+            reviewSelectedBtn.disabled = false;
+            reviewAllSelectedBtn.disabled = false;
+          }
+          
+          // Update select all checkbox
+          selectAllCheckbox.checked = count === customerCheckboxes.length;
+          selectAllCheckbox.indeterminate = count > 0 && count < customerCheckboxes.length;
+        }
+
+        function clearSelection() {
+          customerCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          selectAllCheckbox.checked = false;
+          selectAllCheckbox.indeterminate = false;
+          updateSelectedDisplay();
+        }
+
+        function getSelectedCustomerIds() {
+          return Array.from(document.querySelectorAll('.customer-checkbox:checked')).map(cb => cb.value);
+        }
+      });
+    </script>
+  <% end %>
 </div>

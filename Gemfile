@@ -16,8 +16,7 @@ gem "importmap-rails"
 gem "turbo-rails"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
-# Use Tailwind CSS [https://github.com/rails/tailwindcss-rails]
-gem "tailwindcss-rails"
+# Using Tailwind CSS via CDN instead of gem
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 # Use Redis adapter to run Action Cable in production
@@ -41,7 +40,7 @@ gem "bootsnap", require: false
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
-  gem "debug", platforms: %i[ mri ], require: "debug/prelude"
+  gem "debug", platforms: %i[ mri windows ]
 
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
@@ -53,9 +52,9 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-  gem 'rspec-rails'
-  gem 'factory_bot_rails'
-  gem 'faker'
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "faker"
 end
 
 group :test do
@@ -64,13 +63,17 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem 'devise'
-gem 'simple_form'
-gem 'rails_admin'
-gem 'httparty'
-gem 'sidekiq'
-gem "cssbundling-rails"
-gem 'google-apis-calendar_v3'
-gem 'signet'
-gem 'dotenv-rails'
+gem "devise"
+gem "simple_form"
+gem "rails_admin"
+gem "httparty"
+gem "sidekiq"
+gem "google-apis-calendar_v3"
+gem "signet"
+gem "dotenv-rails"
 gem "sassc-rails"
+gem "chartkick"
+gem "groupdate"
+gem "cssbundling-rails"
+gem "jsbundling-rails"
+gem "childprocess"

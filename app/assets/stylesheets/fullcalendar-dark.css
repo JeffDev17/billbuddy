@@ -1,0 +1,130 @@
+/* FullCalendar Dark Theme Overrides */
+
+/* Apply dark theme when html has dark class */
+html.dark .fc,
+html.dark .fc *,
+html.dark .fc table,
+html.dark .fc table *,
+html.dark .fc-view-harness,
+html.dark .fc-view-harness *,
+html.dark .fc-scroller,
+html.dark .fc-scroller * {
+  background-color: #1f2937 !important;
+  color: #d1d5db !important;
+}
+
+/* Header styling */
+html.dark .fc-toolbar {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+html.dark .fc-toolbar-title {
+  color: #f9fafb !important;
+}
+
+/* Column headers (days of week) */
+html.dark .fc-col-header,
+html.dark .fc-col-header *,
+html.dark .fc-col-header-cell,
+html.dark .fc-col-header-cell * {
+  background-color: #374151 !important;
+  color: #d1d5db !important;
+}
+
+/* Day grid cells */
+html.dark .fc-daygrid-day,
+html.dark .fc-daygrid-day *,
+html.dark .fc-daygrid-day-number,
+html.dark .fc-daygrid-day-top,
+html.dark .fc-daygrid-day-frame {
+  background-color: #1f2937 !important;
+  color: #d1d5db !important;
+}
+
+/* Time grid styling */
+html.dark .fc-timegrid-slot,
+html.dark .fc-timegrid-slot-label,
+html.dark .fc-timegrid-axis,
+html.dark .fc-timegrid-col,
+html.dark .fc-timegrid-body {
+  background-color: #1f2937 !important;
+  color: #9ca3af !important;
+}
+
+/* Table styling */
+html.dark .fc-scrollgrid,
+html.dark .fc-scrollgrid-sync-table,
+html.dark .fc-scrollgrid-sync-table td,
+html.dark .fc-scrollgrid-sync-table th {
+  background-color: #1f2937 !important;
+  color: #d1d5db !important;
+}
+
+/* List view styling */
+html.dark .fc-list-table,
+html.dark .fc-list-table td,
+html.dark .fc-list-table th {
+  background-color: #1f2937 !important;
+  color: #d1d5db !important;
+}
+
+html.dark .fc-list-day-cushion {
+  background-color: #374151 !important;
+  color: #d1d5db !important;
+}
+
+/* Events should keep their colors */
+html.dark .fc-event,
+html.dark .fc-event-main,
+html.dark .fc-event-title,
+html.dark .fc-daygrid-event,
+html.dark .fc-timegrid-event {
+  background-color: inherit !important;
+  color: inherit !important;
+}
+
+/* Today highlight */
+html.dark .fc-day-today {
+  background-color: #1e3a8a !important;
+}
+
+/* All borders dark */
+html.dark .fc *,
+html.dark .fc table *,
+html.dark .fc-scrollgrid *,
+html.dark .fc-daygrid *,
+html.dark .fc-timegrid * {
+  border-color: #374151 !important;
+}
+
+/* Buttons */
+html.dark .fc-button {
+  background-color: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  color: white !important;
+}
+
+html.dark .fc-button:hover {
+  background-color: #4338ca !important;
+  border-color: #4338ca !important;
+}
+
+html.dark .fc-button-active {
+  background-color: #3730a3 !important;
+  border-color: #3730a3 !important;
+}
+
+/* Legend styling */
+html.dark .calendar-legend {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+html.dark .calendar-legend h3 {
+  color: #f9fafb !important;
+}
+
+html.dark .calendar-legend span {
+  color: #d1d5db !important;
+} 

@@ -1,0 +1,271 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+        Conclusão de Aulas - <%= format_brazilian_date_with_weekday(@selected_date) %>
+      </h1>
+      
+      <!-- Navigation -->
+      <div class="flex items-center space-x-4">
+        <%= link_to daily_completion_calendars_path(date: @selected_date.prev_day), 
+            class: "bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors" do %>
+          ← Dia Anterior
+        <% end %>
+        
+        <%= form_with url: daily_completion_calendars_path, method: :get, class: "flex items-center space-x-2" do |f| %>
+          <%= f.date_field :date, value: @selected_date, 
+              class: "px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+          <%= f.submit "Ir", class: "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors" %>
+        <% end %>
+        
+        <%= link_to daily_completion_calendars_path(date: @selected_date.next_day), 
+            class: "bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors" do %>
+          Próximo Dia →
+        <% end %>
+      </div>
+    </div>
+
+    <div class="mb-6 flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Conclusão Diária - <%= format_brazilian_date_with_weekday(@selected_date) %>
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400">
+          Gerencie as aulas do dia e acompanhe seus ganhos
+        </p>
+      </div>
+      
+      <!-- Global Sensitive Data Toggle -->
+      <div data-controller="global-sensitive-data">
+        <button type="button" 
+                data-action="click->global-sensitive-data#toggle"
+                class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <span data-global-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
+          <span>Mostrar Valores</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
+            📅
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total de Aulas</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white"><%= @completion_data[:total_appointments] %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-2 bg-green-100 dark:bg-green-900 rounded-full">
+            ✅
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Concluídas</p>
+            <p class="text-2xl font-bold text-green-600 dark:text-green-400"><%= @completion_data[:completed_appointments] %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+            ⏳
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Pendentes</p>
+            <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400"><%= @completion_data[:pending_appointments] %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-2 bg-green-100 dark:bg-green-900 rounded-full">
+            💰
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Ganhos do Dia</p>
+            <%= render "shared/sensitive_data" do %>
+              <p class="text-2xl font-bold text-green-600 dark:text-green-400">R$ <%= sprintf('%.2f', @completion_data[:total_earnings]) %></p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Preview Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-8">
+      <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            📋 Resumo do Dia - <%= format_brazilian_date_with_weekday_short(@selected_date) %>
+          </h2>
+          
+          <!-- Projected Earnings Card -->
+          <%= render "shared/sensitive_data" do %>
+            <div class="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg px-4 py-2">
+              <div class="text-center">
+                <p class="text-xs text-gray-600 dark:text-gray-400">Se todos agendamentos forem realizados:</p>
+                <p class="text-lg font-bold text-green-600 dark:text-green-400">
+                  R$ <%= sprintf('%.2f', @projected_earnings[:total_if_all_completed]) %>
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-500">
+                  (+ R$ <%= sprintf('%.2f', @projected_earnings[:potential]) %> potencial)
+                </p>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="p-6">
+        <% if @daily_preview.any? %>
+          <div class="space-y-3">
+            <% @daily_preview.each do |appointment_data| %>
+              <div class="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 rounded-lg border-l-4 
+                <% case appointment_data[:status] %>
+                <% when 'completed' %>
+                  border-green-500
+                <% when 'scheduled' %>
+                  border-blue-500
+                <% when 'cancelled' %>
+                  border-red-500
+                <% when 'no_show' %>
+                  border-orange-500
+                <% end %>">
+                <div class="flex-1">
+                  <div class="flex items-center space-x-3">
+                    <span class="font-medium text-gray-900 dark:text-gray-100 text-lg">
+                      <%= appointment_data[:time] %> - <%= appointment_data[:customer] %>
+                    </span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                      (<%= appointment_data[:duration] %>h)
+                    </span>
+                    <%= render "shared/sensitive_data" do %>
+                      <span class="text-sm text-green-600 dark:text-green-400 font-medium">
+                        R$ <%= sprintf('%.2f', appointment_data[:earnings]) %>
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                  <span class="px-3 py-1 text-xs rounded-full font-medium
+                    <% case appointment_data[:status] %>
+                    <% when 'scheduled' %>
+                      bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                    <% when 'completed' %>
+                      bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                    <% when 'cancelled' %>
+                      bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                    <% when 'no_show' %>
+                      bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200
+                    <% end %>">
+                    <%= appointment_data[:status].humanize %>
+                  </span>
+                  
+                  <% if appointment_data[:synced] %>
+                    <span class="text-green-500 text-lg" title="Sincronizado">✓</span>
+                  <% else %>
+                    <span class="text-yellow-500 text-lg" title="Não sincronizado">⏳</span>
+                  <% end %>
+                  
+                  <!-- Action Buttons -->
+                  <div class="flex items-center space-x-1">
+                    <% appointment = appointment_data[:appointment] %>
+                    <% if appointment.status == 'scheduled' %>
+                      <!-- Quick Complete Button -->
+                      <%= link_to mark_completed_appointment_path(appointment), 
+                          data: { 
+                            turbo_method: :post, 
+                            turbo_confirm: "Marcar como concluída para #{appointment.scheduled_at.strftime('%d/%m/%Y')}?" 
+                          },
+                          params: { completion_date: appointment.scheduled_at.to_date },
+                          class: "inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700",
+                          title: "Concluir para a data original" do %>
+                        ✓
+                      <% end %>
+                      
+                      <!-- Edit Button -->
+                      <%= link_to edit_appointment_path(appointment), 
+                          onclick: "preserveScrollPosition()",
+                          class: "inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700",
+                          title: "Editar compromisso" do %>
+                        ✏️
+                      <% end %>
+                      
+                      <!-- Cancel Button -->
+                      <%= link_to mark_cancelled_appointment_path(appointment), 
+                          data: { 
+                            turbo_method: :post, 
+                            turbo_confirm: "Tem certeza que deseja cancelar este compromisso?" 
+                          },
+                          class: "inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600",
+                          title: "Cancelar compromisso" do %>
+                        ❌
+                      <% end %>
+                    <% elsif appointment.status == 'completed' %>
+                      <!-- Show completion date for completed appointments -->
+                      <span class="text-xs text-green-600 dark:text-green-400">
+                        Concluída em <%= appointment.completed_at&.strftime('%d/%m') || 'N/A' %>
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          
+          <!-- Summary Footer -->
+          <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div class="flex justify-between">
+                <span class="text-blue-700 dark:text-blue-300">Total de aulas:</span>
+                <span class="font-medium text-blue-900 dark:text-blue-100">
+                  <%= @daily_preview.count %>
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-blue-700 dark:text-blue-300">Total de horas:</span>
+                <span class="font-medium text-blue-900 dark:text-blue-100">
+                  <%= @daily_preview.sum { |a| a[:duration] }.round(1) %>h
+                </span>
+              </div>
+              <%= render "shared/sensitive_data" do %>
+                <div class="flex justify-between">
+                  <span class="text-blue-700 dark:text-blue-300">Valor total possível:</span>
+                  <span class="font-medium text-green-600 dark:text-green-400">
+                    R$ <%= sprintf('%.2f', @projected_earnings[:total_if_all_completed]) %>
+                  </span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% else %>
+          <div class="text-center py-8">
+            <p class="text-gray-500 dark:text-gray-400">Nenhuma aula agendada para este dia.</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    <!-- Quick Actions -->
+    <div class="mt-8 flex justify-center space-x-4">
+      <%= link_to calendars_path(date: @selected_date), 
+          class: "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md transition-colors" do %>
+        ← Voltar ao Calendário
+      <% end %>
+      
+      <%= link_to appointments_path, 
+          class: "bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md transition-colors" do %>
+        Ver Todos os Compromissos
+      <% end %>
+    </div>
+  </div>
+</div> 

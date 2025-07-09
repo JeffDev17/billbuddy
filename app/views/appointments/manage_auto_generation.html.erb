@@ -1,0 +1,146 @@
+<% content_for :title, "Geração Automática de Compromissos" %>
+
+<div class="max-w-4xl mx-auto p-6">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            🤖 Geração Automática de Compromissos
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-1">
+            Configure a geração automática de compromissos baseada em padrões existentes
+          </p>
+        </div>
+        <%= link_to appointments_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" do %>
+          ← Voltar para Compromissos
+        <% end %>
+      </div>
+
+      <!-- Status Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
+          <h3 class="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">
+            📅 Status do Agendamento
+          </h3>
+          <% if @has_scheduled_job %>
+            <div class="text-green-600 dark:text-green-400 font-medium mb-2">
+              ✅ Ativo
+            </div>
+            <p class="text-sm text-blue-600 dark:text-blue-300">
+              Próxima execução: <strong><%= @next_scheduled_run.strftime('%d/%m/%Y às %H:%M') %></strong>
+            </p>
+            <p class="text-xs text-blue-500 dark:text-blue-400 mt-1">
+              Criará compromissos para: <strong><%= (@next_scheduled_run.to_date + 3.months).strftime('%B de %Y') %></strong>
+            </p>
+          <% else %>
+            <div class="text-red-600 dark:text-red-400 font-medium mb-2">
+              ❌ Inativo
+            </div>
+            <p class="text-sm text-blue-600 dark:text-blue-300">
+              Nenhum agendamento ativo encontrado
+            </p>
+          <% end %>
+        </div>
+
+        <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
+          <h3 class="text-lg font-medium text-green-800 dark:text-green-200 mb-2">
+            🎯 Como Funciona
+          </h3>
+          <ul class="text-sm text-green-600 dark:text-green-300 space-y-1">
+            <li>• Executa no dia 1º de cada mês às 6:00</li>
+            <li>• Analisa padrões dos últimos 2 meses</li>
+            <li>• Cria compromissos para 3 meses à frente</li>
+            <li>• <strong>NÃO sincroniza</strong> com Google Calendar</li>
+            <li>• Use os botões de sincronização quando pronto</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Control Buttons -->
+      <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🎛️ Controles</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <% unless @has_scheduled_job %>
+            <%= button_to "🚀 Ativar Auto-Geração", setup_auto_generation_appointments_path,
+                method: :post,
+                class: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium",
+                data: { confirm: "Ativar a geração automática mensal de compromissos?" } %>
+          <% else %>
+            <%= button_to "🛑 Cancelar Auto-Geração", cancel_auto_generation_appointments_path,
+                method: :post,
+                class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium",
+                data: { confirm: "Cancelar todos os agendamentos de geração automática?" } %>
+          <% end %>
+
+          <%= button_to "▶️ Executar Agora", run_auto_generation_now_appointments_path,
+              method: :post,
+              class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium",
+              data: { confirm: "Executar a geração automática imediatamente? Isso criará compromissos para 3 meses à frente." } %>
+
+          <div class="col-span-2">
+            <%= form_with url: preview_generation_appointments_path, method: :get, local: true, class: "flex space-x-2" do |form| %>
+              <%= form.select :target_month, options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, Date.current.month),
+                  { prompt: "Mês" },
+                  { class: "border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm" } %>
+              <%= form.number_field :target_year, value: Date.current.year, min: 2020, max: 2030,
+                  class: "border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm w-20" %>
+              <%= form.submit "🔍 Revisar Mês", class: "bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm" %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Information Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg">
+          <h3 class="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-3">
+            ⚠️ Importante
+          </h3>
+          <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-2">
+            <li>• Os compromissos são criados <strong>sem sincronização</strong> automática</li>
+            <li>• Use a página de compromissos para revisar e sincronizar</li>
+            <li>• O sistema detecta padrões automaticamente</li>
+            <li>• Clientes inativos são ignorados</li>
+            <li>• Conflitos de horário são evitados</li>
+          </ul>
+        </div>
+
+        <div class="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-lg">
+          <h3 class="text-lg font-medium text-indigo-800 dark:text-indigo-200 mb-3">
+            🔍 Detecção de Padrões
+          </h3>
+          <ul class="text-sm text-indigo-700 dark:text-indigo-300 space-y-2">
+            <li>• Analisa compromissos dos <strong>últimos 2 meses</strong></li>
+            <li>• Identifica dia da semana, horário e duração</li>
+            <li>• Requer <strong>mínimo 3 ocorrências</strong> para criar padrão</li>
+            <li>• Múltiplos padrões por cliente são suportados</li>
+            <li>• Gera para <strong>3 meses à frente</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Example Timeline -->
+      <div class="mt-8 bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+          📊 Cronograma de Exemplo
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-blue-500">
+            <div class="font-medium text-blue-600 dark:text-blue-400">1º de Julho</div>
+            <div class="text-gray-600 dark:text-gray-400">Gera compromissos para Setembro</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-green-500">
+            <div class="font-medium text-green-600 dark:text-green-400">1º de Agosto</div>
+            <div class="text-gray-600 dark:text-gray-400">Gera compromissos para Outubro</div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-purple-500">
+            <div class="font-medium text-purple-600 dark:text-purple-400">1º de Setembro</div>
+            <div class="text-gray-600 dark:text-gray-400">Gera compromissos para Novembro</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

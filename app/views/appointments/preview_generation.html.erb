@@ -1,0 +1,196 @@
+<% content_for :title, "Revisar Geração de Compromissos" %>
+
+<div class="max-w-6xl mx-auto p-6">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            🔍 Revisar Geração de Compromissos
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-1">
+            Revise os compromissos que serão criados para <%= @preview_data[:month_name] %>
+          </p>
+        </div>
+        <%= link_to manage_auto_generation_appointments_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" do %>
+          ← Voltar para Auto-Geração
+        <% end %>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+          <div class="text-2xl font-bold text-blue-700 dark:text-blue-300"><%= @preview_data[:total_would_create] %></div>
+          <div class="text-sm text-blue-600 dark:text-blue-400">Compromissos a Criar</div>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+          <div class="text-2xl font-bold text-green-700 dark:text-green-300"><%= @preview_data[:customers_data].count %></div>
+          <div class="text-sm text-green-600 dark:text-green-400">Clientes Afetados</div>
+        </div>
+        <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+          <div class="text-2xl font-bold text-purple-700 dark:text-purple-300">
+            <%= @preview_data[:month_start].strftime('%d/%m') %>
+          </div>
+          <div class="text-sm text-purple-600 dark:text-purple-400">Data Inicial</div>
+        </div>
+        <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+          <div class="text-2xl font-bold text-orange-700 dark:text-orange-300">
+            <%= @preview_data[:month_end].strftime('%d/%m') %>
+          </div>
+          <div class="text-sm text-orange-600 dark:text-orange-400">Data Final</div>
+        </div>
+      </div>
+
+      <% if @preview_data[:customers_data].any? %>
+        <!-- Customers and Patterns -->
+        <div class="mb-6">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">👥 Clientes e Padrões Detectados</h3>
+          
+          <% @preview_data[:customers_data].each do |customer_data| %>
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-md font-medium text-gray-900 dark:text-gray-100">
+                  👤 <%= customer_data[:customer].name %>
+                </h4>
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                  <%= customer_data[:appointments].count %> compromissos
+                </span>
+              </div>
+              
+              <!-- Patterns detected -->
+              <div class="mb-3">
+                <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🔍 Padrões Detectados:</h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  <% customer_data[:patterns].each do |pattern| %>
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-2 rounded text-xs">
+                      <span class="font-medium text-indigo-600 dark:text-indigo-400">
+                        <%= pattern[:day_name] %>s às <%= pattern[:time] %>
+                      </span>
+                      <br>
+                      <span class="text-gray-600 dark:text-gray-400">
+                        <%= pattern[:duration] %>h (detectado <%= pattern[:frequency] %>x)
+                      </span>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+              
+              <!-- Appointments to be created -->
+              <div>
+                <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📅 Compromissos a Criar:</h5>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                  <% customer_data[:appointments].each do |appointment| %>
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-2 rounded text-xs">
+                      <div class="font-medium text-gray-900 dark:text-gray-100">
+                        <%= appointment[:scheduled_at].strftime('%d/%m %H:%M') %>
+                      </div>
+                      <div class="text-gray-600 dark:text-gray-400">
+                        <%= appointment[:duration] %>h
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- All Appointments Timeline -->
+        <div class="mb-6">
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📊 Cronograma Completo</h3>
+          <div class="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data/Hora</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Duração</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Padrão</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <% all_appointments = @preview_data[:customers_data].flat_map { |cd| cd[:appointments].map { |apt| {appointment: apt, customer: cd[:customer]} } } %>
+                <% all_appointments.sort_by { |item| item[:appointment][:scheduled_at] }.first(50).each do |item| %>
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <%= item[:customer].name %>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                      <%= item[:appointment][:scheduled_at].strftime('%d/%m/%Y %H:%M') %>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                      <%= item[:appointment][:duration] %> horas
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                      <%= item[:appointment][:pattern][:day_name] %>s às <%= item[:appointment][:pattern][:time] %>
+                    </td>
+                  </tr>
+                <% end %>
+                <% if all_appointments.count > 50 %>
+                  <tr>
+                    <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                      ... e mais <%= all_appointments.count - 50 %> compromissos
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mb-6">
+          <h3 class="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-3">
+            ⚠️ Antes de Confirmar
+          </h3>
+          <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+            <li>• Os compromissos serão criados <strong>SEM sincronização</strong> com Google Calendar</li>
+            <li>• Use os botões de sincronização na página de compromissos quando estiver pronto</li>
+            <li>• Conflitos de horário são automaticamente evitados</li>
+            <li>• Compromissos duplicados não serão criados</li>
+            <li>• Esta ação não pode ser desfeita facilmente</li>
+          </ul>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            <strong><%= @preview_data[:total_would_create] %></strong> compromisso(s) será(ão) criado(s) para <%= @preview_data[:month_name] %>
+          </div>
+          
+          <div class="flex space-x-3">
+            <%= link_to "Cancelar", manage_auto_generation_appointments_path, 
+                class: "px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" %>
+            
+            <%= form_with url: confirm_generation_appointments_path, method: :post, local: true do |form| %>
+              <%= form.hidden_field :target_month, value: @target_month %>
+              <%= form.hidden_field :target_year, value: @target_year %>
+              
+              <%= form.submit "✅ Confirmar Criação", 
+                  class: "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500",
+                  data: { confirm: "Confirma a criação de #{@preview_data[:total_would_create]} compromisso(s) para #{@preview_data[:month_name]}? Esta ação não pode ser desfeita facilmente." } %>
+            <% end %>
+          </div>
+        </div>
+
+      <% else %>
+        <!-- No appointments to generate -->
+        <div class="text-center py-12">
+          <div class="text-gray-400 dark:text-gray-500 text-6xl mb-4">📅</div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Nenhum compromisso para gerar</h3>
+          <p class="text-gray-600 dark:text-gray-400 mb-4">
+            Não foram detectados padrões suficientes para criar compromissos em <%= @preview_data[:month_name] %>.
+          </p>
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            <p>Para gerar compromissos automaticamente, é necessário:</p>
+            <ul class="mt-2 list-disc list-inside space-y-1">
+              <li>Pelo menos 3 compromissos com o mesmo padrão (dia + horário)</li>
+              <li>Compromissos nos últimos 2 meses</li>
+              <li>Clientes ativos</li>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div> 

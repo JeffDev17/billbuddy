@@ -1,7 +1,12 @@
 <div class="mb-8">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-dark-text-primary">Pagamentos</h2>
-    <%= link_to "Novo Pagamento", new_payment_path, class: "px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 dark:bg-dark-accent dark:hover:bg-dark-accent-hover" %>
+    <div class="space-x-4">
+      <%= link_to "📋 Checklist Mensal", monthly_checklist_payments_path, class: "px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800" %>
+      <% if @customer %>
+        <%= link_to "Novo Pagamento", new_customer_payment_path(@customer), class: "px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 dark:bg-dark-accent dark:hover:bg-dark-accent-hover" %>
+      <% end %>
+    </div>
   </div>
 
   <div class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow mb-6">
@@ -54,8 +59,12 @@
                 <% end %>
               </div>
               <div class="flex space-x-2">
-                <%= link_to "Editar", edit_payment_path(payment), class: "px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 dark:bg-dark-accent dark:hover:bg-dark-accent-hover text-sm" %>
-                <%= button_to "Excluir", payment_path(payment), method: :delete, class: "px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-sm", data: { confirm: "Tem certeza que deseja excluir este pagamento?" } %>
+                <% if @customer %>
+                  <%= link_to "Editar", edit_customer_payment_path(@customer, payment), class: "px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 dark:bg-dark-accent dark:hover:bg-dark-accent-hover text-sm" %>
+                  <%= button_to "Excluir", customer_payment_path(@customer, payment), method: :delete, class: "px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-sm", data: { confirm: "Tem certeza que deseja excluir este pagamento?" } %>
+                <% else %>
+                  <%= link_to "Ver Cliente", customer_payments_path(payment.customer), class: "px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 text-sm" %>
+                <% end %>
               </div>
             </div>
           </div>

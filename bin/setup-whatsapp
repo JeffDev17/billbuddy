@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+
+puts "🚀 Setting up WhatsApp Integration..."
+
+# Check if Node.js is installed
+def check_nodejs
+  unless system("node --version > /dev/null 2>&1")
+    puts "❌ Node.js not found. Please install Node.js first:"
+    puts "   - macOS: brew install node"
+    puts "   - Ubuntu: sudo apt install nodejs npm"
+    puts "   - Or download from: https://nodejs.org/"
+    exit 1
+  end
+  
+  node_version = `node --version`.strip
+  puts "✅ Node.js found: #{node_version}"
+end
+
+# Install WhatsApp API dependencies
+def install_dependencies
+  whatsapp_dir = File.join(__dir__, '..', 'whatsapp-api')
+  
+  unless File.directory?(whatsapp_dir)
+    puts "❌ WhatsApp API directory not found: #{whatsapp_dir}"
+    exit 1
+  end
+  
+  puts "📦 Installing WhatsApp Node.js dependencies..."
+  Dir.chdir(whatsapp_dir) do
+    unless system("npm install")
+      puts "❌ Failed to install dependencies"
+      exit 1
+    end
+  end
+  
+  puts "✅ Dependencies installed successfully"
+end
+
+# Add the childprocess gem if not present
+def check_ruby_dependencies
+  gemfile_path = File.join(__dir__, '..', 'Gemfile')
+  gemfile_content = File.read(gemfile_path)
+  
+  unless gemfile_content.include?('childprocess')
+    puts "⚠️  Adding childprocess gem to Gemfile..."
+    File.open(gemfile_path, 'a') do |f|
+      f.puts "\n# Process management for WhatsApp integration"
+      f.puts "gem 'childprocess'"
+    end
+    
+    puts "🔄 Running bundle install..."
+    system("bundle install") or exit 1
+  end
+  
+  puts "✅ Ruby dependencies ready"
+end
+
+# Main setup process
+def main
+  puts "\n" + "="*50
+  puts "BillBuddy WhatsApp Integration Setup"
+  puts "="*50
+  
+  check_nodejs
+  check_ruby_dependencies
+  install_dependencies
+  
+  puts "\n✅ WhatsApp integration setup complete!"
+  puts "\n📋 Next steps:"
+  puts "   1. Start your Rails server: rails server"
+  puts "   2. Visit /whatsapp/auth to authenticate"
+  puts "   3. Scan the QR code with your WhatsApp"
+  puts "\n🎉 The WhatsApp service will start automatically with Rails!"
+end
+
+main if __FILE__ == $0 

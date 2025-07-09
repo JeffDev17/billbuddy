@@ -1,0 +1,171 @@
+<% content_for :title, "Criação em Lote de Compromissos" %>
+
+<div class="max-w-4xl mx-auto p-6">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            📅 Criação em Lote de Compromissos
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-1">
+            Crie compromissos para os próximos 4 semanas para múltiplos clientes
+          </p>
+        </div>
+        <%= link_to appointments_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" do %>
+          ← Voltar
+        <% end %>
+      </div>
+
+      <%= form_with url: bulk_create_appointments_path, method: :post, local: true, 
+          data: { 
+            controller: "bulk-appointments",
+            bulk_appointments_default_times_value: @default_times.to_json
+          },
+          class: "space-y-6" do |form| %>
+
+        <!-- Date Range -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <%= form.label :start_date, "Data de Início", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.date_field :start_date, 
+                value: @start_date,
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+          </div>
+          <div>
+            <%= form.label :end_date, "Data de Fim", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.date_field :end_date, 
+                value: @end_date,
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+          </div>
+        </div>
+
+        <!-- Customer Selection -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Selecionar Clientes
+          </label>
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 max-h-64 overflow-y-auto">
+            <div class="mb-3">
+              <label class="inline-flex items-center">
+                <input type="checkbox" 
+                       data-bulk-appointments-target="selectAllCustomers"
+                       data-action="change->bulk-appointments#toggleAllCustomers"
+                       class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Selecionar todos
+                </span>
+              </label>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              <% @customers.each do |customer| %>
+                <label class="inline-flex items-center">
+                  <%= check_box_tag "customer_ids[]", customer.id, false, 
+                      data: { bulk_appointments_target: "customerCheckbox" },
+                      class: "rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %>
+                  <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">
+                    <%= customer.name %>
+                  </span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Days of Week -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Dias da Semana
+          </label>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            <% [
+              [1, 'Segunda'],
+              [2, 'Terça'], 
+              [3, 'Quarta'],
+              [4, 'Quinta'],
+              [5, 'Sexta'],
+              [6, 'Sábado'],
+              [0, 'Domingo']
+            ].each do |day_value, day_name| %>
+              <label class="inline-flex items-center">
+                <%= check_box_tag "recurring_days[]", day_value, false,
+                    class: "rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %>
+                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">
+                  <%= day_name %>
+                </span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Time Slots -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Horários
+          </label>
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div data-bulk-appointments-target="timeSlotsContainer" class="space-y-2">
+              <!-- Time slots will be added here by JavaScript -->
+            </div>
+            <button type="button" 
+                    data-action="click->bulk-appointments#addTimeSlot"
+                    class="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400">
+              + Adicionar Horário
+            </button>
+          </div>
+        </div>
+
+        <!-- Duration -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <%= form.label :duration, "Duração (horas)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.number_field :duration, 
+                value: @default_duration,
+                step: 0.5,
+                min: 0.5,
+                max: 8,
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+          </div>
+        </div>
+
+        <!-- Error Display -->
+        <% if defined?(@errors) && @errors&.any? %>
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
+            <h3 class="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+              Erros encontrados:
+            </h3>
+            <ul class="text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+              <% @errors.first(10).each do |error| %>
+                <li><%= error %></li>
+              <% end %>
+              <% if @errors.count > 10 %>
+                <li class="font-medium">... e mais <%= @errors.count - 10 %> erros</li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <!-- Preview Summary -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+            📊 Resumo da Criação
+          </h3>
+          <p class="text-sm text-blue-700 dark:text-blue-300">
+            <span data-bulk-appointments-target="summary">
+              Configure os parâmetros acima para ver o resumo
+            </span>
+          </p>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <%= link_to "Cancelar", appointments_path, 
+              class: "px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" %>
+          <%= form.submit "Criar Compromissos", 
+              class: "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" %>
+        </div>
+
+      <% end %>
+    </div>
+  </div>
+</div> 

@@ -1,5 +1,5 @@
 <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow p-6">
-  <%= form_with(model: customer) do |form| %>
+  <%= form_with(model: customer, local: true) do |form| %>
     <% if customer.errors.any? %>
       <div class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
         <h2 class="text-lg font-medium"><%= pluralize(customer.errors.count, "erro") %> impediram que este cliente fosse salvo:</h2>
@@ -11,39 +11,154 @@
       </div>
     <% end %>
 
-    <div class="mb-4">
-      <%= form.label :name, "Nome", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-      <%= form.text_field :name, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
-    </div>
+    <!-- Show status history for existing customers -->
+    <% if customer.persisted? && customer.status_history_display.present? %>
+      <div class="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">📅 Histórico de Status</h3>
+        <p class="text-sm text-blue-700 dark:text-blue-300"><%= customer.status_history_display %></p>
+      </div>
+    <% end %>
 
-    <div class="mb-4">
-      <%= form.label :email, "Email", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-      <%= form.email_field :email, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Basic Information -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+          👤 Informações Básicas
+        </h3>
 
-    <div class="mb-4">
-      <%= form.label :phone, "Telefone (formato internacional)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-      <div class="mt-1">
-        <%= form.telephone_field :phone, 
-            placeholder: "Exemplo: +5519996664088 (Brasil), +1234567890 (EUA)", 
-            class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
-        <p class="mt-1 text-sm text-gray-500">Inclua o código do país com + no início (Ex: +55 para Brasil, +1 para EUA)</p>
+        <div>
+          <%= form.label :name, "Nome", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.text_field :name, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div>
+          <%= form.label :email, "Email", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.email_field :email, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div>
+          <%= form.label :phone, "Telefone", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.text_field :phone, placeholder: "+5519999888777", class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Formato internacional com código do país</p>
+        </div>
+      </div>
+
+      <!-- Status and Plan -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
+          ⚙️ Status e Plano
+        </h3>
+
+        <div>
+          <%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.select :status, 
+              options_for_select([
+                ['✅ Ativo', 'active'],
+                ['❌ Inativo', 'inactive'],
+                ['⏸️ Em espera', 'on_hold']
+              ], customer.status), 
+              {}, 
+              { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary",
+                id: "customer_status_select",
+                data: { action: "change->customer-form#statusChanged" } } %>
+        </div>
+
+        <!-- Cancellation reason field (hidden by default) -->
+        <div id="cancellation_reason_field" class="hidden">
+          <%= form.label :cancellation_reason, "Motivo do Cancelamento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.text_area :cancellation_reason, rows: 3,
+              placeholder: "Explique o motivo da inativação do cliente...",
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
+
+        <div>
+          <%= form.label :plan_type, "Tipo de Plano", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.select :plan_type, 
+              options_for_select([
+                ['💳 Crédito', 'credit'],
+                ['📅 Assinatura', 'subscription']
+              ], customer.plan_type), 
+              {}, 
+              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+        </div>
       </div>
     </div>
 
-    <div class="mb-4">
-      <%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-      <%= form.select :status, Customer.statuses.keys.map { |status| [status.humanize, status] }, {}, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
+    <!-- Pricing Section -->
+    <div class="mt-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+        💰 Precificação Personalizada
+      </h3>
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Configure valores personalizados para este cliente. Se deixado em branco, o sistema usará os valores dos pacotes de serviço associados.
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <%= form.label :custom_hourly_rate, "Taxa por Hora (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+            <%= form.number_field :custom_hourly_rate, step: 0.01, min: 0, 
+                placeholder: "Ex: 50.00",
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          </div>
+
+          <div>
+            <%= form.label :package_value, "Valor do Pacote (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+            <%= form.number_field :package_value, step: 0.01, min: 0, 
+                placeholder: "Ex: 200.00",
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          </div>
+
+          <div>
+            <%= form.label :package_hours, "Horas do Pacote", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+            <%= form.number_field :package_hours, step: 0.5, min: 0, 
+                placeholder: "Ex: 4.0",
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-5-00 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="mb-4">
-      <%= form.label :plan_type, "Tipo de Plano", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-      <%= form.select :plan_type, Customer.plan_types.keys.map { |plan_type| [plan_type.humanize, plan_type] }, {}, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-gray-100" %>
-    </div>
+    <!-- Action Buttons -->
+    <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex space-x-4">
+        <%= link_to "Cancelar", customer.persisted? ? customer_path(customer) : customers_path, 
+            class: "px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-dark-bg-primary transition-colors" %>
+        
+        <% if customer.persisted? %>
+          <%= link_to "📊 Histórico de Pagamentos", payment_history_customer_payments_path(customer), 
+              class: "px-4 py-2 border border-blue-300 dark:border-blue-700 rounded-md text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors" %>
+        <% end %>
+      </div>
 
-    <div class="flex justify-end mt-6">
-      <%= link_to "Cancelar", customers_path, class: "mr-2 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-dark-bg-tertiary hover:bg-gray-50 dark:hover:bg-dark-bg-primary" %>
-      <%= form.submit customer.new_record? ? "Criar Cliente" : "Atualizar Cliente", class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
+      <div class="flex space-x-3">
+        <%= form.submit customer.new_record? ? "👤 Criar Cliente" : "✏️ Atualizar Cliente", 
+            class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800 transition-colors" %>
+      </div>
     </div>
   <% end %>
 </div>
+
+<script>
+  // Customer form controller
+  document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.getElementById('customer_status_select');
+    const cancellationField = document.getElementById('cancellation_reason_field');
+    
+    function toggleCancellationField() {
+      if (statusSelect.value === 'inactive') {
+        cancellationField.classList.remove('hidden');
+        cancellationField.querySelector('textarea').required = true;
+      } else {
+        cancellationField.classList.add('hidden');
+        cancellationField.querySelector('textarea').required = false;
+      }
+    }
+    
+    // Initial state
+    toggleCancellationField();
+    
+    // Listen for changes
+    statusSelect.addEventListener('change', toggleCancellationField);
+  });
+</script>

@@ -1,160 +1,160 @@
-<div class="container mx-auto px-4">
-  <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Novo Compromisso</h1>
+<div class="<%= appointment.persisted? ? '' : 'container mx-auto px-4' %>">
+  <% unless appointment.persisted? %>
+    <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Novo Compromisso</h1>
+  <% end %>
 
-  <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow p-6">
-    <%= form_with(model: [@customer, appointment], local: true, data: { controller: "appointment-recurring" }) do |form| %>
-      <% if appointment.errors.any? %>
-        <div class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
-          <h2 class="text-lg font-medium"><%= pluralize(appointment.errors.count, "erro") %> impediram que este compromisso fosse salvo:</h2>
-          <ul class="list-disc pl-5 mt-2">
-            <% appointment.errors.full_messages.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
-      <% end %>
-
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <% unless @customer %>
-          <div>
-            <%= form.label :customer_id, "Cliente", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-            <%= form.collection_select :customer_id, current_user.customers.active, :id, :name, 
-                { prompt: "Selecione um cliente" }, 
-                { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" } %>
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+        Detalhes do Compromisso
+      </h3>
+    </div>
+    
+    <div class="px-6 py-4">
+      <%= form_with model: appointment, local: true, data: { controller: "appointment-recurring", turbo: false } do |form| %>
+        <% if appointment.errors.any? %>
+          <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+                  Encontramos alguns erros:
+                </h3>
+                <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                  <ul class="list-disc list-inside space-y-1">
+                    <% appointment.errors.full_messages.each do |message| %>
+                      <li><%= message %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         <% end %>
 
-        <div>
-          <%= form.label :scheduled_at, "Data e Hora", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%= form.datetime_local_field :scheduled_at, 
-              value: appointment.scheduled_at&.strftime("%Y-%m-%dT%H:%M"),
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
-        </div>
-
-        <div>
-          <%= form.label :duration, "Duração (horas)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%= form.number_field :duration, 
-              step: 0.5, 
-              min: 0.5, 
-              value: appointment.duration || 1,
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
-        </div>
-
-        <div>
-          <%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-          <%= form.select :status, 
-              options_for_select([
-                ['Agendado', 'scheduled'],
-                ['Concluído', 'completed'],
-                ['Cancelado', 'cancelled'],
-                ['Não compareceu', 'no_show']
-              ], appointment.status), 
-              {}, 
-              { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" } %>
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <%= form.label :notes, "Observações", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-        <%= form.text_area :notes, 
-            rows: 3,
-            class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
-      </div>
-
-      <!-- Recurring Appointment Options -->
-      <div class="mt-6">
-        <div class="flex items-center">
-          <%= check_box_tag "is_recurring", "1", false, 
-              id: "is_recurring",
-              data: { 
-                appointment_recurring_target: "recurringCheckbox",
-                action: "change->appointment-recurring#toggleRecurring"
-              },
-              class: "rounded border-gray-300 dark:border-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %>
-          <label for="is_recurring" class="ml-2 text-sm text-gray-700 dark:text-gray-200">
-            🔄 Compromisso recorrente
-          </label>
-        </div>
-      </div>
-
-      <div data-appointment-recurring-target="recurringOptions" class="hidden mt-4">
-        <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-          <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-3">Configurações de Recorrência</h3>
-          
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Repetir em quais dias da semana?</label>
-            <div class="grid grid-cols-4 gap-2">
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="1" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Segunda</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="2" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Terça</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="3" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Quarta</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="4" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Quinta</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="5" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sexta</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="6" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Sábado</span>
-              </label>
-              <label class="inline-flex items-center">
-                <input type="checkbox" name="recurring_days[]" value="0" class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">Domingo</span>
-              </label>
-            </div>
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <%= form.label :customer_id, "Cliente", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.collection_select :customer_id, @customers, :id, :name, 
+                { prompt: "Selecione um cliente" }, 
+                { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" } %>
           </div>
 
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Repetir até quando?</label>
-            <div class="space-y-2">
-              <label class="inline-flex items-center">
-                <input type="checkbox" 
-                       id="no_end_date" 
-                       name="no_end_date" 
-                       data-action="change->appointment-recurring#toggleEndDate"
-                       data-appointment-recurring-target="noEndDateCheckbox"
-                       class="h-4 w-4 text-indigo-600 dark:text-indigo-400 rounded">
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-200">♾️ Repetir indefinidamente</span>
-              </label>
-              <div>
-                <input type="date" 
-                       id="recurring_until" 
-                       name="recurring_until" 
-                       data-appointment-recurring-target="endDateField"
-                       class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                       min="<%= Date.tomorrow.strftime('%Y-%m-%d') %>">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Deixe em branco para repetir indefinidamente</p>
+          <div>
+            <%= form.label :scheduled_at, "Data e Hora", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.datetime_local_field :scheduled_at, 
+                value: appointment.scheduled_at&.strftime("%Y-%m-%dT%H:%M"),
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+          </div>
+
+          <div>
+            <%= form.label :duration, "Duração (horas)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.number_field :duration, 
+                step: 0.5, 
+                min: 0.5, 
+                value: appointment.duration || 1,
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+          </div>
+
+          <div>
+            <%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.select :status, 
+                options_for_select([
+                  ["Agendado", "scheduled"],
+                  ["Concluído", "completed"],
+                  ["Cancelado", "cancelled"],
+                  ["Não compareceu", "no_show"]
+                ], appointment.status), 
+                {},
+                { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" } %>
+          </div>
+
+          <div class="sm:col-span-2">
+            <%= form.label :notes, "Notas", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+            <%= form.text_area :notes, 
+                rows: 3,
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+          </div>
+
+          <!-- Recurring Options -->
+          <div class="sm:col-span-2">
+            <div class="relative flex items-start">
+              <div class="flex items-center h-5">
+                <%= check_box_tag :is_recurring, "1", false, 
+                    data: { action: "change->appointment-recurring#toggleRecurring" },
+                    class: "focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded" %>
+              </div>
+              <div class="ml-3 text-sm">
+                <%= label_tag :is_recurring, "Criar compromissos recorrentes", class: "font-medium text-gray-700 dark:text-gray-300" %>
+                <p class="text-gray-500 dark:text-gray-400">Criar vários compromissos com base em um padrão semanal</p>
               </div>
             </div>
           </div>
 
-          <div class="text-sm text-blue-600 dark:text-blue-300">
-            <p>💡 <strong>Dica:</strong> Isso criará múltiplos compromissos individuais baseados no padrão selecionado.</p>
-            <p>⚡ <strong>Limite:</strong> Máximo de 60 compromissos por vez. Padrão: 3 meses se indefinido.</p>
-            <p>🔄 <strong>Sincronização:</strong> Use o botão "Sincronizar" no calendário após criar os compromissos.</p>
+          <div data-appointment-recurring-target="options" class="hidden sm:col-span-2">
+            <div class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Repetir nos dias:
+                </label>
+                <div class="grid grid-cols-7 gap-2">
+                  <% [
+                    ["Dom", 0], ["Seg", 1], ["Ter", 2], ["Qua", 3], 
+                    ["Qui", 4], ["Sex", 5], ["Sáb", 6]
+                  ].each do |day_name, day_value| %>
+                    <label class="inline-flex items-center">
+                      <%= check_box_tag "recurring_days[]", day_value, false, 
+                          class: "rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" %>
+                      <span class="ml-1 text-sm text-gray-700 dark:text-gray-300"><%= day_name %></span>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Repetir até:
+                </label>
+                <div class="space-y-2">
+                  <label class="inline-flex items-center">
+                    <%= radio_button_tag :no_end_date, "0", true, 
+                        class: "form-radio text-indigo-600" %>
+                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Data específica:</span>
+                  </label>
+                  <%= date_field_tag :recurring_until, 
+                      (Date.current + 3.months).strftime("%Y-%m-%d"),
+                      class: "ml-6 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+                  
+                  <div>
+                    <label class="inline-flex items-center">
+                      <%= radio_button_tag :no_end_date, "1", false, 
+                          class: "form-radio text-indigo-600" %>
+                      <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Próximos 3 meses (padrão)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                <p class="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>💡 Dica:</strong> Para criar muitos compromissos de uma vez, considere usar a 
+                  <%= link_to "Criação em Lote", bulk_create_appointments_path, 
+                      class: "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 underline" %>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="flex justify-end mt-6 space-x-3">
-        <% if @customer %>
-          <%= link_to "Cancelar", customer_appointments_path(@customer), class: "px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" %>
-        <% else %>
+        <div class="flex justify-end mt-6 space-x-3">
           <%= link_to "Cancelar", appointments_path, class: "px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" %>
-        <% end %>
-        <%= form.submit "Salvar Compromisso", class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
-      </div>
-    <% end %>
+          <%= form.submit "Salvar Compromisso", class: "px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md dark:bg-indigo-700 dark:hover:bg-indigo-800" %>
+        </div>
+      <% end %>
+    </div>
   </div>
 </div>
