@@ -6,9 +6,25 @@ if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
   demo_user = User.find_or_create_by!(email: "demo@billbuddy.com") do |user|
     user.password = "demo123456"
     user.password_confirmation = "demo123456"
+    puts "🔐 Setting password for demo user..."
   end
 
-  puts "✅ Demo user created: demo@billbuddy.com / demo123456"
+  # Verify user creation and password
+  if demo_user.persisted?
+    puts "✅ Demo user created: #{demo_user.email}"
+    puts "🔑 Password hash present: #{demo_user.encrypted_password.present?}"
+
+    # Test password validation
+    if demo_user.valid_password?("demo123456")
+      puts "✅ Password validation working correctly"
+    else
+      puts "❌ Password validation failed - updating..."
+      demo_user.update!(password: "demo123456", password_confirmation: "demo123456")
+    end
+  else
+    puts "❌ Failed to create demo user: #{demo_user.errors.full_messages}"
+    raise "Demo user creation failed"
+  end
 
   # Create demo customers
   customers_data = [
