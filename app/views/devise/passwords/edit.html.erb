@@ -1,0 +1,115 @@
+<!-- Password Reset Edit Page -->
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-green-900 dark:to-emerald-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <!-- Logo and Header -->
+    <div class="text-center">
+      <div class="mx-auto h-16 w-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <i class="fas fa-shield-alt text-white text-2xl"></i>
+      </div>
+      <h2 class="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
+        Nova Senha
+      </h2>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        Defina uma nova senha segura para sua conta
+      </p>
+    </div>
+
+    <!-- Reset Form -->
+    <div class="bg-white dark:bg-gray-800 py-8 px-6 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700">
+      <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }, local: true, class: "space-y-6") do |f| %>
+        <%= f.hidden_field :reset_password_token %>
+
+        <!-- Error Messages -->
+        <% if resource.errors.any? %>
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+            <div class="flex">
+              <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-0.5"></i>
+              <div class="text-sm text-red-800 dark:text-red-200">
+                <p class="font-medium mb-2">Erro ao alterar senha:</p>
+                <ul class="list-disc list-inside space-y-1">
+                  <% resource.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        <% end %>
+        
+        <!-- New Password Field -->
+        <div>
+          <%= f.label :password, class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" do %>
+            <i class="fas fa-lock mr-2 text-gray-400"></i>
+            Nova Senha
+          <% end %>
+          <%= f.password_field :password, 
+              autofocus: true, 
+              autocomplete: "new-password",
+              class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ease-in-out",
+              placeholder: "Digite sua nova senha" %>
+        </div>
+
+        <!-- Confirm Password Field -->
+        <div>
+          <%= f.label :password_confirmation, class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" do %>
+            <i class="fas fa-lock mr-2 text-gray-400"></i>
+            Confirmar Nova Senha
+          <% end %>
+          <%= f.password_field :password_confirmation, 
+              autocomplete: "new-password",
+              class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ease-in-out",
+              placeholder: "Confirme sua nova senha" %>
+        </div>
+
+        <!-- Password Requirements -->
+        <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+          <div class="flex">
+            <i class="fas fa-shield-alt text-gray-400 mr-3 mt-0.5"></i>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              <p class="font-medium mb-2">Requisitos da senha:</p>
+              <ul class="space-y-1 text-xs">
+                <li>• Mínimo de 6 caracteres</li>
+                <li>• Use letras, números e símbolos</li>
+                <li>• Evite senhas óbvias como "123456"</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div>
+          <%= f.submit "Alterar senha", class: "w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 ease-in-out transform hover:scale-105" %>
+        </div>
+      <% end %>
+
+      <!-- Back to Login -->
+      <div class="mt-6 text-center">
+        <%= link_to new_session_path(resource_name), 
+            class: "inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors duration-200" do %>
+          <i class="fas fa-arrow-left mr-2"></i>
+          Voltar para o login
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <% if notice %>
+      <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+        <div class="flex">
+          <i class="fas fa-check-circle text-green-400 mr-3 mt-0.5"></i>
+          <div class="text-sm text-green-800 dark:text-green-200">
+            <p class="font-medium mb-1">Senha alterada com sucesso!</p>
+            <p class="text-xs">Você já está logado e pode usar o sistema.</p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Footer -->
+    <div class="text-center">
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        © <%= Date.current.year %> BillBuddy. Sistema de gestão para professores.
+      </p>
+    </div>
+  </div>
+</div>

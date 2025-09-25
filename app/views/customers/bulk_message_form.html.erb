@@ -70,7 +70,7 @@
       <div class="p-6">
                  <%= form_tag send_bulk_message_customers_path, method: :post, 
              class: "space-y-6", 
-             data: { controller: "bulk-message-form" } do %>
+             data: { controller: "bulk-operations", bulk_operations_type_value: "messages" } do %>
           
           <!-- Message Type -->
           <div>
@@ -81,7 +81,7 @@
               <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                 <%= radio_button_tag :message_type, 'custom', true, 
                     class: "text-blue-600 focus:ring-blue-500 mr-3",
-                    data: { action: "change->bulk-message-form#messageTypeChanged" } %>
+                    data: { action: "change->bulk-operations#messageTypeChanged" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Mensagem Personalizada</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400">Escreva sua própria mensagem</div>
@@ -91,7 +91,7 @@
               <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                 <%= radio_button_tag :message_type, 'payment_reminder', false, 
                     class: "text-blue-600 focus:ring-blue-500 mr-3",
-                    data: { action: "change->bulk-message-form#messageTypeChanged" } %>
+                    data: { action: "change->bulk-operations#messageTypeChanged" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Lembrete de Pagamento</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400">Cobrança ou lembrete</div>
@@ -101,7 +101,7 @@
               <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-900/20">
                 <%= radio_button_tag :message_type, 'general_announcement', false, 
                     class: "text-blue-600 focus:ring-blue-500 mr-3",
-                    data: { action: "change->bulk-message-form#messageTypeChanged" } %>
+                    data: { action: "change->bulk-operations#messageTypeChanged" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Comunicado Geral</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400">Notícias ou avisos</div>
@@ -119,7 +119,7 @@
               <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
                 <%= radio_button_tag :target_audience, 'all', true, 
                     class: "text-green-600 focus:ring-green-500 mr-3",
-                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                    data: { action: "change->bulk-operations#toggleCustomerList" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Todos</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400"><%= @customers_count %> clientes</div>
@@ -129,7 +129,7 @@
               <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
                 <%= radio_button_tag :target_audience, 'active', false, 
                     class: "text-green-600 focus:ring-green-500 mr-3",
-                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                    data: { action: "change->bulk-operations#toggleCustomerList" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Apenas Ativos</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400"><%= @active_customers_count %> clientes</div>
@@ -139,7 +139,7 @@
               <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
                 <%= radio_button_tag :target_audience, 'credit', false, 
                     class: "text-green-600 focus:ring-green-500 mr-3",
-                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                    data: { action: "change->bulk-operations#toggleCustomerList" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Plano Créditos</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400"><%= @credit_customers_count %> clientes</div>
@@ -149,7 +149,7 @@
               <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
                 <%= radio_button_tag :target_audience, 'subscription', false, 
                     class: "text-green-600 focus:ring-green-500 mr-3",
-                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                    data: { action: "change->bulk-operations#toggleCustomerList" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Plano Assinatura</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400"><%= @subscription_customers_count %> clientes</div>
@@ -159,7 +159,7 @@
               <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50 dark:has-[:checked]:bg-purple-900/20">
                 <%= radio_button_tag :target_audience, 'specific', false, 
                     class: "text-purple-600 focus:ring-purple-500 mr-3",
-                    data: { action: "change->bulk-message-form#toggleCustomerList" } %>
+                    data: { action: "change->bulk-operations#toggleCustomerList" } %>
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Clientes Específicos</div>
                   <div class="text-sm text-gray-500 dark:text-gray-400">Escolher da lista</div>
@@ -168,21 +168,21 @@
             </div>
             
             <!-- Specific Customers Selection -->
-            <div data-bulk-message-form-target="specificCustomersSection" class="hidden mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
+            <div data-bulk-operations-target="specificCustomersSection" class="hidden mt-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
               <div class="flex justify-between items-center mb-3">
                 <h4 class="text-sm font-medium text-purple-800 dark:text-purple-200">
                   <i class="fas fa-user-check mr-2"></i>Selecionar Clientes
                 </h4>
                 <div class="flex space-x-2">
                   <button type="button" 
-                          data-bulk-message-form-target="selectAllBtn"
-                          data-action="click->bulk-message-form#selectAllCustomers"
+                          data-bulk-operations-target="selectAllBtn"
+                          data-action="click->bulk-operations#selectAllCustomers"
                           class="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
                     Selecionar Todos
                   </button>
                   <button type="button" 
-                          data-bulk-message-form-target="clearAllBtn"
-                          data-action="click->bulk-message-form#clearAllCustomers"
+                          data-bulk-operations-target="clearAllBtn"
+                          data-action="click->bulk-operations#clearAllCustomers"
                           class="text-xs px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
                     Limpar Todos
                   </button>
@@ -190,7 +190,7 @@
               </div>
               
               <div id="selected-customers-count" class="text-sm text-purple-700 dark:text-purple-300 mb-3">
-                <span data-bulk-message-form-target="selectedCount">0</span> cliente(s) selecionado(s)
+                <span data-bulk-operations-target="selectedCount">0</span> cliente(s) selecionado(s)
               </div>
               
               <div class="max-h-60 overflow-y-auto border border-purple-200 dark:border-purple-700 rounded bg-white dark:bg-gray-800">
@@ -200,8 +200,8 @@
                       <%= check_box_tag "selected_customer_ids[]", customer.id, false, 
                           class: "text-purple-600 focus:ring-purple-500 mr-2 rounded",
                           data: { 
-                            bulk_message_form_target: "customerCheckbox",
-                            action: "change->bulk-message-form#customerCheckboxChanged",
+                            bulk_operations_target: "customerCheckbox",
+                            action: "change->bulk-operations#customerCheckboxChanged",
                             customer_name: customer.name 
                           } %>
                       <div class="min-w-0 flex-1">
@@ -236,8 +236,8 @@
                 placeholder: "Digite sua mensagem aqui...\n\nDica: Use {{nome}} para incluir o nome do cliente automaticamente.",
                 class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white",
                 data: { 
-                  bulk_message_form_target: "messageField",
-                  action: "input->bulk-message-form#updatePreview"
+                  bulk_operations_target: "messageField",
+                  action: "input->bulk-operations#updatePreview"
                 } %>
             <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
               <i class="fas fa-info-circle mr-1 text-blue-500"></i>
@@ -250,7 +250,7 @@
             <h4 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               <i class="fas fa-eye mr-2"></i>Preview da Mensagem
             </h4>
-            <div data-bulk-message-form-target="messagePreview" class="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div data-bulk-operations-target="messagePreview" class="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-600">
               <div class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line bg-white dark:bg-gray-800 p-4 rounded border border-gray-200 dark:border-gray-600">
                 <em>A preview da mensagem aparecerá aqui conforme você digita...</em>
               </div>

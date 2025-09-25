@@ -43,8 +43,9 @@
              id="dateSelector" 
              value="<%= @selected_date.strftime('%Y-%m-%d') %>"
              class="text-sm rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-             data-controller="date-selector"
-             data-action="change->date-selector#navigate">
+             data-controller="calendar"
+             data-calendar-type-value="dateSelector"
+             data-action="change->calendar#navigate">
     </div>
   </div>
 <% end %> 

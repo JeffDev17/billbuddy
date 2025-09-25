@@ -1,9 +1,54 @@
 <div class="mb-8">
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-semibold text-gray-900 dark:text-dark-text-primary"><%= @customer.name %></h2>
-    <div>
-      <%= link_to "Editar", edit_customer_path(@customer), class: "px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800 mr-2" %>
-      <%= link_to "Voltar", customers_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-purple-50 dark:bg-slate-700 dark:hover:bg-slate-600" %>
+    <!-- Customer Name and Navigation -->
+    <div class="flex items-center space-x-4">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-dark-text-primary">
+        <%= @customer.name %>
+        <% if @customer.status == 'active' %>
+          <span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-full">Ativo</span>
+        <% elsif @customer.status == 'on_hold' %>
+          <span class="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">Em Pausa</span>
+        <% else %>
+          <span class="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 rounded-full">Inativo</span>
+        <% end %>
+      </h2>
+      
+      <!-- Customer Navigation -->
+      <div class="flex items-center space-x-2">
+        <% if @prev_customer %>
+          <%= link_to customer_path(@prev_customer), 
+              class: "p-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 rounded-md transition-colors",
+              title: "Cliente anterior: #{@prev_customer.name}" do %>
+            ← Anterior
+          <% end %>
+        <% else %>
+          <span class="p-2 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-md">
+            ← Anterior
+          </span>
+        <% end %>
+        
+        <span class="text-sm text-gray-500 dark:text-gray-400 px-2">
+          <%= @ordered_customers.pluck(:id).index(@customer.id) + 1 %> de <%= @ordered_customers.count %>
+        </span>
+        
+        <% if @next_customer %>
+          <%= link_to customer_path(@next_customer), 
+              class: "p-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 rounded-md transition-colors",
+              title: "Próximo cliente: #{@next_customer.name}" do %>
+            Próximo →
+          <% end %>
+        <% else %>
+          <span class="p-2 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 rounded-md">
+            Próximo →
+          </span>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center space-x-2">
+      <%= link_to "Editar", edit_customer_path(@customer), class: "px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 dark:bg-purple-700 dark:hover:bg-purple-800" %>
+      <%= link_to "Lista", customers_path, class: "px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-slate-700 dark:hover:bg-slate-600" %>
     </div>
   </div>
 
@@ -48,18 +93,18 @@
       </div>
 
       <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <!-- Valores do Pacote Manual -->
-        <% if @customer.package_value.present? && @customer.package_hours.present? %>
+        <!-- Valores Mensais -->
+        <% if @customer.monthly_amount.present? && @customer.monthly_hours.present? %>
           <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">📦 Pacote Manual</p>
+            <p class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">📦 Valores Mensais</p>
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span class="text-gray-600 dark:text-gray-400">Valor Total:</span>
-                <strong class="text-blue-800 dark:text-blue-200">R$ <%= number_with_precision(@customer.package_value, precision: 2) %></strong>
+                <span class="text-gray-600 dark:text-gray-400">Valor Mensal:</span>
+                <strong class="text-blue-800 dark:text-blue-200">R$ <%= number_with_precision(@customer.monthly_amount, precision: 2) %></strong>
               </div>
               <div>
-                <span class="text-gray-600 dark:text-gray-400">Total de Horas:</span>
-                <strong class="text-blue-800 dark:text-blue-200"><%= @customer.package_hours %> horas</strong>
+                <span class="text-gray-600 dark:text-gray-400">Horas Mensais:</span>
+                <strong class="text-blue-800 dark:text-blue-200"><%= @customer.monthly_hours %> horas</strong>
               </div>
             </div>
           </div>
@@ -72,7 +117,7 @@
             <p class="text-lg font-semibold text-gray-900 dark:text-dark-text-primary">
               R$ <%= number_with_precision(@customer.package_total_value, precision: 2) %><%= @customer.subscription? ? "/mês" : "" %>
             </p>
-            <% if @customer.package_value.present? %>
+            <% if @customer.monthly_amount.present? %>
               <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                 ✏️ Manual
               </span>
@@ -93,7 +138,7 @@
           <p class="text-sm text-gray-500 dark:text-dark-text-secondary">Preço por Hora (aulas)</p>
           <p class="text-sm text-gray-700 dark:text-gray-300">
             R$ <%= number_with_precision(@customer.effective_hourly_rate, precision: 2) %>
-            <% if @customer.package_value.present? && @customer.package_hours.present? %>
+            <% if @customer.monthly_amount.present? && @customer.monthly_hours.present? %>
               <span class="text-xs text-gray-500 dark:text-gray-400">(calculado automaticamente)</span>
             <% end %>
           </p>
@@ -101,11 +146,39 @@
         
         <% if @customer.has_custom_pricing? %>
           <p class="text-xs text-gray-500 dark:text-dark-text-secondary mt-2">Este cliente possui um preço personalizado por hora que sobrescreve o cálculo do pacote.</p>
-        <% elsif @customer.package_value.present? %>
-          <p class="text-xs text-gray-500 dark:text-dark-text-secondary mt-2">Preço por hora calculado automaticamente com base no pacote manual.</p>
+        <% elsif @customer.monthly_amount.present? %>
+          <p class="text-xs text-gray-500 dark:text-dark-text-secondary mt-2">Preço por hora calculado automaticamente com base nos valores mensais.</p>
         <% end %>
       </div>
     </div>
+
+    <!-- Aulas Pendentes de Reagendamento - Para todos os tipos de cliente -->
+    <% if @pending_reschedule_count > 0 %>
+      <div class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow mb-6">
+        <div class="p-3 bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-lg">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-orange-600 dark:text-orange-400 text-lg">📅</span>
+              <div>
+                <p class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                  Aulas para Reagendamento
+                </p>
+                <p class="text-xs text-orange-600 dark:text-orange-400">
+                  <%= @pending_reschedule_count %> 
+                  <%= @pending_reschedule_count == 1 ? 'aula disponível' : 'aulas disponíveis' %> para reagendar
+                </p>
+              </div>
+            </div>
+            <div>
+              <%= link_to appointments_path(customer_id: @customer.id, status: 'cancelled', cancellation_type: 'pending_reschedule'),
+                  class: "px-3 py-1 bg-orange-600 hover:bg-orange-700 text-white text-xs rounded transition-colors" do %>
+                Ver Aulas
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
 
     <div class="bg-white dark:bg-dark-bg-secondary p-6 rounded-lg shadow">
       <% if @customer.credit? %>
@@ -122,7 +195,16 @@
             <div class="mt-2 space-y-3">
               <% @active_credits.each do |credit| %>
                 <div class="p-3 bg-gray-50 dark:bg-dark-bg-tertiary rounded">
-                  <p class="text-gray-900 dark:text-dark-text-primary"><strong><%= credit.service_package.name %></strong>: <%= credit.remaining_hours %> horas</p>
+                  <div class="flex items-center">
+                    <p class="text-gray-900 dark:text-dark-text-primary flex-1">
+                      <strong><%= credit.package_name %></strong>: <%= credit.remaining_hours %> horas
+                    </p>
+                    <% if credit.custom_credit? %>
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 ml-2">
+                        ⚡ Personalizado
+                      </span>
+                    <% end %>
+                  </div>
                   <p class="text-xs text-gray-500 dark:text-dark-text-secondary">Comprado em <%= credit.purchase_date.strftime("%d/%m/%Y") %></p>
                 </div>
               <% end %>
@@ -216,6 +298,128 @@
           <% end %>
         </div>
       <% end %>
+    </div>
+  </div>
+
+  <!-- Customer Schedule Section -->
+  <div class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+          🗓️ Horários Regulares
+        </h3>
+        <button onclick="openScheduleModal()" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors duration-200">
+          ➕ Gerenciar Horários
+        </button>
+      </div>
+    </div>
+    
+    <div class="px-6 py-4">
+      <% if @customer.has_regular_schedule? %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <% @customer.active_schedules.each do |schedule| %>
+            <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-sm font-medium text-purple-800 dark:text-purple-200">
+                  <%= schedule.day_name %>
+                </div>
+                <button onclick="removeSchedule(<%= schedule.id %>)" class="text-red-500 hover:text-red-700 text-xs">
+                  ✕
+                </button>
+              </div>
+              <div class="text-lg font-bold text-purple-700 dark:text-purple-300">
+                <%= schedule.formatted_time %>
+              </div>
+              <div class="text-xs text-purple-600 dark:text-purple-400">
+                <%= schedule.duration %>h de duração
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <div class="text-4xl mb-2">📅</div>
+          <div class="text-lg font-medium mb-2">Nenhum horário regular definido</div>
+          <div class="text-sm mb-4">Defina os horários regulares deste cliente para facilitar a geração automática de agendamentos</div>
+          <button onclick="openScheduleModal()" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors duration-200">
+            Definir Horários
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Schedule Management Modal -->
+  <div id="scheduleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-gray-900 dark:bg-opacity-70 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white dark:bg-slate-800">
+      <div class="mt-3">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">Gerenciar Horários de <%= @customer.name %></h3>
+        
+        <!-- Current Schedules -->
+        <div class="mb-6">
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Horários Atuais:</h4>
+          <div id="currentSchedules" class="space-y-2">
+            <% @customer.active_schedules.each do |schedule| %>
+              <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg" data-schedule-id="<%= schedule.id %>">
+                <span class="text-sm text-gray-900 dark:text-gray-100">
+                  <%= schedule.formatted_schedule %>
+                </span>
+                <button onclick="removeSchedule(<%= schedule.id %>)" class="text-red-500 hover:text-red-700 text-sm">
+                  Remover
+                </button>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        
+        <!-- Add New Schedule Form -->
+        <div class="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Adicionar Novo Horário:</h4>
+          <form id="scheduleForm" class="space-y-4">
+            <input type="hidden" name="customer_id" value="<%= @customer.id %>">
+            
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dia da Semana</label>
+                <select name="day_of_week" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                  <option value="">Selecione...</option>
+                  <% CustomerSchedule::DAYS_OF_WEEK.each do |value, name| %>
+                    <option value="<%= value %>"><%= name %></option>
+                  <% end %>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Horário</label>
+                <input type="time" name="start_time" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+              </div>
+              
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Duração (horas)</label>
+                <select name="duration" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                  <option value="">Selecione...</option>
+                  <option value="0.5">30 minutos</option>
+                  <option value="1">1 hora</option>
+                  <option value="1.5">1.5 horas</option>
+                  <option value="2">2 horas</option>
+                  <option value="2.5">2.5 horas</option>
+                  <option value="3">3 horas</option>
+                </select>
+              </div>
+            </div>
+            
+            <button type="submit" class="w-full px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700">
+              Adicionar Horário
+            </button>
+          </form>
+        </div>
+        
+        <div class="flex justify-end space-x-2">
+          <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700">
+            Fechar
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -913,4 +1117,73 @@
 
   </div>
 </div>
+
+<script>
+  function openScheduleModal() {
+    document.getElementById('scheduleModal').classList.remove('hidden');
+  }
+
+  function closeScheduleModal() {
+    document.getElementById('scheduleModal').classList.add('hidden');
+  }
+
+  function removeSchedule(scheduleId) {
+    if (confirm('Tem certeza que deseja remover este horário?')) {
+      fetch(`/customer_schedules/${scheduleId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Remove from both modal and main view
+          const scheduleElement = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+          if (scheduleElement) scheduleElement.remove();
+          
+          // Reload page to refresh the schedule display
+          window.location.reload();
+        } else {
+          alert('Erro ao remover horário: ' + data.error);
+        }
+      })
+      .catch(error => {
+        alert('Erro ao remover horário');
+        console.error('Error:', error);
+      });
+    }
+  }
+
+  document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('/customer_schedules', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Reset form
+        this.reset();
+        
+        // Reload page to refresh the schedule display
+        window.location.reload();
+      } else {
+        alert('Erro ao adicionar horário: ' + data.error);
+      }
+    })
+    .catch(error => {
+      alert('Erro ao adicionar horário');
+      console.error('Error:', error);
+    });
+  });
+</script>
 

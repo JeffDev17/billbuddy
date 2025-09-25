@@ -187,9 +187,9 @@ class AppointmentMetricsService
   end
 
   def calculate_earnings_for_appointments(appointments_relation)
-    # Calculate earnings using customer's effective hourly rate (custom pricing or service package rate)
+    # Calculate earnings using stored appointment rates (preserves historical accuracy)
     appointments_relation.includes(:customer).sum do |appointment|
-      appointment.duration * appointment.customer.effective_hourly_rate
+      appointment.duration * appointment.effective_appointment_rate
     end
   end
 

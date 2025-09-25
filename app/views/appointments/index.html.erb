@@ -6,6 +6,10 @@
           class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" do %>
         📅 Criação em Lote
       <% end %>
+      <%= link_to manage_auto_generation_appointments_path,
+          class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:focus:ring-purple-400" do %>
+        🧠 Geração Inteligente
+      <% end %>
       <%= link_to new_appointment_path, 
           class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-indigo-400" do %>
         + Novo Compromisso
@@ -33,10 +37,6 @@
                 class: "bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm" do %>
               🔄 Revisar Todos
             <% end %>
-            <%= link_to manage_auto_generation_appointments_path,
-                class: "bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm" do %>
-              🤖 Auto-Geração
-            <% end %>
             
             <!-- Quick sync options (smaller buttons) -->
             <div class="border-l border-blue-300 pl-3 ml-3 flex space-x-2">
@@ -53,62 +53,112 @@
     </div>
   <% end %>
 
-  <!-- Filters Section -->
+  <!-- Month Navigation Section -->
   <div class="mb-6">
-    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
-              <div class="p-4 border-b border-gray-200 dark:border-slate-700">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
-            🔍 Filtros de Busca
-          </h3>
-          <button type="button" 
-                  onclick="document.getElementById('filters-form').classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-180')"
-                  class="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
-            <span class="mr-1">Mostrar/Ocultar</span>
-            <svg class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </button>
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+          📅 Navegação por Mês
+        </h3>
+        <div class="flex items-center space-x-2">
+          <% current_date = params[:month].present? && params[:year].present? ? Date.new(params[:year].to_i, params[:month].to_i, 1) : Date.current %>
+          <% prev_month = current_date.prev_month %>
+          <% next_month = current_date.next_month %>
+          
+          <%= link_to appointments_path(month: prev_month.month, year: prev_month.year, **@current_filters.except(:month, :year)),
+              class: "inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" do %>
+            ← <%= prev_month.strftime('%b %Y') %>
+          <% end %>
+          
+          <span class="px-4 py-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <%= current_date.strftime('%B %Y') %>
+          </span>
+          
+          <%= link_to appointments_path(month: next_month.month, year: next_month.year, **@current_filters.except(:month, :year)),
+              class: "inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" do %>
+            <%= next_month.strftime('%b %Y') %> →
+          <% end %>
         </div>
       </div>
       
-      <div id="filters-form" class="p-4 <%= @current_filters.values.any?(&:present?) ? '' : 'hidden' %>">
+      <!-- Quick Month Jumps -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+        <%= link_to "Este Mês", appointments_path(month: Date.current.month, year: Date.current.year), 
+            class: "px-3 py-2 text-sm rounded-md border #{current_date.month == Date.current.month && current_date.year == Date.current.year ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+        
+        <% last_month = Date.current.prev_month %>
+        <%= link_to "Mês Passado", appointments_path(month: last_month.month, year: last_month.year), 
+            class: "px-3 py-2 text-sm rounded-md border #{current_date.month == last_month.month && current_date.year == last_month.year ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+        
+        <% next_month_jump = Date.current.next_month %>
+        <%= link_to "Próximo Mês", appointments_path(month: next_month_jump.month, year: next_month_jump.year), 
+            class: "px-3 py-2 text-sm rounded-md border #{current_date.month == next_month_jump.month && current_date.year == next_month_jump.year ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+        
+        <%= link_to "Todos", appointments_path, 
+            class: "px-3 py-2 text-sm rounded-md border #{!params[:month] && !params[:year] ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="mb-6">
+    <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700">
+      <div class="p-4 border-b border-gray-200 dark:border-slate-700">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+          🔍 Filtros de Busca
+        </h3>
+      </div>
+      
+      <div class="p-4">
         <%= form_with url: appointments_path, method: :get, local: true, data: { controller: "appointment-filters", appointment_filters_target: "form" }, class: "space-y-4" do |form| %>
           
-                     <!-- Quick Date Filters -->
+          <!-- Hidden month/year fields to preserve navigation state -->
+          <%= form.hidden_field :month, value: params[:month] if params[:month].present? %>
+          <%= form.hidden_field :year, value: params[:year] if params[:year].present? %>
+          
+          <!-- Sort Order Controls -->
           <div class="mb-4">
             <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros Rápidos:</span>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ordenação:</span>
               <div class="flex space-x-2">
-                <%= link_to appointments_path(sort_order: 'earliest_first', **@current_filters.except(:sort_order)), 
-                    class: "text-xs px-2 py-1 rounded-md border #{@current_filters[:sort_order] == 'earliest_first' || @current_filters[:sort_order].blank? ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}" do %>
+                <% month_year_params = { month: params[:month], year: params[:year] }.compact %>
+                <%= link_to appointments_path(sort_order: 'scheduled_first', **@current_filters.except(:sort_order), **month_year_params), 
+                    class: "text-xs px-2 py-1 rounded-md border #{@current_filters[:sort_order] == 'scheduled_first' || @current_filters[:sort_order].blank? ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}" do %>
+                  📋 Agendados Primeiro
+                <% end %>
+                <%= link_to appointments_path(sort_order: 'earliest_first', **@current_filters.except(:sort_order), **month_year_params), 
+                    class: "text-xs px-2 py-1 rounded-md border #{@current_filters[:sort_order] == 'earliest_first' ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}" do %>
                   ⬆️ Antigos → Recentes
                 <% end %>
-                <%= link_to appointments_path(sort_order: 'latest_first', **@current_filters.except(:sort_order)), 
+                <%= link_to appointments_path(sort_order: 'latest_first', **@current_filters.except(:sort_order), **month_year_params), 
                     class: "text-xs px-2 py-1 rounded-md border #{@current_filters[:sort_order] == 'latest_first' ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}" do %>
                   ⬇️ Recentes → Antigos
                 <% end %>
               </div>
             </div>
+          </div>
+          
+          <!-- Quick Date Filters within current month -->
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Filtros Rápidos:</span>
+            </div>
             
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-            <%= link_to "Hoje", appointments_path(start_date: Date.current, end_date: Date.current), 
+            <%= link_to "Hoje", appointments_path(start_date: Date.current, end_date: Date.current, **month_year_params), 
                 class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.to_s && @current_filters[:end_date] == Date.current.to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
             
-            <%= link_to "Esta Semana", appointments_path(start_date: Date.current.beginning_of_week, end_date: Date.current.end_of_week), 
+            <%= link_to "Esta Semana", appointments_path(start_date: Date.current.beginning_of_week, end_date: Date.current.end_of_week, **month_year_params), 
                 class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.beginning_of_week.to_s && @current_filters[:end_date] == Date.current.end_of_week.to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
             
-            <%= link_to "Este Mês", appointments_path(start_date: Date.current.beginning_of_month, end_date: Date.current.end_of_month), 
-                class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.beginning_of_month.to_s && @current_filters[:end_date] == Date.current.end_of_month.to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
-            
-            <%= link_to "Próximos 7 dias", appointments_path(start_date: Date.current, end_date: Date.current + 7.days), 
+            <%= link_to "Próximos 7 dias", appointments_path(start_date: Date.current, end_date: Date.current + 7.days, **month_year_params), 
                 class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.to_s && @current_filters[:end_date] == (Date.current + 7.days).to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
             
-            <%= link_to "Próximos 30 dias", appointments_path(start_date: Date.current, end_date: Date.current + 30.days), 
+            <%= link_to "Próximos 30 dias", appointments_path(start_date: Date.current, end_date: Date.current + 30.days, **month_year_params), 
                 class: "px-3 py-2 text-sm rounded-md border #{@current_filters[:start_date] == Date.current.to_s && @current_filters[:end_date] == (Date.current + 30.days).to_s ? 'bg-indigo-100 dark:bg-indigo-900 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}" %>
             
-                          <%= link_to "Limpar", appointments_path, 
-                  class: "px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400" %>
+            <%= link_to "Limpar Filtros", appointments_path(**month_year_params), 
+                class: "px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400" %>
             </div>
           </div>
 
@@ -209,11 +259,12 @@
               <%= form.label :sort_order, "Ordenar por", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
               <%= form.select :sort_order, 
                   options_for_select([
+                    ['📋 Agendados Primeiro (Recomendado)', 'scheduled_first'],
                     ['📅 Mais Antigos Primeiro', 'earliest_first'],
                     ['📅 Mais Recentes Primeiro', 'latest_first'],
                     ['👤 Nome do Cliente', 'customer_name'],
                     ['📊 Status', 'status']
-                  ], @current_filters[:sort_order] || 'earliest_first'),
+                  ], @current_filters[:sort_order] || 'scheduled_first'),
                   {},
                   { class: "w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100", 
                     data: { appointment_filters_target: "sortSelect" } } %>
@@ -261,6 +312,7 @@
                            🔍 "<%= value %>"
                          <% when :sort_order %>
                            <% sort_labels = {
+                             'scheduled_first' => '📋 Agendados Primeiro',
                              'latest_first' => '📅 Mais Recentes Primeiro',
                              'earliest_first' => '📅 Mais Antigos Primeiro', 
                              'customer_name' => '👤 Nome do Cliente',
@@ -291,7 +343,7 @@
       </svg>
     </button>
     
-    <div id="bulk-delete-section" class="hidden mt-2 bg-gray-50 dark:bg-slate-800 rounded-lg p-4" data-controller="bulk-delete">
+    <div id="bulk-delete-section" class="hidden mt-2 bg-gray-50 dark:bg-slate-800 rounded-lg p-4" data-controller="bulk-operations" data-bulk-operations-type-value="delete">
       <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
         🗑️ Deletar Compromissos por Cliente
       </h3>
@@ -305,8 +357,8 @@
               Selecionar Cliente
             </label>
             <select id="customer_select" 
-                    data-bulk-delete-target="customerSelect"
-                    data-action="change->bulk-delete#updateDeleteButton"
+                    data-bulk-operations-target="customerSelect"
+                    data-action="change->bulk-operations#updateDeleteButton"
                     class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100">
               <option value="">Selecione um cliente...</option>
               <% current_user.customers.joins(:appointments).distinct.order(:name).each do |customer| %>
@@ -320,8 +372,8 @@
           </div>
           <div>
             <button type="button" 
-                    data-bulk-delete-target="deleteButton"
-                    data-action="click->bulk-delete#confirmDelete"
+                    data-bulk-operations-target="deleteButton"
+                    data-action="click->bulk-operations#confirmDelete"
                     disabled
                     class="disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
               Deletar Todos
@@ -332,8 +384,8 @@
         <div class="flex items-center">
           <input type="checkbox" 
                  id="future_only_checkbox" 
-                 data-bulk-delete-target="futureOnlyCheckbox"
-                 data-action="change->bulk-delete#updateDeleteButton"
+                 data-bulk-operations-target="futureOnlyCheckbox"
+                 data-action="change->bulk-operations#updateDeleteButton"
                  class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
           <label for="future_only_checkbox" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
             🚀 Deletar apenas compromissos futuros (a partir de agora)

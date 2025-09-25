@@ -10,70 +10,51 @@ import "controllers"
 // Import scroll position preservation
 import "./scroll_position"
 
+// Import appointment modal functions
+import "./appointment_modals"
+
 // Configure Turbo
 Turbo.config.drive.progressBarDelay = 100
 Turbo.session.drive = true
 
-// TODO: Re-enable charts after fixing core functionality
-// import "chart.js"
-// import Chartkick from "chartkick"
+// Charts - loaded synchronously for better compatibility
+import "chart.js"
+import "chartjs-adapter-date-fns"
+import "chartkick"
 
 // Chart loading functionality - only for metrics page
-async function loadChartsIfNeeded() {
+function loadChartsIfNeeded() {
   // Check if we're on the metrics page
   const currentPath = window.location.pathname
   if (!currentPath.includes('/calendars/metrics')) {
     return
   }
 
-  // Show loading indicators
-  showChartLoadingIndicators()
-
   try {
-    // Load Chart.js first
-    console.log("Loading Chart.js...")
-    const chartModule = await import("chart.js")
-    const Chart = chartModule.default
+    console.log("Configuring charts for metrics page...")
     
-    if (!Chart) {
-      throw new Error("Chart.js failed to load properly")
+    // Charts are already imported synchronously, just verify they're available
+    if (typeof window.Chart === 'undefined') {
+      throw new Error("Chart.js not available")
     }
     
-    // Make Chart globally available for Chartkick
-    window.Chart = Chart
-    console.log("Chart.js loaded and made available globally")
-    
-    // Try to load date adapter
-    try {
-      await import("chartjs-adapter-date-fns")
-      console.log("Date adapter loaded successfully")
-    } catch (dateAdapterError) {
-      console.warn("Date adapter failed to load, some time-based charts may not work:", dateAdapterError)
+    if (typeof window.Chartkick === 'undefined') {
+      throw new Error("Chartkick not available") 
     }
     
-    // Now load Chartkick
-    console.log("Loading Chartkick...")
-    const chartkickModule = await import("chartkick")
-    const Chartkick = chartkickModule.default
-    
-    if (!Chartkick) {
-      throw new Error("Chartkick failed to load properly")
-    }
+    // Verify date adapter is available for time-based charts
+    console.log("Chart.js adapters available:", window.Chart._adapters || "Not available")
     
     // Configure Chartkick with Chart.js
-    Chartkick.use(Chart)
+    if (typeof window.Chartkick.use === 'function') {
+      window.Chartkick.use(window.Chart)
+      console.log("Chartkick configured with Chart.js successfully")
+    }
     
-    // Make Chartkick globally available
-    window.Chartkick = Chartkick
-    
-    console.log("Charts configured successfully for metrics page")
-    
-    // Hide loading indicators after a short delay to let charts render
-    setTimeout(hideChartLoadingIndicators, 1500)
+    console.log("Charts ready for metrics page")
     
   } catch (error) {
-    console.error("Failed to load charts:", error)
-    // Show error message instead of loading indicators
+    console.error("Failed to configure charts:", error)
     showChartErrorMessage()
   }
 }

@@ -325,16 +325,40 @@ class PaymentManagementService
   def calculate_monthly_totals(month_date)
     payments = payments_for_month(month_date).values.flatten
 
+    # Calculate expected amount based on actual payments or customer pricing
+    total_expected = calculate_total_expected_amount(month_date)
+    total_paid = payments.select(&:paid?).sum(&:amount)
+    total_cancelled = payments.select(&:cancelled?).sum(&:amount)
+    total_pending = payments.select { |p| p.pending? }.sum(&:amount)
+
     {
-      total_received: payments.select(&:paid?).sum(&:amount),
-      pending_amount: calculate_pending_amount(month_date),
-      cancelled_amount: payments.select(&:cancelled?).sum(&:amount)
+      total_expected: total_expected,
+      total_received: total_paid,
+      pending_amount: total_pending,
+      cancelled_amount: total_cancelled
     }
   end
 
   def calculate_pending_amount(month_date)
-    eligible_customers_for_month(month_date).sum { |customer| calculate_payment_amount(customer, month_date) } -
-      payments_for_month(month_date).values.flatten.sum(&:amount)
+    # Calculate based on actual pending payment records
+    payments_for_month(month_date).values.flatten.select(&:pending?).sum(&:amount)
+  end
+
+  private
+
+  def calculate_total_expected_amount(month_date)
+    total = 0
+    eligible_customers_for_month(month_date).each do |customer|
+      payments = payments_for_month(month_date)[customer.id]
+      if payments&.any?
+        # Use actual payment amount if exists
+        total += payments.first.amount
+      else
+        # Use calculated amount for customers without payments
+        total += calculate_payment_amount(customer, month_date)
+      end
+    end
+    total
   end
 
   def valid_status?(status)

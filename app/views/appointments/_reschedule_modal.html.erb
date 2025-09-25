@@ -1,0 +1,104 @@
+<div id="reschedule-modal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen px-4 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true"></div>
+    
+    <!-- Modal Content -->
+    <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="w-full">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4" id="modal-title">
+              Reagendar Compromisso - <%= @appointment.customer.name %>
+            </h3>
+            
+            <div class="mb-4 p-3 bg-orange-50 rounded-lg">
+              <p class="text-sm text-orange-800">
+                <strong>Compromisso Original:</strong> <%= @appointment.scheduled_at.strftime("%d/%m/%Y às %H:%M") %><br>
+                <strong>Duração:</strong> <%= @appointment.duration %>h<br>
+                <strong>Prazo para reagendar:</strong> <%= @appointment.reschedule_deadline.strftime("%d/%m/%Y") %>
+              </p>
+            </div>
+
+            <%= form_with url: reschedule_appointment_path(@appointment), method: :post, local: true, id: "reschedule-form" do |form| %>
+              
+              <!-- Nova Data -->
+              <div class="mb-4">
+                <%= form.label :reschedule_date, "Nova Data:", 
+                      class: "block text-sm font-medium text-gray-700 mb-2" %>
+                <%= form.date_field :reschedule_date, 
+                      min: Date.current,
+                      max: @appointment.reschedule_deadline.to_date,
+                      class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+                      required: true %>
+                <p class="text-xs text-gray-500 mt-1">Data limite: <%= @appointment.reschedule_deadline.strftime("%d/%m/%Y") %></p>
+              </div>
+
+              <!-- Novo Horário -->
+              <div class="mb-4">
+                <%= form.label :reschedule_time, "Novo Horário:", 
+                      class: "block text-sm font-medium text-gray-700 mb-2" %>
+                <%= form.time_field :reschedule_time, 
+                      value: @appointment.scheduled_at.strftime("%H:%M"),
+                      class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+                      required: true %>
+              </div>
+
+              <!-- Nova Duração (opcional) -->
+              <div class="mb-4">
+                <%= form.label :new_duration, "Nova Duração (opcional):", 
+                      class: "block text-sm font-medium text-gray-700 mb-2" %>
+                <%= form.number_field :new_duration, 
+                      value: @appointment.duration,
+                      step: 0.5,
+                      min: 0.5,
+                      class: "w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500",
+                      placeholder: "Ex: 1.5 para 1h30min" %>
+                <p class="text-xs text-gray-500 mt-1">Deixe em branco para manter <%= @appointment.duration %>h</p>
+              </div>
+
+              <!-- Botões -->
+              <div class="flex justify-end space-x-3 pt-4 border-t">
+                <button type="button" 
+                        onclick="closeRescheduleModal()" 
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  Cancelar
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                  Confirmar Reagendamento
+                </button>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openRescheduleModal(appointmentId) {
+  fetch(`/appointments/${appointmentId}/edit`)
+    .then(response => response.text())
+    .then(html => {
+      // Criar um modal simplificado para reagendamento
+      // Por agora, vamos redirecionar para a página de edição
+      window.location.href = `/appointments/${appointmentId}/edit`;
+    });
+}
+
+function closeRescheduleModal() {
+  const modal = document.getElementById('reschedule-modal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+// Fechar modal ao clicar fora
+document.addEventListener('click', function(event) {
+  const modal = document.getElementById('reschedule-modal');
+  if (modal && event.target === modal) {
+    closeRescheduleModal();
+  }
+});
+</script>

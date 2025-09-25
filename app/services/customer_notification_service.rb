@@ -19,7 +19,12 @@ class CustomerNotificationService
     validate_phone_presence!
 
     formatted_phone = PhoneFormatterService.format(@customer.phone)
-    PaymentReminderService.send_payment_reminder(@customer, formatted_phone)
+
+    # Build a standard payment reminder message
+    message = build_standard_payment_reminder_message
+
+    # Use WhatsappApiService directly to get proper error handling
+    WhatsappApiService.send_message(formatted_phone, message)
 
     success_result("Lembrete de pagamento enviado com sucesso!")
   rescue => e
@@ -55,6 +60,19 @@ class CustomerNotificationService
 
   def validate_message!(message)
     raise StandardError, "A mensagem é obrigatória" if message.blank?
+  end
+
+  def build_standard_payment_reminder_message
+    <<~MESSAGE
+      Olá #{@customer.name}!
+
+      Este é um lembrete de pagamento.
+
+      Por favor, entre em contato conosco para regularizar sua situação.
+
+      Att,
+      Equipe BillBuddy
+    MESSAGE
   end
 
   def build_payment_reminder_message(amount, custom_message = nil)

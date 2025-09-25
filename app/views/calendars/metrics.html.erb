@@ -6,13 +6,85 @@
     </div>
     
     <!-- Global Sensitive Data Toggle -->
-    <div data-controller="global-sensitive-data">
+    <div data-controller="sensitive-data" data-sensitive-data-type-value="global">
       <button type="button" 
-              data-action="click->global-sensitive-data#toggle"
+              data-action="click->sensitive-data#toggle"
               class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-        <span data-global-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
+        <span data-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
         <span>Mostrar Valores</span>
       </button>
+    </div>
+  </div>
+
+  <!-- Month/Year Selection -->
+  <div class="mb-8 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">📅 Período de Análise</h3>
+        <div class="text-sm text-gray-600 dark:text-gray-400">
+          Visualizando: <span class="font-semibold text-gray-900 dark:text-gray-100">
+            <%= Date.new(@selected_year, @selected_month, 1).strftime("%B de %Y") %>
+          </span>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <%= form_with url: metrics_calendars_path, method: :get, class: "flex items-center space-x-3", local: true do |form| %>
+          <div class="flex items-center space-x-2">
+            <label class="text-sm text-gray-600 dark:text-gray-400">Mês:</label>
+            <%= form.select :month, 
+                options_for_select(
+                  (1..12).map { |m| [Date::MONTHNAMES[m], m] },
+                  @selected_month
+                ),
+                {},
+                { class: "rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:border-indigo-500 focus:ring-indigo-500" } %>
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <label class="text-sm text-gray-600 dark:text-gray-400">Ano:</label>
+            <%= form.select :year, 
+                options_for_select(
+                  (2020..Date.current.year + 1).map { |y| [y, y] },
+                  @selected_year
+                ),
+                {},
+                { class: "rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm focus:border-indigo-500 focus:ring-indigo-500" } %>
+          </div>
+          
+          <%= form.submit "📊 Atualizar", 
+              class: "bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-md transition-colors duration-200" %>
+        <% end %>
+        
+        <!-- Quick navigation buttons -->
+        <div class="flex items-center space-x-1 border-l border-gray-300 dark:border-gray-600 pl-4">
+          <% prev_month = @selected_date.prev_month %>
+          <%= link_to metrics_calendars_path(month: prev_month.month, year: prev_month.year),
+              class: "p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors",
+              title: "Mês anterior" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+          <% end %>
+          
+          <%= link_to metrics_calendars_path,
+              class: "px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors",
+              title: "Mês atual" do %>
+            Hoje
+          <% end %>
+          
+          <% unless @selected_date >= Date.current.beginning_of_month %>
+            <% next_month = @selected_date.next_month %>
+            <%= link_to metrics_calendars_path(month: next_month.month, year: next_month.year),
+                class: "p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors",
+                title: "Próximo mês" do %>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -68,7 +140,7 @@
               </dd>
               <dt class="text-xs text-green-200 mt-1" data-controller="sensitive-data">
                 <span data-sensitive-data-target="content">
-                  Meta: R$ <%= @monthly_summary[:earnings][:projected] %>
+                  Total + Cancelamentos: R$ <%= @monthly_summary[:earnings][:total_with_cancellations] %>
                 </span>
               </dt>
             </dl>
@@ -183,29 +255,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Explanation Section -->
-  <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-8">
-    <div class="flex">
-      <div class="flex-shrink-0">
-        <span class="text-blue-500 text-lg">ℹ️</span>
-      </div>
-      <div class="ml-3">
-        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
-          Sobre as Taxas de Performance
-        </h3>
-        <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
-          <p><strong>Taxa de Realização:</strong> Percentual de aulas concluídas dentre as que já passaram da data agendada.</p>
-          <p><strong>Taxa de Cancelamento:</strong> Percentual de aulas canceladas dentre as que já passaram da data agendada.</p>
-          <p><strong>Ticket Médio:</strong> Valor médio ganho por aula concluída (duração × taxa horária do cliente).</p>
-          <p class="mt-1 text-xs">
-            📊 As taxas somam até 100% considerando apenas aulas que já passaram (concluídas + canceladas + faltas).
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Charts Section -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
     <!-- Appointment Status Distribution Chart -->
@@ -229,7 +278,8 @@
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
       <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📈 Tendência dos Últimos 6 Meses</h3>
       <div class="relative h-64">
-        <% if @monthly_trends.present? %>
+        <% if @monthly_trends.present? && @monthly_trends.any? %>
+          <!-- Debug: <%= @monthly_trends.inspect %> -->
           <%= line_chart @monthly_trends.map { |t| [t[:month_name], t[:completed]] },
               label: "Aulas Concluídas",
               colors: ["#3b82f6"],
@@ -251,7 +301,8 @@
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
       <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📅 Performance Semanal</h3>
       <div class="relative h-64">
-        <% if @weekly_performance.present? %>
+        <% if @weekly_performance.present? && @weekly_performance.any? %>
+          <!-- Debug: <%= @weekly_performance.inspect %> -->
           <%= column_chart @weekly_performance.map { |w| [w[:week_label], w[:completed]] },
               label: "Aulas Concluídas",
               colors: ["#059669"],
@@ -269,7 +320,7 @@
       <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">💰 Evolução do Faturamento</h3>
       <div class="relative h-64" data-controller="sensitive-data">
         <div data-sensitive-data-target="content">
-          <% if @monthly_trends.present? %>
+          <% if @monthly_trends.present? && @monthly_trends.any? %>
             <%= area_chart @monthly_trends.map { |t| [t[:month_name], t[:earnings]] },
                 prefix: "R$ ",
                 colors: ["#059669"],
@@ -323,6 +374,97 @@
             Dados não disponíveis
           </div>
         <% end %>
+      </div>
+    </div>
+    <!-- Weekly Revenue Chart -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">📊 Lucro Semanal do Mês</h3>
+      <div class="relative h-64" data-controller="sensitive-data">
+        <div data-sensitive-data-target="content">
+          <% if @weekly_revenue.present? && @weekly_revenue.any? %>
+            <%= column_chart @weekly_revenue.map { |w| [w[:week_label], w[:revenue]] },
+                prefix: "R$ ",
+                label: "Lucro Total",
+                colors: ["#7c3aed"],
+                height: "250px" %>
+          <% else %>
+            <div class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              Dados não disponíveis
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancellation Breakdown Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Cancellation Types Breakdown -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🔄 Tipos de Cancelamento</h3>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Pendente Reagendamento</span>
+          </div>
+          <span class="text-lg font-bold text-orange-600 dark:text-orange-400">
+            <%= @monthly_summary[:cancellations][:pending_reschedule] %>
+          </span>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-red-800 rounded-full mr-3"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Em Cima da Hora</span>
+          </div>
+          <span class="text-lg font-bold text-red-800 dark:text-red-300">
+            <%= @monthly_summary[:cancellations][:with_revenue] %>
+          </span>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div class="flex items-center">
+            <div class="w-3 h-3 bg-gray-500 rounded-full mr-3"></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Padrão</span>
+          </div>
+          <span class="text-lg font-bold text-gray-600 dark:text-gray-400">
+            <%= @monthly_summary[:cancellations][:standard] %>
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Revenue from Cancellations -->
+    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">💰 Receita de Cancelamentos</h3>
+      <div class="space-y-4" data-controller="sensitive-data">
+        <div data-sensitive-data-target="content">
+          <div class="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg">
+            <p class="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+              R$ <%= sprintf('%.2f', @monthly_summary[:earnings][:cancellation_revenue]) %>
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              Receita de cancelamentos em cima da hora
+            </p>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mt-4">
+            <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <p class="text-lg font-bold text-blue-600 dark:text-blue-400">
+                R$ <%= sprintf('%.2f', @monthly_summary[:earnings][:completed]) %>
+              </p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Aulas Concluídas</p>
+            </div>
+            
+            <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <p class="text-lg font-bold text-purple-600 dark:text-purple-400">
+                R$ <%= sprintf('%.2f', @monthly_summary[:earnings][:total_with_cancellations]) %>
+              </p>
+              <p class="text-xs text-gray-600 dark:text-gray-400">Total Geral</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

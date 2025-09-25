@@ -1,6 +1,7 @@
 <div class="container mx-auto px-4" 
-     data-controller="payment-status bulk-payment" 
-     data-bulk-payment-month-value="<%= @selected_month %>">
+     data-controller="payment-status bulk-operations" 
+     data-bulk-operations-type-value="payments"
+     data-bulk-operations-month-value="<%= @selected_month %>">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
       📋 Checklist de Pagamentos - <%= I18n.l(@month_date, format: "%B %Y").capitalize %>
@@ -8,11 +9,11 @@
     
     <div class="flex items-center space-x-4">
       <!-- Global Sensitive Data Toggle -->
-      <div data-controller="global-sensitive-data">
+      <div data-controller="sensitive-data" data-sensitive-data-type-value="global">
         <button type="button" 
-                data-action="click->global-sensitive-data#toggle"
+                data-action="click->sensitive-data#toggle"
                 class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-          <span data-global-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
+          <span data-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
           <span>Mostrar Valores</span>
         </button>
       </div>
@@ -165,17 +166,17 @@
           <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Lista de Clientes</h3>
           
           <!-- Bulk Actions - Show for all months now -->
-          <div data-bulk-payment-target="bulkActions" class="flex items-center space-x-3" style="display: none;">
+          <div data-bulk-operations-target="bulkActions" class="flex items-center space-x-3" style="display: none;">
             <span class="text-sm text-gray-600 dark:text-gray-400">
-              <span data-bulk-payment-target="selectedCount">0</span> selecionados
+              <span data-bulk-operations-target="selectedCount">0</span> selecionados
             </span>
-            <button data-bulk-payment-target="markSelectedPaid"
-                    data-action="click->bulk-payment#markSelectedAsPaid"
+            <button data-bulk-operations-target="markSelectedPaid"
+                    data-action="click->bulk-operations#markSelectedAsPaid"
                     class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition-colors duration-200">
               ✅ Marcar Selecionados
             </button>
-            <button data-bulk-payment-target="markAllPaid"
-                    data-action="click->bulk-payment#markAllAsPaid"
+            <button data-bulk-operations-target="markAllPaid"
+                    data-action="click->bulk-operations#markAllAsPaid"
                     class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-md transition-colors duration-200">
               💰 Marcar Todos como Pagos
             </button>
@@ -208,8 +209,8 @@
       <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
         <label class="flex items-center space-x-2">
           <input type="checkbox" 
-                 data-bulk-payment-target="selectAll"
-                 data-action="change->bulk-payment#toggleSelectAll"
+                 data-bulk-operations-target="selectAll"
+                 data-action="change->bulk-operations#toggleSelectAll"
                  class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-400">
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
             Selecionar Todos os Clientes
@@ -234,8 +235,8 @@
           <!-- Checkbox for bulk selection (show for all months) -->
           <div class="flex-shrink-0 mr-4">
             <input type="checkbox" 
-                   data-bulk-payment-target="checkbox"
-                   data-action="change->bulk-payment#toggleCheckbox"
+                   data-bulk-operations-target="checkbox"
+                   data-action="change->bulk-operations#toggleCheckbox"
                    data-customer-id="<%= customer.id %>"
                    data-current-status="<%= current_status %>"
                    class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-400">
@@ -280,13 +281,39 @@
 
           <!-- Status e valor -->
           <div class="flex items-center space-x-4">
-            <!-- Valor da mensalidade/crédito -->
+            <!-- Valor da mensalidade/crédito - Editable -->
             <div class="text-right">
-              <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                R$ <%= number_with_precision(customer.package_total_value, precision: 2) %>
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                <%= customer.subscription? ? 'Mensalidade' : 'Último Crédito' %>
+              <% existing_payment = @payments_by_customer[customer.id]&.first %>
+              <% display_amount = existing_payment&.amount || customer.package_total_value %>
+              
+              <div class="payment-amount-container" data-customer-id="<%= customer.id %>">
+                <!-- Display Mode -->
+                <div class="amount-display cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-2 py-1 rounded"
+                     onclick="editAmount(<%= customer.id %>)">
+                  <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    R$ <span class="amount-value"><%= number_with_precision(display_amount, precision: 2) %></span>
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    <%= customer.subscription? ? 'Mensalidade' : 'Último Crédito' %>
+                    <% if existing_payment&.amount != customer.package_total_value %>
+                      <span class="text-blue-600 dark:text-blue-400">✏️</span>
+                    <% end %>
+                  </div>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div class="amount-edit hidden">
+                  <input type="number" 
+                         step="0.01" 
+                         min="0"
+                         value="<%= display_amount %>"
+                         class="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                         onblur="saveAmount(<%= customer.id %>)"
+                         onkeypress="handleAmountKeypress(event, <%= customer.id %>)">
+                  <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Enter para salvar
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -355,4 +382,109 @@
       <% end %>
     </div>
   </div>
-</div> 
+</div>
+
+<script>
+// Inline Payment Amount Editing
+function editAmount(customerId) {
+  const container = document.querySelector(`[data-customer-id="${customerId}"] .payment-amount-container`);
+  const displayDiv = container.querySelector('.amount-display');
+  const editDiv = container.querySelector('.amount-edit');
+  const input = editDiv.querySelector('input');
+  
+  displayDiv.classList.add('hidden');
+  editDiv.classList.remove('hidden');
+  input.focus();
+  input.select();
+}
+
+function saveAmount(customerId) {
+  const container = document.querySelector(`[data-customer-id="${customerId}"] .payment-amount-container`);
+  const displayDiv = container.querySelector('.amount-display');
+  const editDiv = container.querySelector('.amount-edit');
+  const input = editDiv.querySelector('input');
+  const newAmount = parseFloat(input.value);
+  
+  if (isNaN(newAmount) || newAmount <= 0) {
+    alert('Por favor, insira um valor válido');
+    input.focus();
+    return;
+  }
+  
+  // Update payment amount via AJAX
+  const month = '<%= @selected_month %>';
+  
+  fetch('/payments/update_payment_amount', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    },
+    body: JSON.stringify({
+      customer_id: customerId,
+      month: month,
+      amount: newAmount
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Update display
+      const amountSpan = displayDiv.querySelector('.amount-value');
+      amountSpan.textContent = newAmount.toFixed(2);
+      
+      // Show edit indicator if different from calculated amount
+      const editIndicator = displayDiv.querySelector('.text-blue-600');
+      if (data.is_manual_override && !editIndicator) {
+        const subtitleDiv = displayDiv.querySelector('.text-xs');
+        subtitleDiv.innerHTML += ' <span class="text-blue-600 dark:text-blue-400">✏️</span>';
+      }
+      
+      // Switch back to display mode
+      editDiv.classList.add('hidden');
+      displayDiv.classList.remove('hidden');
+      
+      // Show success feedback
+      showToast('Valor atualizado com sucesso!', 'success');
+    } else {
+      alert('Erro ao atualizar valor: ' + data.message);
+      input.focus();
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Erro ao atualizar valor');
+    input.focus();
+  });
+}
+
+function handleAmountKeypress(event, customerId) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    saveAmount(customerId);
+  } else if (event.key === 'Escape') {
+    // Cancel editing
+    const container = document.querySelector(`[data-customer-id="${customerId}"] .payment-amount-container`);
+    const displayDiv = container.querySelector('.amount-display');
+    const editDiv = container.querySelector('.amount-edit');
+    
+    editDiv.classList.add('hidden');
+    displayDiv.classList.remove('hidden');
+  }
+}
+
+function showToast(message, type = 'info') {
+  // Simple toast notification
+  const toast = document.createElement('div');
+  toast.className = `fixed top-4 right-4 px-4 py-2 rounded shadow-lg z-50 ${
+    type === 'success' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+  }`;
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+</script> 

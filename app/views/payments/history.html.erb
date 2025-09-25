@@ -12,11 +12,11 @@
     
     <div class="flex items-center space-x-3">
       <!-- Global Sensitive Data Toggle -->
-      <div data-controller="global-sensitive-data">
+      <div data-controller="sensitive-data" data-sensitive-data-type-value="global">
         <button type="button" 
-                data-action="click->global-sensitive-data#toggle"
+                data-action="click->sensitive-data#toggle"
                 class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-          <span data-global-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
+          <span data-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
           <span>Mostrar Valores</span>
         </button>
       </div>
@@ -240,11 +240,11 @@
   </div>
 
   <!-- Global Sensitive Data Toggle -->
-  <div class="fixed bottom-6 right-6" data-controller="global-sensitive-data">
+  <div class="fixed bottom-6 right-6" data-controller="sensitive-data" data-sensitive-data-type-value="global">
     <button type="button" 
-            data-action="click->global-sensitive-data#toggle"
+            data-action="click->sensitive-data#toggle"
             class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-lg">
-      <span data-global-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
+      <span data-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
       <span>Mostrar/Ocultar Valores</span>
     </button>
   </div>

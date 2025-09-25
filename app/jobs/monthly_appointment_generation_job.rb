@@ -91,7 +91,7 @@ class MonthlyAppointmentGenerationJob < ApplicationJob
       {
         wday: apt.scheduled_at.wday,
         hour: apt.scheduled_at.hour,
-        minute: apt.scheduled_at.minute,
+        minute: apt.scheduled_at.min,
         duration: apt.duration
       }
     end

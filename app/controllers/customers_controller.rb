@@ -12,16 +12,19 @@ class CustomersController < ApplicationController
     @customers = @customers.where(status: params[:status]) if params[:status].present?
     @customers = @customers.where(plan_type: params[:plan_type]) if params[:plan_type].present?
 
-    # Group customers by status
-    @active_customers = @customers.active
-    @inactive_customers = @customers.inactive
-    @on_hold_customers = @customers.on_hold
+    # Separate active/on_hold customers from inactive ones
+    @active_and_on_hold_customers = @customers.where(status: [ "active", "on_hold" ]).order(
+      Arel.sql("CASE WHEN status = 'active' THEN 0 ELSE 1 END"),
+      :name
+    )
+    @inactive_customers = @customers.inactive.order(:name)
 
-    # Ordenar por nome
-    @customers = @customers.order(:name)
-    @active_customers = @active_customers.order(:name)
-    @inactive_customers = @inactive_customers.order(:name)
-    @on_hold_customers = @on_hold_customers.order(:name)
+    # Keep original grouping for backwards compatibility
+    @active_customers = @customers.active.order(:name)
+    @on_hold_customers = @customers.on_hold.order(:name)
+
+    # Main customers list for the table (active and on_hold only)
+    @customers = @active_and_on_hold_customers
 
     # Para o mapa de calendário
     @customers_with_phone = current_user_customers.where.not(phone: [ nil, "" ])
@@ -31,6 +34,20 @@ class CustomersController < ApplicationController
     @active_credits = @customer.customer_credits.where("remaining_hours > 0").order(purchase_date: :desc)
     @total_remaining_hours = @active_credits.sum(:remaining_hours)
     @active_subscription = @customer.active_subscription
+    @pending_reschedule_count = @customer.appointments.cancelled_pending_reschedule.count
+
+    # Customer navigation (active customers first, then by name)
+    @ordered_customers = current_user_customers.order(
+      Arel.sql("CASE WHEN status = 'active' THEN 0 WHEN status = 'on_hold' THEN 1 ELSE 2 END"),
+      :name
+    )
+
+    current_index = @ordered_customers.pluck(:id).index(@customer.id)
+
+    if current_index
+      @prev_customer = current_index > 0 ? @ordered_customers[current_index - 1] : nil
+      @next_customer = current_index < @ordered_customers.count - 1 ? @ordered_customers[current_index + 1] : nil
+    end
 
     # Get all appointments with proper ordering and grouping
     @all_appointments = @customer.appointments.includes(:customer).order(scheduled_at: :desc)
@@ -154,7 +171,15 @@ class CustomersController < ApplicationController
 
   def send_payment_reminder
     begin
-      result = payment_reminder_service.send_reminder(@customer)
+      # Use the CustomerNotificationService for custom payment reminders
+      amount = params[:amount]
+      message = params[:message]
+
+      if amount.present? && message.present?
+        result = customer_notification_service.send_custom_payment_reminder(amount, message)
+      else
+        result = customer_notification_service.send_payment_reminder
+      end
 
       if result[:success]
         redirect_to @customer, notice: result[:message]
@@ -250,7 +275,7 @@ class CustomersController < ApplicationController
     end
   end
 
-    def sync_upcoming_appointments
+  def sync_upcoming_appointments
     weeks_ahead = params[:weeks_ahead]&.to_i || 4  # Changed from 2 to 4 weeks (1 month)
     result = manual_sync_service.sync_customer_upcoming_appointments(@customer, weeks_ahead: weeks_ahead)
 
@@ -270,7 +295,7 @@ class CustomersController < ApplicationController
   end
 
   def customer_params
-    params.require(:customer).permit(:name, :email, :phone, :status, :plan_type, :custom_hourly_rate, :package_value, :package_hours, :cancellation_reason)
+    params.require(:customer).permit(:name, :email, :phone, :status, :plan_type, :custom_hourly_rate, :monthly_amount, :monthly_hours, :cancellation_reason, :birthdate)
   end
 
   def customer_notification_service

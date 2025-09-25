@@ -2,10 +2,8 @@ class AppointmentsController < ApplicationController
   include UserScoped
 
   before_action :authenticate_user!
-  before_action :set_appointment, only: [ :edit, :update, :destroy, :mark_completed, :mark_cancelled ]
-  before_action :set_customers, only: [ :new, :edit, :bulk_create, :process_bulk_create ]
-
-  # Navigation helper is now available from ApplicationController
+  before_action :set_appointment, only: [ :edit, :update, :destroy, :mark_completed, :mark_cancelled, :cancellation_options, :reschedule ]
+  before_action :set_customers, only: [ :new, :edit, :update, :bulk_create, :process_bulk_create ]
 
   def index
     @appointments = appointment_filter_service.call(params)
@@ -18,15 +16,8 @@ class AppointmentsController < ApplicationController
 
   def new
     @appointment = Appointment.new(status: "scheduled")
-
-    # Pre-fill from calendar selection if available
-    if params[:scheduled_at].present?
-      @appointment.scheduled_at = Time.parse(params[:scheduled_at])
-    end
-
-    if params[:duration].present?
-      @appointment.duration = params[:duration].to_f
-    end
+    @appointment.scheduled_at = Time.parse(params[:scheduled_at]) if params[:scheduled_at].present?
+    @appointment.duration = params[:duration].to_f if params[:duration].present?
   end
 
   def create
@@ -41,7 +32,7 @@ class AppointmentsController < ApplicationController
     navigation_service.store_return_path(request.referer, appointments_path)
   end
 
-    def update
+  def update
     old_status = @appointment.status
 
     if @appointment.update(appointment_params)
@@ -105,16 +96,39 @@ class AppointmentsController < ApplicationController
       redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), alert: result[:message]
     end
   end
+  def cancellation_options
+    @cancellation_options = appointment_cancellation_service.get_cancellation_options(@appointment)
+    render partial: "cancellation_options_modal", locals: { appointment: @appointment, options: @cancellation_options }
+  end
 
-  def mark_cancelled
-    if @appointment.update(status: "cancelled")
-      message = "Compromisso cancelado com sucesso."
-      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), notice: message
+      def mark_cancelled
+    result = appointment_cancellation_service.cancel_appointment(
+      @appointment,
+      {
+        reason: params[:cancellation_reason],
+        force_type: params[:cancellation_type]
+      }
+    )
+
+    if result[:success]
+      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), notice: result[:message]
     else
-      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), alert: "Erro ao cancelar compromisso."
+      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), alert: result[:message]
     end
   end
 
+  def reschedule
+    new_datetime = Time.parse("#{params[:reschedule_date]} #{params[:reschedule_time]}")
+    new_duration = params[:new_duration].present? ? params[:new_duration].to_f : nil
+
+    result = appointment_cancellation_service.reschedule_appointment(@appointment, new_datetime, new_duration)
+
+    if result[:success]
+      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), notice: result[:message]
+    else
+      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), alert: result[:message]
+    end
+  end
   def bulk_mark_completed
     appointment_ids = params[:appointment_ids] || []
     completion_date = params[:completion_date].present? ? Date.parse(params[:completion_date]) : Date.current
@@ -128,7 +142,6 @@ class AppointmentsController < ApplicationController
       redirect_to return_path, alert: result[:message]
     end
   end
-
   def bulk_delete_by_customer
     result = appointment_bulk_operations_service.bulk_delete_by_customer(
       params[:customer_id],
@@ -141,11 +154,9 @@ class AppointmentsController < ApplicationController
       redirect_to appointments_path, alert: result[:message]
     end
   end
-
   def bulk_create
     setup_bulk_create_defaults
   end
-
   def process_bulk_create
     result = appointment_bulk_operations_service.process_bulk_create(
       selected_customers,
@@ -222,8 +233,7 @@ class AppointmentsController < ApplicationController
   end
 
   def manage_auto_generation
-    @next_scheduled_run = MonthlyAppointmentScheduler.next_scheduled_run
-    @has_scheduled_job = @next_scheduled_run.present?
+    # Simple fast loading - no need to check scheduled jobs for basic view
   end
 
   def setup_auto_generation
@@ -242,6 +252,159 @@ class AppointmentsController < ApplicationController
     MonthlyAppointmentScheduler.run_now_for_testing
     redirect_to manage_auto_generation_appointments_path,
                 notice: "Geração automática executada imediatamente. Verifique os logs para detalhes."
+  end
+
+  def fill_current_month
+    generator = ScheduleBasedAppointmentGenerator.new(current_user)
+    start_date = Date.current
+    end_date = Date.current.end_of_month
+    result = generator.generate_appointments(start_date, end_date)
+
+    message = "#{result[:appointments_created]} compromissos criados para preencher lacunas do mês atual usando horários regulares"
+    message += ". #{result[:customers_processed]} clientes processados"
+    message += ". Erros: #{result[:errors].count}" if result[:errors].any?
+
+    redirect_to manage_auto_generation_appointments_path, notice: message
+  end
+
+  def generate_next_month
+    if params[:appointments].present?
+      result = create_selective_appointments(params[:appointments])
+      message = "#{result[:created]} compromissos criados seletivamente para #{Date.current.next_month.strftime('%B de %Y')}"
+      message += ". Erros: #{result[:errors].count}" if result[:errors].any?
+    elsif params[:patterns].present? && params[:customer_names].present?
+      start_date = Date.current.next_month.beginning_of_month
+      end_date = Date.current.next_month.end_of_month
+      result = create_appointments_from_patterns(params[:patterns], params[:customer_names], start_date, end_date)
+      message = "#{result[:success]} compromissos criados com padrões personalizados para #{Date.current.next_month.strftime('%B de %Y')}"
+      message += ". Erros: #{result[:errors].count}" if result[:errors].any?
+    elsif params[:customer_id].present?
+      customer = current_user.customers.find(params[:customer_id])
+      generator = ScheduleBasedAppointmentGenerator.new(current_user)
+      start_date = Date.current.next_month.beginning_of_month
+      end_date = Date.current.next_month.end_of_month
+      result = generator.generate_for_customer(customer, start_date, end_date)
+      message = "#{result[:created]} compromissos criados para #{customer.name} em #{Date.current.next_month.strftime('%B de %Y')}"
+      message += ". Erros: #{result[:errors].count}" if result[:errors].any?
+    else
+      generator = ScheduleBasedAppointmentGenerator.new(current_user)
+      result = generator.generate_next_month
+      message = "#{result[:appointments_created]} compromissos criados com base em horários regulares para #{Date.current.next_month.strftime('%B de %Y')}"
+      message += ". #{result[:customers_processed]} clientes processados"
+      message += ". Erros: #{result[:errors].count}" if result[:errors].any?
+    end
+
+    redirect_path = params[:from_preview] == "true" ? preview_next_month_appointments_path : manage_auto_generation_appointments_path
+    redirect_to redirect_path, notice: message
+  end
+  def preview_next_month
+    start_date = Date.current.next_month.beginning_of_month
+    end_date = Date.current.next_month.end_of_month
+
+
+    generator = ScheduleBasedAppointmentGenerator.new(current_user)
+    @preview_result = generator.generate_appointments(start_date, end_date, preview_only: true)
+    @generation_type = "schedule_based"
+
+    @target_month = Date.current.next_month.strftime("%B de %Y")
+  end
+  def preview_current_month
+    start_date = Date.current
+    end_date = Date.current.end_of_month
+
+    # Always use schedule-based generation (simplified)
+    generator = ScheduleBasedAppointmentGenerator.new(current_user)
+    @preview_result = generator.generate_appointments(start_date, end_date, preview_only: true)
+    @generation_type = "schedule_based"
+
+    @target_month = Date.current.strftime("%B de %Y")
+    render :preview_next_month
+  end
+
+  def generate_custom_period
+    start_date = Date.parse(params[:start_date])
+    end_date = Date.parse(params[:end_date])
+
+    generator = ScheduleBasedAppointmentGenerator.new(current_user)
+
+    if params[:preview]
+      @preview_result = generator.generate_appointments(start_date, end_date, preview_only: true)
+      @generation_type = "schedule_based"
+      @target_period = "#{start_date.strftime('%d/%m/%Y')} a #{end_date.strftime('%d/%m/%Y')}"
+      render :preview_custom_period
+    else
+      result = generator.generate_appointments(start_date, end_date)
+
+      message = "#{result[:appointments_created]} compromissos criados para o período #{start_date.strftime('%d/%m/%Y')} - #{end_date.strftime('%d/%m/%Y')} usando horários regulares"
+      message += ". #{result[:customers_processed]} clientes processados"
+      message += ". Erros: #{result[:errors].count}" if result[:errors].any?
+
+      redirect_to manage_auto_generation_appointments_path, notice: message
+    end
+  rescue Date::Error
+    redirect_to manage_auto_generation_appointments_path, alert: "Datas inválidas fornecidas"
+  end
+  def get_month_stats
+    year = params[:year].to_i
+    month = params[:month].to_i
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    appointments = Appointment.joins(:customer).where(customers: { user_id: current_user.id }).where(scheduled_at: start_date..end_date)
+
+    by_status = appointments.group(:status).count
+
+    stats = {
+      month: month,
+      year: year,
+      month_name: start_date.strftime("%B de %Y"),
+      total_appointments: appointments.count,
+      total_customers: appointments.select(:customer_id).distinct.count,
+      total_hours: appointments.sum(:duration),
+      by_status: by_status,
+      is_future: Date.new(year, month, 1) > Date.current
+    }
+
+    render json: stats
+  rescue => e
+    render json: { error: "Erro ao obter estatísticas: #{e.message}" }, status: 400
+  end
+
+  def delete_month_appointments
+    year = params[:year].to_i
+    month = params[:month].to_i
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    appointments = Appointment.joins(:customer).where(customers: { user_id: current_user.id }).where(scheduled_at: start_date..end_date).where("scheduled_at > ?", Time.current)
+    deleted_count = appointments.count
+    appointments.destroy_all
+    month_name = start_date.strftime("%B de %Y")
+    redirect_to manage_auto_generation_appointments_path, notice: "#{deleted_count} compromissos futuros deletados de #{month_name}"
+  rescue => e
+    redirect_to manage_auto_generation_appointments_path, alert: "Erro ao deletar compromissos: #{e.message}"
+  end
+
+  def generate_specific_month
+    year = params[:year].to_i
+    month = params[:month].to_i
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    generator = ScheduleBasedAppointmentGenerator.new(current_user)
+    result = generator.generate_appointments(start_date, end_date)
+
+    month_name = start_date.strftime("%B de %Y")
+    message = "#{result[:appointments_created]} compromissos criados para #{month_name} usando horários regulares"
+    message += ". #{result[:customers_processed]} clientes processados"
+    message += ". Erros: #{result[:errors].count}" if result[:errors].any?
+
+    redirect_to manage_auto_generation_appointments_path, notice: message
+  rescue => e
+    redirect_to manage_auto_generation_appointments_path, alert: "Erro ao gerar compromissos: #{e.message}"
   end
 
   def preview_generation
@@ -283,7 +446,11 @@ class AppointmentsController < ApplicationController
   end
 
   def appointment_params
-    params.require(:appointment).permit(:customer_id, :scheduled_at, :duration, :status, :notes)
+    params.require(:appointment).permit(
+      :customer_id, :scheduled_at, :duration, :status, :notes,
+      :cancellation_type, :cancellation_reason, :cancelled_at,
+      :hourly_rate
+    )
   end
 
   def appointment_filter_service
@@ -310,6 +477,10 @@ class AppointmentsController < ApplicationController
     @appointment_sync_operations_service ||= AppointmentSyncOperationsService.new(current_user)
   end
 
+  def appointment_cancellation_service
+    @appointment_cancellation_service ||= AppointmentCancellationService.new(current_user)
+  end
+
   def current_filters_from_params(params)
     {
       search: params[:search],
@@ -317,11 +488,12 @@ class AppointmentsController < ApplicationController
       status: params[:status],
       start_date: params[:start_date],
       end_date: params[:end_date],
-      sync_status: params[:sync_status]
+      sync_status: params[:sync_status],
+      sort_order: params[:sort_order],
+      month: params[:month],
+      year: params[:year]
     }.compact
   end
-
-
 
   def recurring_appointment?
     params[:is_recurring] == "1" && params[:recurring_days].present?
@@ -334,7 +506,6 @@ class AppointmentsController < ApplicationController
       no_end_date: params[:no_end_date]
     }
 
-    # Don't sync recurring appointments to calendar by default
     result = appointment_creation_service.create_recurring(appointment_params, recurring_params, sync_to_calendar: false)
 
     if result[:success]
@@ -417,34 +588,157 @@ class AppointmentsController < ApplicationController
     message
   end
 
-  # Event styling helpers for FullCalendar (shared with CalendarsController)
-  def event_background_color(appointment)
-    case appointment.status
-    when "scheduled"
-      appointment.customer.credit? ? "#3b82f6" : "#8b5cf6"  # Blue for credit, Purple for subscription
-    when "completed"
-      "#059669"  # Emerald
-    when "cancelled"
-      "#ef4444"  # Red
-    when "no_show"
-      "#f59e0b"  # Amber
-    else
-      "#6b7280"  # Gray
+  def create_selective_appointments(appointments_data)
+    created_count = 0
+    errors = []
+
+    begin
+      Appointment.transaction do
+        appointments_data.each do |appointment_id, appointment_params|
+          next unless appointment_params[:selected] == "true"
+          customer = current_user.customers.find_by(name: appointment_params[:customer_name])
+          unless customer
+            errors << "Cliente '#{appointment_params[:customer_name]}' não encontrado"
+            next
+          end
+
+          date = Date.parse(appointment_params[:date])
+          time_parts = appointment_params[:time].split(":")
+          hour = time_parts[0].to_i
+          minute = time_parts[1].to_i
+
+          scheduled_at = Time.zone.local(date.year, date.month, date.day, hour, minute)
+          duration = appointment_params[:duration].to_f
+          end_time = scheduled_at + duration.hours
+          day_start = scheduled_at.beginning_of_day
+          day_end = scheduled_at.end_of_day
+
+          existing_appointment = customer.appointments
+            .where(scheduled_at: day_start..day_end)
+            .where.not(status: [ "cancelled" ])
+            .find do |apt|
+              apt_end_time = apt.scheduled_at + apt.duration.hours
+              (apt.scheduled_at <= scheduled_at && apt_end_time > scheduled_at) ||
+              (apt.scheduled_at < end_time && apt_end_time >= end_time) ||
+              (scheduled_at <= apt.scheduled_at && end_time > apt.scheduled_at)
+            end
+
+          if existing_appointment
+            errors << "Conflito para #{customer.name} em #{scheduled_at.strftime('%d/%m/%Y %H:%M')}"
+            next
+          end
+
+          appointment = customer.appointments.build(
+            scheduled_at: scheduled_at,
+            duration: duration,
+            status: "scheduled",
+            notes: "Criado via geração inteligente (#{appointment_params[:confidence]}% confiança)"
+          )
+
+          if appointment.save
+            created_count += 1
+
+          else
+            errors << "Erro ao criar compromisso para #{customer.name}: #{appointment.errors.full_messages.join(', ')}"
+          end
+        end
+      end
+    rescue => e
+      errors << "Erro durante criação: #{e.message}"
+
     end
+
+    {
+      created: created_count,
+      errors: errors
+    }
   end
 
-  def event_border_color(appointment)
-    case appointment.status
-    when "scheduled"
-      appointment.customer.credit? ? "#2563eb" : "#7c3aed"
-    when "completed"
-      "#047857"
-    when "cancelled"
-      "#dc2626"
-    when "no_show"
-      "#d97706"
-    else
-      "#4b5563"
+  def build_pattern_overrides_from_params(patterns_params, customer_names_params)
+    overrides = {}
+
+    patterns_params.each do |customer_index, customer_patterns|
+      customer_name = customer_names_params[customer_index]
+      next unless customer_name
+
+      customer = current_user.customers.find_by(name: customer_name)
+      next unless customer
+
+      overrides[customer_name] = []
+
+      customer_patterns.each do |_pattern_index, pattern_data|
+        days = Array(pattern_data[:days]).map(&:to_i)
+        time = pattern_data[:time]
+        duration = pattern_data[:duration].to_f
+
+        next if days.empty? || time.blank?
+
+        overrides[customer_name] << {
+          days: days,
+          time: time,
+          duration: duration
+        }
+      end
+
+      if overrides[customer_name].empty?
+        overrides.delete(customer_name)
+      end
+    end
+
+    overrides
+  end
+
+  def create_appointments_from_patterns(patterns_params, customer_names_params, start_date, end_date)
+    created_count = 0
+    errors = []
+    customer_counts = {}
+
+    begin
+      Appointment.transaction do
+        patterns_params.each do |customer_index, customer_patterns|
+          customer_name = customer_names_params[customer_index]
+          next unless customer_name
+
+          customer = current_user.customers.find_by(name: customer_name)
+          unless customer
+            errors << "Cliente '#{customer_name}' não encontrado"
+            next
+          end
+
+          customer_appointment_count = 0
+
+          customer_patterns.each do |_pattern_index, pattern_data|
+            days = Array(pattern_data[:days]).map(&:to_i)
+            time = pattern_data[:time]
+            duration = pattern_data[:duration].to_f
+
+            next if days.empty? || time.blank?
+
+            result = appointment_creation_service.create_bulk(
+              [ customer ],           # customers array
+              start_date,          # start_date
+              end_date,            # end_date
+              days,                # recurring_days
+              [ time ],              # time_slots array
+              duration,            # duration
+              sync_to_calendar: false
+            )
+
+            pattern_created = result[:success] || 0
+            customer_appointment_count += pattern_created
+            errors.concat(result[:errors]) if result[:errors].any?
+          end
+
+          customer_counts[customer_name] = customer_appointment_count
+          created_count += customer_appointment_count
+        end
+      end
+
+      { success: created_count, errors: errors }
+
+    rescue => e
+
+      { success: 0, errors: [ "Erro interno: #{e.message}" ] }
     end
   end
 end

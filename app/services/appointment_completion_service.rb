@@ -72,6 +72,7 @@ class AppointmentCompletionService
       completed_appointments: completed_appointments.count,
       pending_appointments: appointments.scheduled.count,
       total_earnings: calculate_daily_earnings(completed_appointments),
+      cancellation_revenue: calculate_daily_cancellation_revenue(date),
       appointments_by_status: appointments.group(:status).count
     }
   end
@@ -106,39 +107,42 @@ class AppointmentCompletionService
   end
 
   def should_deduct_credits?(appointment)
-    appointment.customer.credit? && appointment.customer.total_remaining_hours > 0
+    appointment.customer.credit?
   end
 
   def deduct_customer_credits(appointment)
     hours_to_deduct = appointment.duration
     customer = appointment.customer
 
-    remaining_hours = hours_to_deduct
-    credits = customer.customer_credits.where("remaining_hours > 0").order(purchase_date: :asc)
+    # Find the most recent credit to deduct from (allowing negative balances)
+    credit = customer.customer_credits.order(purchase_date: :desc).first
 
-    credits.each do |credit|
-      break if remaining_hours <= 0
-
-      if credit.remaining_hours >= remaining_hours
-        credit.update!(remaining_hours: credit.remaining_hours - remaining_hours)
-        remaining_hours = 0
-      else
-        remaining_hours -= credit.remaining_hours
-        credit.update!(remaining_hours: 0)
-      end
-    end
-
-    if remaining_hours > 0
-      Rails.logger.warn "Insufficient credits for appointment #{appointment.id}. #{remaining_hours} hours could not be deducted."
+    if credit
+      credit.deduct_hours(hours_to_deduct)
+    else
+      Rails.logger.warn "No credits found for customer #{customer.id} for appointment #{appointment.id}"
     end
   end
 
   def calculate_appointment_earnings(appointment)
-    appointment.duration * appointment.customer.effective_hourly_rate
+    appointment.duration * appointment.effective_appointment_rate
   end
 
   def calculate_daily_earnings(completed_appointments)
     completed_appointments.sum do |appointment|
+      calculate_appointment_earnings(appointment)
+    end
+  end
+
+  def calculate_daily_cancellation_revenue(date)
+    # Get cancelled appointments with revenue for the specific date
+    cancelled_with_revenue = Appointment.joins(:customer)
+                                       .where(customers: { user_id: @user.id })
+                                       .where(status: "cancelled", cancellation_type: "with_revenue")
+                                       .where(scheduled_at: date.beginning_of_day..date.end_of_day)
+                                       .includes(:customer)
+
+    cancelled_with_revenue.sum do |appointment|
       calculate_appointment_earnings(appointment)
     end
   end

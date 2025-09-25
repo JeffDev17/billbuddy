@@ -8,6 +8,8 @@ class AppointmentFilterService
     appointments = base_scope
 
     appointments = filter_by_status(appointments, params[:status])
+    appointments = filter_by_cancellation_type(appointments, params[:cancellation_type])
+    appointments = filter_by_month_year(appointments, params[:month], params[:year])
     appointments = filter_by_date_range(appointments, params[:start_date], params[:end_date])
     appointments = filter_by_customer(appointments, params[:customer_id])
     appointments = filter_by_search(appointments, params[:search])
@@ -47,14 +49,17 @@ class AppointmentFilterService
   private
 
   def base_scope
-    @base_scope ||= Appointment.joins(:customer)
-                              .where(customers: { user_id: @user.id })
-                              .includes(:customer)
+    @base_scope ||= Appointment.joins(:customer).where(customers: { user_id: @user.id }).includes(:customer)
   end
 
   def filter_by_status(appointments, status)
     return appointments if status.blank?
     appointments.where(status: status)
+  end
+
+  def filter_by_cancellation_type(appointments, cancellation_type)
+    return appointments if cancellation_type.blank?
+    appointments.where(cancellation_type: cancellation_type)
   end
 
   def filter_by_date_range(appointments, start_date, end_date)
@@ -79,11 +84,19 @@ class AppointmentFilterService
     appointments.where(customer_id: customer_id)
   end
 
+  def filter_by_month_year(appointments, month, year)
+    return appointments if month.blank? || year.blank?
+
+    start_date = Date.new(year.to_i, month.to_i, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    appointments.where(scheduled_at: start_date.beginning_of_day..end_date.end_of_day)
+  end
+
     def filter_by_search(appointments, search_term)
     return appointments if search_term.blank?
 
-    appointments.joins(:customer)
-                .where(
+    appointments.joins(:customer).where(
                   "customers.name ILIKE ? OR appointments.notes ILIKE ?",
                   "%#{search_term}%",
                   "%#{search_term}%"
@@ -92,17 +105,26 @@ class AppointmentFilterService
 
   def apply_sorting(appointments, sort_order)
     case sort_order
+    when "scheduled_first"
+      # Show scheduled appointments first, then by date (earliest to latest)
+      # Use Ruby sorting to avoid SQL complexity
+      appointments.order(scheduled_at: :asc).to_a.sort_by do |appointment|
+        [ appointment.status == "scheduled" ? 0 : 1, appointment.scheduled_at ]
+      end
     when "earliest_first"
       appointments.order(scheduled_at: :asc)
     when "latest_first"
       appointments.order(scheduled_at: :desc)
     when "customer_name"
-      appointments.joins(:customer).order("customers.name ASC, scheduled_at ASC")
+      appointments.joins(:customer).order("customers.name ASC, appointments.scheduled_at ASC")
     when "status"
-      appointments.order(status: :asc, scheduled_at: :asc)
+      appointments.order("appointments.status ASC, appointments.scheduled_at ASC")
     else
-      # Default to earliest first (chronological order)
-      appointments.order(scheduled_at: :asc)
+      # Default to scheduled first (new default behavior)
+      # Use Ruby sorting to avoid SQL complexity
+      appointments.order(scheduled_at: :asc).to_a.sort_by do |appointment|
+        [ appointment.status == "scheduled" ? 0 : 1, appointment.scheduled_at ]
+      end
     end
   end
 end

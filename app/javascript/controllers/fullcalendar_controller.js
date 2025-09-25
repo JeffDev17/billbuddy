@@ -15,6 +15,16 @@ export default class extends Controller {
 
   connect() {
     this.initializeCalendar()
+
+    setTimeout(() => {
+      const sensitiveDataController = this.application.getControllerForElementAndIdentifier(
+        this.element, 
+        'sensitive-data'
+      )
+      if (sensitiveDataController) {
+        sensitiveDataController.setFullCalendar(this.calendar)
+      }
+    }, 100)
   }
 
   disconnect() {
@@ -216,8 +226,129 @@ export default class extends Controller {
   }
 
   async showAppointmentDetails(appointmentId, event) {
-    // Navigate to appointment edit page
-    window.location.href = `/appointments/${appointmentId}/edit`
+    // Create action modal instead of directly navigating
+    this.showAppointmentActionModal(appointmentId, event)
+  }
+
+  showAppointmentActionModal(appointmentId, event) {
+    const extendedProps = event.extendedProps
+    const customerName = extendedProps.customerName
+    const status = extendedProps.status
+    const startTime = event.start.toLocaleString('pt-BR')
+    const duration = extendedProps.duration
+    
+    // Create modal HTML
+    const modalHtml = `
+      <div id="appointment-action-modal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 text-center sm:block sm:p-0">
+          <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true"></div>
+          
+          <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div class="sm:flex sm:items-start">
+                <div class="w-full">
+                  <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4" id="modal-title">
+                    ${customerName}
+                  </h3>
+                  
+                  <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                      <strong>Data/Hora:</strong> ${startTime}<br>
+                      <strong>Duração:</strong> ${duration}h<br>
+                      <strong>Status:</strong> ${status}
+                    </p>
+                  </div>
+
+                  <div class="flex flex-col space-y-3">
+                    ${status === 'scheduled' ? `
+                      <button onclick="document.getElementById('appointment-action-modal').remove(); window.location.href='/appointments/${appointmentId}/edit'" 
+                              class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
+                        ✏️ Editar Compromisso
+                      </button>
+                      
+                      <button onclick="document.getElementById('appointment-action-modal').remove(); openCancellationModal(${appointmentId})" 
+                              class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors">
+                        ❌ Cancelar Compromisso
+                      </button>
+                      
+                      <form action="/appointments/${appointmentId}/mark_completed" method="post" style="width: 100%;"
+                            onsubmit="if(confirm('Marcar como concluída?')) { document.getElementById('appointment-action-modal').remove(); return true; } else { return false; }">
+                        <input type="hidden" name="_method" value="post">
+                        <input type="hidden" name="authenticity_token" value="${document.querySelector('meta[name="csrf-token"]').content}">
+                        <input type="hidden" name="completion_date" value="${event.start.toISOString().split('T')[0]}">
+                        <button type="submit" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors">
+                          ✓ Marcar como Concluída
+                        </button>
+                      </form>
+                      
+                      <form action="/appointments/${appointmentId}" method="post" style="width: 100%;"
+                            onsubmit="if(confirm('⚠️ Tem certeza que deseja EXCLUIR este compromisso?\\n\\nEsta ação não pode ser desfeita!')) { document.getElementById('appointment-action-modal').remove(); return true; } else { return false; }">
+                        <input type="hidden" name="_method" value="delete">
+                        <input type="hidden" name="authenticity_token" value="${document.querySelector('meta[name="csrf-token"]').content}">
+                        <button type="submit" 
+                                class="w-full bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-md transition-colors border border-gray-600">
+                          🗑️ Excluir Compromisso
+                        </button>
+                      </form>
+                    ` : status === 'cancelled' && extendedProps.canReschedule ? `
+                      <span class="text-sm text-orange-600 mb-2">Este compromisso pode ser reagendado</span>
+                      <button onclick="document.getElementById('appointment-action-modal').remove(); window.location.href='/appointments/${appointmentId}/edit'" 
+                              class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition-colors">
+                        📅 Reagendar Compromisso
+                      </button>
+                      
+                      <form action="/appointments/${appointmentId}" method="post" style="width: 100%;"
+                            onsubmit="if(confirm('⚠️ Tem certeza que deseja EXCLUIR este compromisso?\\n\\nEsta ação não pode ser desfeita!')) { document.getElementById('appointment-action-modal').remove(); return true; } else { return false; }">
+                        <input type="hidden" name="_method" value="delete">
+                        <input type="hidden" name="authenticity_token" value="${document.querySelector('meta[name="csrf-token"]').content}">
+                        <button type="submit" 
+                                class="w-full bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-md transition-colors border border-gray-600">
+                          🗑️ Excluir Compromisso
+                        </button>
+                      </form>
+                    ` : `
+                      <button onclick="document.getElementById('appointment-action-modal').remove(); window.location.href='/appointments/${appointmentId}/edit'" 
+                              class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors">
+                        👁️ Ver Detalhes
+                      </button>
+                      
+                      <form action="/appointments/${appointmentId}" method="post" style="width: 100%;"
+                            onsubmit="if(confirm('⚠️ Tem certeza que deseja EXCLUIR este compromisso?\\n\\nEsta ação não pode ser desfeita!')) { document.getElementById('appointment-action-modal').remove(); return true; } else { return false; }">
+                        <input type="hidden" name="_method" value="delete">
+                        <input type="hidden" name="authenticity_token" value="${document.querySelector('meta[name="csrf-token"]').content}">
+                        <button type="submit" 
+                                class="w-full bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-md transition-colors border border-gray-600">
+                          🗑️ Excluir Compromisso
+                        </button>
+                      </form>
+                    `}
+                  </div>
+                  
+                  <div class="flex justify-end mt-4 pt-4 border-t">
+                    <button type="button" 
+                            onclick="document.getElementById('appointment-action-modal').remove()" 
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHtml)
+    
+    // Close modal when clicking outside
+    document.getElementById('appointment-action-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.remove()
+      }
+    })
   }
 
   async updateAppointmentTime(appointmentId, newStart, newEnd) {

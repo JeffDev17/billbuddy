@@ -1,0 +1,179 @@
+<!-- Profile Show Page -->
+<div class="max-w-4xl mx-auto">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+          <i class="fas fa-user-circle mr-3 text-purple-600 dark:text-purple-400"></i>
+          Meu Perfil
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Gerencie suas informações pessoais e configurações de conta</p>
+      </div>
+      <div class="flex space-x-3">
+        <%= link_to profile_edit_path, 
+            class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 transform hover:scale-105" do %>
+          <i class="fas fa-edit mr-2"></i>
+          Editar Perfil
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Cards -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- Account Information Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
+        <h2 class="text-lg font-semibold text-white flex items-center">
+          <i class="fas fa-id-card mr-3"></i>
+          Informações da Conta
+        </h2>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center">
+            <i class="fas fa-envelope text-gray-400 mr-3"></i>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</span>
+          </div>
+          <span class="text-sm text-gray-900 dark:text-white font-mono"><%= current_user.email %></span>
+        </div>
+        
+        <div class="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center">
+            <i class="fas fa-calendar text-gray-400 mr-3"></i>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Membro desde</span>
+          </div>
+          <span class="text-sm text-gray-900 dark:text-white">
+            <%= current_user.created_at.strftime('%d/%m/%Y') %>
+          </span>
+        </div>
+
+        <div class="flex items-center justify-between py-3">
+          <div class="flex items-center">
+            <i class="fas fa-clock text-gray-400 mr-3"></i>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Última atualização</span>
+          </div>
+          <span class="text-sm text-gray-900 dark:text-white">
+            <%= current_user.updated_at.strftime('%d/%m/%Y às %H:%M') %>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Settings Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+        <h2 class="text-lg font-semibold text-white flex items-center">
+          <i class="fas fa-shield-alt mr-3"></i>
+          Segurança
+        </h2>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center">
+            <i class="fas fa-key text-gray-400 mr-3"></i>
+            <div>
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300 block">Senha</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">Última alteração: <%= current_user.updated_at.strftime('%d/%m/%Y') %></span>
+            </div>
+          </div>
+          <%= link_to change_password_path, 
+              class: "inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200" do %>
+            <i class="fas fa-edit mr-1"></i>
+            Alterar
+          <% end %>
+        </div>
+
+        <div class="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-600">
+          <div class="flex items-center">
+            <i class="fas fa-users text-gray-400 mr-3"></i>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Total de clientes</span>
+          </div>
+          <span class="text-sm text-gray-900 dark:text-white">
+            <%= current_user.customers.count %>
+          </span>
+        </div>
+
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+          <div class="flex items-start">
+            <i class="fas fa-check-circle text-green-400 mr-2 mt-0.5"></i>
+            <div class="text-sm text-green-800 dark:text-green-200">
+              <p class="font-medium">Conta Segura</p>
+              <p class="text-xs mt-1">Sua conta está protegida e funcionando normalmente.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
+      <h2 class="text-lg font-semibold text-white flex items-center">
+        <i class="fas fa-bolt mr-3"></i>
+        Ações Rápidas
+      </h2>
+    </div>
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <%= link_to profile_edit_path, 
+            class: "group bg-gray-50 dark:bg-gray-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500 rounded-xl p-4 transition-all duration-200 transform hover:scale-105" do %>
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <i class="fas fa-user-edit text-purple-600 dark:text-purple-400 text-xl group-hover:text-purple-700 dark:group-hover:text-purple-300"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-purple-900 dark:group-hover:text-purple-100">
+                Editar Informações
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Atualizar email e dados
+              </p>
+            </div>
+          </div>
+        <% end %>
+
+        <%= link_to change_password_path, 
+            class: "group bg-gray-50 dark:bg-gray-700 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500 rounded-xl p-4 transition-all duration-200 transform hover:scale-105" do %>
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <i class="fas fa-lock text-green-600 dark:text-green-400 text-xl group-hover:text-green-700 dark:group-hover:text-green-300"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-green-900 dark:group-hover:text-green-100">
+                Alterar Senha
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Manter conta segura
+              </p>
+            </div>
+          </div>
+        <% end %>
+
+        <%= link_to destroy_user_session_path, method: :delete, 
+            class: "group bg-gray-50 dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 border border-gray-200 dark:border-gray-600 hover:border-red-300 dark:hover:border-red-500 rounded-xl p-4 transition-all duration-200 transform hover:scale-105",
+            data: { confirm: 'Tem certeza que deseja sair?' } do %>
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <i class="fas fa-sign-out-alt text-red-600 dark:text-red-400 text-xl group-hover:text-red-700 dark:group-hover:text-red-300"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-red-900 dark:group-hover:text-red-100">
+                Sair da Conta
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Logout seguro
+              </p>
+            </div>
+          </div>
+        <% end %>
+
+      </div>
+    </div>
+  </div>
+</div>
