@@ -1,15 +1,15 @@
-<% content_for :title, "Geração Automática de Compromissos" %>
+<% content_for :title, "Geração Inteligente de Compromissos" %>
 
-<div class="max-w-4xl mx-auto p-6">
+<div class="max-w-5xl mx-auto p-6">
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
     <div class="p-6">
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            🤖 Geração Automática de Compromissos
+            🧠 Geração Inteligente de Compromissos
           </h1>
           <p class="text-gray-600 dark:text-gray-400 mt-1">
-            Configure a geração automática de compromissos baseada em padrões existentes
+            Crie compromissos baseados nos padrões regulares dos seus clientes ativos
           </p>
         </div>
         <%= link_to appointments_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" do %>
@@ -17,130 +17,386 @@
         <% end %>
       </div>
 
-      <!-- Status Section -->
+      <!-- Preview-First Workflow Notice -->
+      <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <span class="text-2xl">🔮</span>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-amber-800 dark:text-amber-200">
+              Preview Obrigatório - Visualize Antes de Criar
+            </h3>
+            <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              Para sua segurança, todos os tipos de geração agora exigem preview primeiro. Veja exatamente o que será criado antes de confirmar.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simplified Generation Section -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Current Month -->
         <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-          <h3 class="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">
-            📅 Status do Agendamento
+          <h3 class="text-lg font-medium text-blue-800 dark:text-blue-200 mb-3">
+            📅 Mês Atual - <%= Date.current.strftime('%B %Y') %>
           </h3>
-          <% if @has_scheduled_job %>
-            <div class="text-green-600 dark:text-green-400 font-medium mb-2">
-              ✅ Ativo
+          <p class="text-sm text-blue-600 dark:text-blue-300 mb-4">
+            Preenche lacunas no restante do mês baseado nos horários regulares dos clientes
+          </p>
+          
+          <div class="space-y-2">
+            <%= button_to "🔮 Preview Mês Atual", preview_current_month_appointments_path,
+                method: :get,
+                params: { generation_type: 'schedule_based' },
+                class: "w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-200" %>
+            <div class="text-xs text-blue-500 dark:text-blue-400 text-center">
+              ⚡ Rápido e baseado em horários regulares
             </div>
-            <p class="text-sm text-blue-600 dark:text-blue-300">
-              Próxima execução: <strong><%= @next_scheduled_run.strftime('%d/%m/%Y às %H:%M') %></strong>
-            </p>
-            <p class="text-xs text-blue-500 dark:text-blue-400 mt-1">
-              Criará compromissos para: <strong><%= (@next_scheduled_run.to_date + 3.months).strftime('%B de %Y') %></strong>
-            </p>
-          <% else %>
-            <div class="text-red-600 dark:text-red-400 font-medium mb-2">
-              ❌ Inativo
-            </div>
-            <p class="text-sm text-blue-600 dark:text-blue-300">
-              Nenhum agendamento ativo encontrado
-            </p>
-          <% end %>
+          </div>
         </div>
 
+        <!-- Next Month -->
         <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
-          <h3 class="text-lg font-medium text-green-800 dark:text-green-200 mb-2">
-            🎯 Como Funciona
+          <h3 class="text-lg font-medium text-green-800 dark:text-green-200 mb-3">
+            📆 Próximo Mês - <%= Date.current.next_month.strftime('%B de %Y') %>
           </h3>
-          <ul class="text-sm text-green-600 dark:text-green-300 space-y-1">
-            <li>• Executa no dia 1º de cada mês às 6:00</li>
-            <li>• Analisa padrões dos últimos 2 meses</li>
-            <li>• Cria compromissos para 3 meses à frente</li>
-            <li>• <strong>NÃO sincroniza</strong> com Google Calendar</li>
-            <li>• Use os botões de sincronização quando pronto</li>
-          </ul>
+          <p class="text-sm text-green-600 dark:text-green-300 mb-4">
+            Gera todos os compromissos para o próximo mês baseado nos horários regulares
+          </p>
+          
+          <div class="space-y-2">
+            <%= button_to "🔮 Preview Próximo Mês", preview_next_month_appointments_path,
+                method: :get,
+                params: { generation_type: 'schedule_based' },
+                class: "w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-200" %>
+            <div class="text-xs text-green-500 dark:text-green-400 text-center">
+              ⚡ Baseado nos horários regulares definidos
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Control Buttons -->
+      <!-- How It Works Section -->
       <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mb-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🎛️ Controles</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">🎯 Como Funciona</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+          <div>
+            <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-2">🗓️ Horários Regulares</h4>
+            <ul class="text-gray-600 dark:text-gray-400 space-y-1">
+              <li>• Usa os horários definidos na página de cada cliente</li>
+              <li>• Exemplo: Segunda 8h, Quarta 14h, Sexta 16h</li>
+              <li>• Geração rápida e precisa (sem análise complexa)</li>
+              <li>• Considera apenas clientes com status "ativo"</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-2">🛡️ Proteções</h4>
+            <ul class="text-gray-600 dark:text-gray-400 space-y-1">
+              <li>• Nunca sobrescreve compromissos existentes</li>
+              <li>• Verifica conflitos de horário antes de criar</li>
+              <li>• Apenas cria onde não há nada agendado</li>
+              <li>• Pula automaticamente datas passadas</li>
+            </ul>
+          </div>
+        </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <% unless @has_scheduled_job %>
-            <%= button_to "🚀 Ativar Auto-Geração", setup_auto_generation_appointments_path,
-                method: :post,
-                class: "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium",
-                data: { confirm: "Ativar a geração automática mensal de compromissos?" } %>
-          <% else %>
-            <%= button_to "🛑 Cancelar Auto-Geração", cancel_auto_generation_appointments_path,
-                method: :post,
-                class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium",
-                data: { confirm: "Cancelar todos os agendamentos de geração automática?" } %>
-          <% end %>
-
-          <%= button_to "▶️ Executar Agora", run_auto_generation_now_appointments_path,
-              method: :post,
-              class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium",
-              data: { confirm: "Executar a geração automática imediatamente? Isso criará compromissos para 3 meses à frente." } %>
-
-          <div class="col-span-2">
-            <%= form_with url: preview_generation_appointments_path, method: :get, local: true, class: "flex space-x-2" do |form| %>
-              <%= form.select :target_month, options_for_select((1..12).map { |m| [Date::MONTHNAMES[m], m] }, Date.current.month),
-                  { prompt: "Mês" },
-                  { class: "border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm" } %>
-              <%= form.number_field :target_year, value: Date.current.year, min: 2020, max: 2030,
-                  class: "border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm w-20" %>
-              <%= form.submit "🔍 Revisar Mês", class: "bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm" %>
-            <% end %>
+        <div class="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded">
+          <div class="text-sm text-purple-800 dark:text-purple-200">
+            <strong>💡 Dica:</strong> Defina os horários regulares de cada cliente na página do cliente (seção "Horários Regulares") para que apareçam aqui automaticamente.
           </div>
         </div>
       </div>
 
-      <!-- Information Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg">
-          <h3 class="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-3">
-            ⚠️ Importante
-          </h3>
-          <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-2">
-            <li>• Os compromissos são criados <strong>sem sincronização</strong> automática</li>
-            <li>• Use a página de compromissos para revisar e sincronizar</li>
-            <li>• O sistema detecta padrões automaticamente</li>
-            <li>• Clientes inativos são ignorados</li>
-            <li>• Conflitos de horário são evitados</li>
-          </ul>
-        </div>
-
-        <div class="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-lg">
-          <h3 class="text-lg font-medium text-indigo-800 dark:text-indigo-200 mb-3">
-            🔍 Detecção de Padrões
-          </h3>
-          <ul class="text-sm text-indigo-700 dark:text-indigo-300 space-y-2">
-            <li>• Analisa compromissos dos <strong>últimos 2 meses</strong></li>
-            <li>• Identifica dia da semana, horário e duração</li>
-            <li>• Requer <strong>mínimo 3 ocorrências</strong> para criar padrão</li>
-            <li>• Múltiplos padrões por cliente são suportados</li>
-            <li>• Gera para <strong>3 meses à frente</strong></li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Example Timeline -->
-      <div class="mt-8 bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-          📊 Cronograma de Exemplo
+      <!-- Month Management Section -->
+      <div class="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg mb-6">
+        <h3 class="text-lg font-medium text-orange-800 dark:text-orange-200 mb-4">
+          🗓️ Gerenciar Meses Específicos
         </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-blue-500">
-            <div class="font-medium text-blue-600 dark:text-blue-400">1º de Julho</div>
-            <div class="text-gray-600 dark:text-gray-400">Gera compromissos para Setembro</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Month Stats & Generation -->
+          <div>
+            <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-3">📊 Estatísticas do Mês</h4>
+            <div class="space-y-3">
+              <div class="flex space-x-2">
+                <select id="stats-month" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
+                  <% (1..12).each do |month| %>
+                    <option value="<%= month %>" <%= 'selected' if month == Date.current.next_month.month %>>
+                      <%= Date::MONTHNAMES[month] %>
+                    </option>
+                  <% end %>
+                </select>
+                <select id="stats-year" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100">
+                  <% (Date.current.year..(Date.current.year + 2)).each do |year| %>
+                    <option value="<%= year %>" <%= 'selected' if year == Date.current.year %>>
+                      <%= year %>
+                    </option>
+                  <% end %>
+                </select>
+                <button onclick="loadMonthStats()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">
+                  🔍 Ver
+                </button>
+              </div>
+              
+              <div id="month-stats" class="bg-white dark:bg-gray-800 p-4 rounded border border-gray-200 dark:border-gray-600 min-h-[100px]">
+                <div class="text-center py-8">
+                  <div class="text-3xl mb-2">📊</div>
+                  <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Selecione um mês e clique em "🔍 Ver"</p>
+                  <p class="text-xs text-gray-400 dark:text-gray-500">para visualizar estatísticas e ações</p>
+                </div>
+              </div>
+              
+              <div id="month-actions" class="space-y-2" style="display: none;">
+                <button onclick="previewForMonth()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium">
+                  🔮 Preview Compromissos
+                </button>
+                <button onclick="deleteMonthAppointments()" id="delete-button" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium" style="display: none;">
+                  🗑️ Deletar Todos os Compromissos
+                </button>
+                <div class="text-xs text-orange-500 dark:text-orange-400 text-center">
+                  ↳ Geração via preview, deletar apenas para meses futuros
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-green-500">
-            <div class="font-medium text-green-600 dark:text-green-400">1º de Agosto</div>
-            <div class="text-gray-600 dark:text-gray-400">Gera compromissos para Outubro</div>
+
+          <!-- Custom Date Range -->
+          <div>
+            <h4 class="font-medium text-gray-800 dark:text-gray-200 mb-3">📋 Período Personalizado</h4>
+            <%= form_with url: generate_custom_period_appointments_path, method: :post, local: true, class: "space-y-3" do |form| %>
+              <div>
+                <%= form.label :start_date, "Data Início", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+                <%= form.date_field :start_date, value: Date.current.next_month.beginning_of_month,
+                    class: "w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" %>
+              </div>
+              
+              <div>
+                <%= form.label :end_date, "Data Fim", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+                <%= form.date_field :end_date, value: Date.current.next_month.end_of_month,
+                    class: "w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-100" %>
+              </div>
+              
+              <div class="flex space-x-2">
+                <%= form.submit "🔮 Preview", name: "preview", 
+                    class: "flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium" %>
+                <%= form.submit "✅ Criar", name: "create",
+                    class: "flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm font-medium",
+                    data: { confirm: "Confirmar criação de compromissos para o período selecionado?" } %>
+              </div>
+            <% end %>
+            
+            <p class="text-xs text-orange-600 dark:text-orange-400 mt-2">
+              💡 Use o preview para ver exatamente o que será criado antes de confirmar
+            </p>
           </div>
-          <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-purple-500">
-            <div class="font-medium text-purple-600 dark:text-purple-400">1º de Setembro</div>
-            <div class="text-gray-600 dark:text-gray-400">Gera compromissos para Novembro</div>
+        </div>
+      </div>
+
+      <!-- Examples Section -->
+      <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
+        <h3 class="text-lg font-medium text-green-800 dark:text-green-200 mb-3">
+          💡 Exemplos de Padrões Detectados
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="space-y-2">
+            <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-blue-400">
+              <strong class="text-gray-800 dark:text-gray-200">João Silva</strong>
+              <p class="text-gray-600 dark:text-gray-400">Segundas às 08:00 (1h) - 95% confiança</p>
+              <p class="text-gray-600 dark:text-gray-400">Quartas às 14:00 (1h) - 90% confiança</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-green-400">
+              <strong class="text-gray-800 dark:text-gray-200">Maria Santos</strong>
+              <p class="text-gray-600 dark:text-gray-400">Terças às 19:00 (1.5h) - 85% confiança</p>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-purple-400">
+              <strong class="text-gray-800 dark:text-gray-200">Pedro Costa</strong>
+              <p class="text-gray-600 dark:text-gray-400">Diariamente às 07:00 (0.5h) - 100% confiança</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-orange-400">
+              <strong class="text-gray-800 dark:text-gray-200">Ana Lima</strong>
+              <p class="text-gray-600 dark:text-gray-400">Sábados às 10:00 (2h) - 80% confiança</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div> 
+</div>
+
+<script>
+  let currentStats = null;
+
+  function loadMonthStats() {
+    const month = document.getElementById('stats-month').value;
+    const year = document.getElementById('stats-year').value;
+    const statsDiv = document.getElementById('month-stats');
+    const actionsDiv = document.getElementById('month-actions');
+    const deleteButton = document.getElementById('delete-button');
+
+    statsDiv.innerHTML = '<p class="text-gray-500 text-sm">Carregando...</p>';
+
+    fetch(`/appointments/get_month_stats?month=${month}&year=${year}`)
+      .then(response => response.json())
+      .then(data => {
+        currentStats = data;
+        
+        if (data.error) {
+          statsDiv.innerHTML = `<p class="text-red-500 text-sm">${data.error}</p>`;
+          actionsDiv.style.display = 'none';
+          return;
+        }
+
+        // Display stats
+        let statsHtml = `
+          <div class="space-y-2">
+            <h5 class="font-medium text-gray-800 dark:text-gray-200">${data.month_name}</h5>
+            <div class="text-sm text-gray-600 dark:text-gray-400">
+              <div class="flex justify-between">
+                <span>Total de compromissos:</span>
+                <span class="font-medium">${data.total_appointments}</span>
+              </div>
+        `;
+
+        // Show breakdown by status if there are appointments
+        if (data.total_appointments > 0) {
+          statsHtml += '<div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">';
+          for (const [status, count] of Object.entries(data.by_status)) {
+            const statusText = {
+              'scheduled': 'Agendados',
+              'completed': 'Concluídos',
+              'cancelled': 'Cancelados',
+              'no_show': 'Faltaram'
+            }[status] || status;
+            
+            statsHtml += `
+              <div class="flex justify-between">
+                <span>${statusText}:</span>
+                <span>${count}</span>
+              </div>
+            `;
+          }
+          statsHtml += '</div>';
+        }
+
+        statsHtml += '</div></div>';
+        statsDiv.innerHTML = statsHtml;
+
+        // Show action buttons
+        actionsDiv.style.display = 'block';
+        
+        // Show delete button only for future months with appointments
+        if (data.is_future && data.total_appointments > 0) {
+          deleteButton.style.display = 'block';
+        } else {
+          deleteButton.style.display = 'none';
+        }
+      })
+      .catch(error => {
+        statsDiv.innerHTML = '<p class="text-red-500 text-sm">Erro ao carregar estatísticas</p>';
+        actionsDiv.style.display = 'none';
+      });
+  }
+
+  function previewForMonth() {
+    if (!currentStats) return;
+    
+    const month = document.getElementById('stats-month').value;
+    const year = document.getElementById('stats-year').value;
+    
+    // Calculate the start and end dates for the selected month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    
+    // Format dates as YYYY-MM-DD
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    // Create a form and submit it to the custom period preview
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/appointments/generate_custom_period';
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    // Add preview flag
+    const previewInput = document.createElement('input');
+    previewInput.type = 'hidden';
+    previewInput.name = 'preview';
+    previewInput.value = 'true';
+    form.appendChild(previewInput);
+    
+    // Add date range
+    const startInput = document.createElement('input');
+    startInput.type = 'hidden';
+    startInput.name = 'start_date';
+    startInput.value = startDateStr;
+    form.appendChild(startInput);
+    
+    const endInput = document.createElement('input');
+    endInput.type = 'hidden';
+    endInput.name = 'end_date';
+    endInput.value = endDateStr;
+    form.appendChild(endInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  function deleteMonthAppointments() {
+    if (!currentStats) return;
+    
+    const month = document.getElementById('stats-month').value;
+    const year = document.getElementById('stats-year').value;
+    
+    const confirmText = `ATENÇÃO: Você está prestes a deletar TODOS os ${currentStats.total_appointments} compromissos de ${currentStats.month_name}.\n\nEsta ação NÃO PODE ser desfeita.\n\nTem certeza?`;
+    
+    if (confirm(confirmText)) {
+      // Create a form and submit it
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/appointments/delete_month_appointments';
+      
+      // Add method override for DELETE
+      const methodInput = document.createElement('input');
+      methodInput.type = 'hidden';
+      methodInput.name = '_method';
+      methodInput.value = 'delete';
+      form.appendChild(methodInput);
+      
+      // Add CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'authenticity_token';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+      
+      // Add month and year
+      const monthInput = document.createElement('input');
+      monthInput.type = 'hidden';
+      monthInput.name = 'month';
+      monthInput.value = month;
+      form.appendChild(monthInput);
+      
+      const yearInput = document.createElement('input');
+      yearInput.type = 'hidden';
+      yearInput.name = 'year';
+      yearInput.value = year;
+      form.appendChild(yearInput);
+      
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  // Stats are loaded manually by clicking "Ver" button for better performance
+</script>

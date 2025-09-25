@@ -41,6 +41,12 @@
           <%= form.text_field :phone, placeholder: "+5519999888777", class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
           <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Formato internacional com código do país</p>
         </div>
+
+        <div>
+          <%= form.label :birthdate, "Data de Nascimento", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+          <%= form.date_field :birthdate, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Para aparecer nos aniversariantes do mês</p>
+        </div>
       </div>
 
       <!-- Status and Plan -->
@@ -103,17 +109,17 @@
           </div>
 
           <div>
-            <%= form.label :package_value, "Valor do Pacote (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
-            <%= form.number_field :package_value, step: 0.01, min: 0, 
-                placeholder: "Ex: 200.00",
+            <%= form.label :monthly_amount, "Valor Mensal (R$)", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+            <%= form.number_field :monthly_amount, step: 0.01, min: 0, 
+                placeholder: "Ex: 680.00",
                 class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
           </div>
 
           <div>
-            <%= form.label :package_hours, "Horas do Pacote", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
-            <%= form.number_field :package_hours, step: 0.5, min: 0, 
-                placeholder: "Ex: 4.0",
-                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-5-00 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
+            <%= form.label :monthly_hours, "Horas Mensais", class: "block text-sm font-medium text-gray-700 dark:text-dark-text-secondary mb-1" %>
+            <%= form.number_field :monthly_hours, step: 0.5, min: 0, 
+                placeholder: "Ex: 8.0",
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-indigo-500 dark:focus:ring-dark-accent focus:border-indigo-500 dark:focus:border-dark-accent bg-white dark:bg-dark-bg-tertiary text-gray-900 dark:text-dark-text-primary" %>
           </div>
         </div>
       </div>

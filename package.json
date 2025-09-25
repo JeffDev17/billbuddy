@@ -1,4 +1,5 @@
 {
+  "license": "MIT",
   "dependencies": {
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",
@@ -6,9 +7,11 @@
     "@fullcalendar/interaction": "^6.1.15",
     "@fullcalendar/list": "^6.1.15",
     "@hotwired/stimulus": "^3.2.2",
+    "@hotwired/turbo-rails": "^8.0.12",
     "@tailwindcss/forms": "^0.5.10",
     "autoprefixer": "^10.4.21",
     "chart.js": "^4.5.0",
+    "chartjs-adapter-date-fns": "^3.0.0",
     "chartkick": "^5.0.1",
     "postcss": "^8.5.3",
     "rails_admin": "3.3.0",
@@ -16,6 +19,7 @@
     "tailwindcss": "^4.1.5"
   },
   "scripts": {
+    "build": "echo 'JavaScript handled by importmap'",
     "build:css": "sass ./app/assets/stylesheets/application.sass.scss:./app/assets/builds/application.css ./app/assets/stylesheets/rails_admin.scss:./app/assets/builds/rails_admin.css --no-source-map --load-path=node_modules"
   }
 }

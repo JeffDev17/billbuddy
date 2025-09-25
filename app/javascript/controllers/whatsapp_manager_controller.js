@@ -3,6 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "statusText", 
+    "statusDot",
     "messages", 
     "loadingState", 
     "qrContainer", 
@@ -76,8 +77,9 @@ export default class extends Controller {
       console.log('📊 Status recebido:', data)
       this.updateDebugInfo('Status', data)
       
-      if (data.authenticated) {
+      if (data.authenticated || data.state === 'CONNECTED') {
         this.showSuccess()
+        this.updateStatus('🟢 WhatsApp conectado e pronto')
         this.stopIntervals()
         return
       }
@@ -207,13 +209,24 @@ export default class extends Controller {
   }
 
   generateQRCode(qrData) {
-    this.qrCodeInstance = new QRCode(this.qrCodeTarget, {
-      text: qrData,
-      width: 256,
-      height: 256,
-      colorDark: '#000000',
-      colorLight: '#ffffff'
-    })
+    try {
+      this.qrCodeInstance = new QRCode(this.qrCodeTarget, {
+        text: qrData,
+        width: 256,
+        height: 256,
+        colorDark: '#000000',
+        colorLight: '#ffffff'
+      })
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error)
+      // Fallback para URL externa
+      this.qrCodeTarget.innerHTML = `
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrData)}" 
+             alt="QR Code do WhatsApp" 
+             class="mx-auto rounded-lg shadow-md border border-gray-200 dark:border-gray-700"
+             style="width: 256px; height: 256px;" />
+      `
+    }
   }
 
   showLoading(message = 'Carregando...') {
@@ -256,6 +269,22 @@ export default class extends Controller {
 
   updateStatus(text) {
     this.statusTextTarget.textContent = text
+    
+    // Update status dot color based on message
+    if (this.hasStatusDotTarget) {
+      this.statusDotTarget.className = this.statusDotTarget.className.replace(/bg-\w+-\d+/, '')
+      
+      if (text.includes('🟢') || text.includes('autenticado')) {
+        this.statusDotTarget.classList.add('bg-green-500')
+        this.statusDotTarget.classList.remove('animate-pulse')
+      } else if (text.includes('🟡') || text.includes('QR')) {
+        this.statusDotTarget.classList.add('bg-yellow-500', 'animate-pulse')
+      } else if (text.includes('🔴') || text.includes('Erro')) {
+        this.statusDotTarget.classList.add('bg-red-500', 'animate-pulse')
+      } else {
+        this.statusDotTarget.classList.add('bg-blue-500', 'animate-pulse')
+      }
+    }
   }
 
   showMessage(message, type) {

@@ -56,6 +56,58 @@ namespace :whatsapp do
   task clean_start: :environment do
     puts "🧹 Performing clean start of WhatsApp service..."
 
+    puts "🛑 Stopping any existing WhatsApp service..."
+    WhatsappProcessManager.stop!
+
+    puts "🧹 Cleaning up processes on port 3001..."
+    system("lsof -ti:3001 | xargs kill -9 2>/dev/null || true")
+    system("pkill -f 'node.*app.js' 2>/dev/null || true")
+    system("pkill -f 'whatsapp-api' 2>/dev/null || true")
+
+    sleep(3)
+
+    puts "🚀 Starting WhatsApp service..."
+    if WhatsappProcessManager.start!
+      puts "✅ WhatsApp service started successfully on port #{WhatsappProcessManager.port}"
+      puts "📊 Check status at: http://localhost:#{WhatsappProcessManager.port}/status"
+    else
+      puts "❌ Failed to start WhatsApp service. Check logs at log/whatsapp.log"
+      exit 1
+    end
+  end
+
+  desc "Show WhatsApp service logs"
+  task logs: :environment do
+    log_file = Rails.root.join("log", "whatsapp.log")
+    if File.exist?(log_file)
+      puts "📄 WhatsApp service logs:"
+      puts "=" * 50
+      system("tail -50 #{log_file}")
+    else
+      puts "❌ No WhatsApp log file found at #{log_file}"
+    end
+  end
+
+  desc "Test WhatsApp service connection"
+  task test: :environment do
+    puts "🔍 Testing WhatsApp service connection..."
+
+    begin
+      status = WhatsappApiService.status
+      puts "📊 Service Status: #{status}"
+
+      if status[:status] == "ready"
+        puts "✅ WhatsApp service is ready!"
+      elsif status[:status] == "pending"
+        puts "⏳ WhatsApp service is waiting for QR code scan"
+      else
+        puts "⚠️  WhatsApp service status: #{status[:status]}"
+      end
+    rescue => e
+      puts "❌ Error testing WhatsApp service: #{e.message}"
+      puts "💡 Try running: bin/rails whatsapp:clean_start"
+    end
+
     # Force stop and cleanup
     WhatsappProcessManager.stop!
 

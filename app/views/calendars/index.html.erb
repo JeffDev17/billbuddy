@@ -307,6 +307,16 @@
       📅 Agenda Interativa
     </h1>
     <div class="flex flex-wrap gap-3">
+      <!-- Customer Names Toggle -->
+      <div data-controller="sensitive-data" data-sensitive-data-type-value="customerNames">
+        <button type="button" 
+                data-action="click->sensitive-data#toggle"
+                class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          <span data-sensitive-data-target="toggleIcon">👁️</span>
+          <span>Ocultar Nomes</span>
+        </button>
+      </div>
+      
       <%= link_to daily_completion_calendars_path(date: Date.current), 
           class: "bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition-colors" do %>
         ✅ Concluir Aulas
@@ -409,10 +419,12 @@
     </div>
     
     <!-- FullCalendar -->
-    <div data-controller="fullcalendar" 
+    <div data-controller="fullcalendar sensitive-data" 
          data-fullcalendar-events-url-value="<%= events_calendars_path %>"
          data-fullcalendar-selected-date-value="<%= Date.current.iso8601 %>"
-         data-fullcalendar-locale-value="pt-br">
+         data-fullcalendar-locale-value="pt-br"
+         data-sensitive-data-type-value="calendar"
+         data-sensitive-data-events-url-value="<%= events_calendars_path %>">
       <div data-fullcalendar-target="calendar"></div>
     </div>
   </div>
@@ -420,30 +432,61 @@
   <!-- Legend -->
   <div class="mt-6 calendar-legend rounded-lg p-4">
     <h3 class="text-sm font-medium mb-3">Legenda</h3>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-      <div class="flex items-center">
-        <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-        <span>Crédito Agendado</span>
+    
+    <!-- Status Colors -->
+    <div class="mb-4">
+      <h4 class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Status dos Compromissos</h4>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+          <span>Crédito Agendado</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+          <span>Assinatura Agendada</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-emerald-600 rounded mr-2"></div>
+          <span>Concluído</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 bg-amber-500 rounded mr-2"></div>
+          <span>Falta (No Show)</span>
+        </div>
       </div>
-      <div class="flex items-center">
-        <div class="w-4 h-4 bg-purple-500 rounded mr-2"></div>
-        <span>Assinatura Agendada</span>
+    </div>
+
+    <!-- Cancellation Types -->
+    <div class="mb-4">
+      <h4 class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Tipos de Cancelamento</h4>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+        <div class="flex items-center">
+          <div class="w-4 h-4 rounded mr-2" style="background-color: #ef4444;"></div>
+          <span>Cancelamento Normal</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 rounded mr-2" style="background-color: #f97316;"></div>
+          <span>Pendente Reagendamento</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-4 h-4 rounded mr-2" style="background-color: #7f1d1d;"></div>
+          <span>Em Cima da Hora (Faturado)</span>
+        </div>
       </div>
-      <div class="flex items-center">
-        <div class="w-4 h-4 bg-emerald-600 rounded mr-2"></div>
-        <span>Concluído</span>
-      </div>
-      <div class="flex items-center">
-        <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
-        <span>Cancelado</span>
-      </div>
-      <div class="flex items-center">
-        <div class="w-2 h-4 bg-yellow-500 rounded mr-3"></div>
-        <span>Não Sincronizado</span>
-      </div>
-      <div class="flex items-center">
-        <div class="w-2 h-4 bg-green-500 rounded mr-3"></div>
-        <span>Sincronizado</span>
+    </div>
+
+    <!-- Sync Status -->
+    <div>
+      <h4 class="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Status de Sincronização</h4>
+      <div class="grid grid-cols-2 gap-4 text-xs">
+        <div class="flex items-center">
+          <div class="w-2 h-4 bg-yellow-500 rounded mr-3"></div>
+          <span>Não Sincronizado</span>
+        </div>
+        <div class="flex items-center">
+          <div class="w-2 h-4 bg-green-500 rounded mr-3"></div>
+          <span>Sincronizado</span>
+        </div>
       </div>
     </div>
   </div>

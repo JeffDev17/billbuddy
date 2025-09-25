@@ -1,3 +1,6 @@
+require "net/http"
+require "timeout"
+
 class WhatsappApiService
   class WhatsappError < StandardError; end
 
@@ -27,20 +30,47 @@ class WhatsappApiService
     validate_phone!(phone)
     validate_message!(message)
 
-    response = make_request(phone, message)
-    handle_response(response)
+    # Try sending with retry logic for "CHAT_NOT_READY" errors
+    attempts = 0
+    max_attempts = 3
+
+    while attempts < max_attempts
+      attempts += 1
+
+      begin
+        response = make_request(phone, message)
+        handle_response(response)
+        return true # Success!
+
+      rescue StandardError => e
+        if e.message.include?("CHAT_NOT_READY") && attempts < max_attempts
+          Rails.logger.warn("WhatsApp interface not ready, retrying... (#{attempts}/#{max_attempts})")
+          sleep(5) # Wait 5 seconds before retry
+          next
+        else
+          # Re-raise if it's not a CHAT_NOT_READY error or we've exhausted retries
+          raise e
+        end
+      end
+    end
+
   rescue StandardError => e
     Rails.logger.error("WhatsApp API Error: #{e.message}")
     raise WhatsappError, "Falha ao enviar mensagem WhatsApp: #{e.message}"
   end
 
   def get_status
-    ensure_service_running!
-    response = HTTParty.get("#{whatsapp_api_url}/status", timeout: 10)
-    JSON.parse(response.body)
-  rescue => e
-    Rails.logger.error("WhatsApp Status Error: #{e.message}")
-    { status: "error", error: e.message }
+    # Try to get the actual status from the Node.js service
+    begin
+      response = HTTParty.get("#{whatsapp_api_url}/status", timeout: 10)
+      JSON.parse(response.body)
+    rescue Errno::ECONNREFUSED, Timeout::Error => e
+      # Service is not responding - it's actually stopped
+      { status: "stopped", authenticated: false }
+    rescue => e
+      Rails.logger.error("WhatsApp Status Error: #{e.message}")
+      { status: "error", authenticated: false, error: e.message }
+    end
   end
 
   def get_qr_code

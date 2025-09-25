@@ -69,32 +69,32 @@ class GoogleCalendarSyncService
     sync_appointments_collection(appointments)
   end
 
-  # Recurring sync methods
+  # Deprecated recurring sync methods - use SmartGoogleCalendarSyncService instead
   def sync_customer_recurring_appointments(customer, date_range = nil)
+    Rails.logger.warn "DEPRECATED: Use SmartGoogleCalendarSyncService for better recurring sync"
     appointments = customer.unsynced_appointments
     appointments = appointments.where(scheduled_at: date_range) if date_range
-    sync_as_recurring_events(appointments)
+    sync_appointments_collection(appointments) # Fallback to individual sync
   end
 
   def sync_all_scheduled_appointments_as_recurring
-    customer_groups = user_unsynced_appointments.includes(:customer).group_by(&:customer)
-    customer_groups.sum { |customer, appointments| sync_as_recurring_events(appointments) }
+    Rails.logger.warn "DEPRECATED: Use SmartGoogleCalendarSyncService for better recurring sync"
+    sync_all_scheduled_appointments # Fallback to individual sync
   end
 
   def sync_all_appointments_as_recurring
-    customer_groups = user_unsynced_all_appointments.includes(:customer).group_by(&:customer)
-    customer_groups.sum { |customer, appointments| sync_as_recurring_events(appointments) }
+    Rails.logger.warn "DEPRECATED: Use SmartGoogleCalendarSyncService for better recurring sync"
+    sync_all_appointments # Fallback to individual sync
   end
 
   def sync_appointments_for_period_as_recurring(start_date, end_date)
-    appointments = period_appointments(start_date, end_date)
-    sync_as_recurring_events(appointments)
+    Rails.logger.warn "DEPRECATED: Use SmartGoogleCalendarSyncService for better recurring sync"
+    sync_appointments_for_period(start_date, end_date) # Fallback to individual sync
   end
 
   def sync_all_appointments_for_period_as_recurring(start_date, end_date)
-    appointments = period_all_appointments(start_date, end_date)
-    customer_groups = appointments.includes(:customer).group_by(&:customer)
-    customer_groups.sum { |customer, appointments| sync_as_recurring_events(appointments) }
+    Rails.logger.warn "DEPRECATED: Use SmartGoogleCalendarSyncService for better recurring sync"
+    sync_all_appointments_for_period(start_date, end_date) # Fallback to individual sync
   end
 
   # CRUD operations
@@ -119,47 +119,11 @@ class GoogleCalendarSyncService
   def sync_appointments_collection(appointments)
     appointments.sum { |appointment| sync_appointment(appointment) ? 1 : 0 }
   end
-
-    def sync_as_recurring_events(appointments)
-    grouped_appointments = RecurringAppointmentGrouper.new(appointments).group_by_pattern
-
-    synced_count = 0
-    grouped_appointments.each do |group_key, appointment_group|
-      if appointment_group.size >= 2
-        synced_count += sync_recurring_group(appointment_group)
-      else
-        # Single appointments - sync individually
-        synced_count += sync_appointments_collection(appointment_group)
-      end
-    end
-    synced_count
-  end
-
-    def sync_recurring_group(appointments)
-    pattern = RecurringPatternDetector.new(appointments).detect
-    return sync_appointments_collection(appointments) unless pattern
-
-    execute_sync do
-      create_recurring_event(appointments, pattern)
-      appointments.size
-    end || sync_appointments_collection(appointments) # Fallback to individual
-  end
-
   # Event creation
   def create_individual_event(appointment)
     event = GoogleCalendarEventBuilder.individual(appointment)
     google_event = @service.insert_event("primary", event)
     appointment.update!(google_event_id: google_event.id)
-    true
-  end
-
-  def create_recurring_event(appointments, pattern)
-    event = GoogleCalendarEventBuilder.recurring(appointments, pattern)
-    google_event = @service.insert_event("primary", event)
-
-    appointments.each do |appointment|
-      appointment.update!(google_event_id: google_event.id, is_recurring_event: true)
-    end
     true
   end
 
@@ -179,23 +143,17 @@ class GoogleCalendarSyncService
   def delete_recurring_series(appointment)
     @service.delete_event("primary", appointment.google_event_id)
 
-    appointment.customer.appointments
-               .where(google_event_id: appointment.google_event_id, is_recurring_event: true)
-               .update_all(google_event_id: nil, is_recurring_event: false)
+    appointment.customer.appointments.where(google_event_id: appointment.google_event_id, is_recurring_event: true).update_all(google_event_id: nil, is_recurring_event: false)
     true
   end
 
   # Query helpers
   def user_unsynced_appointments
-    Appointment.joins(:customer)
-               .where(customers: { user_id: @user.id })
-               .unsynced_scheduled
+    Appointment.joins(:customer).where(customers: { user_id: @user.id }).unsynced_scheduled
   end
 
   def user_unsynced_all_appointments
-    Appointment.joins(:customer)
-               .where(customers: { user_id: @user.id })
-               .unsynced_all
+    Appointment.joins(:customer).where(customers: { user_id: @user.id }).unsynced_all
   end
 
   def period_appointments(start_date, end_date)

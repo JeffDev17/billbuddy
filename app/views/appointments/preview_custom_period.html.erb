@@ -1,0 +1,170 @@
+<% content_for :title, "Preview: #{@target_period}" %>
+
+<div class="max-w-6xl mx-auto p-6">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            🔮 Preview: <%= @target_period %>
+            <span class="text-lg text-purple-600 dark:text-purple-400">(Horários Regulares)</span>
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-1">
+            Visualização dos compromissos que seriam criados baseados nos horários regulares definidos
+          </p>
+        </div>
+        <%= link_to manage_auto_generation_appointments_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" do %>
+          ← Voltar
+        <% end %>
+      </div>
+
+      <!-- Summary -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
+          <div class="text-2xl font-bold text-blue-600 dark:text-blue-400"><%= @preview_result[:appointments_created] %></div>
+          <div class="text-sm text-blue-600 dark:text-blue-300">Compromissos a criar</div>
+        </div>
+        
+        <div class="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
+          <div class="text-2xl font-bold text-green-600 dark:text-green-400"><%= @preview_result[:customers_processed] %></div>
+          <div class="text-sm text-green-600 dark:text-green-300">Clientes com horários regulares</div>
+        </div>
+      </div>
+
+      <!-- Customers with New Appointments -->
+      <% if @preview_result[:appointments_created] > 0 %>
+        <div class="mb-8">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            ✅ Compromissos a Criar (<%= @preview_result[:appointments_created] %>)
+          </h2>
+          
+          <!-- Customer Details -->
+        <div class="space-y-6 mb-8">
+          <% @preview_result[:details].each do |customer_detail| %>
+            <% if customer_detail[:created] > 0 %>
+              <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    👤 <%= customer_detail[:customer_name] %>
+                  </h3>
+                  <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+                    <%= customer_detail[:created] %> compromisso<%= 's' if customer_detail[:created] != 1 %>
+                  </span>
+                </div>
+                
+                <!-- Appointments Summary by Day -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <% 
+                    # Group appointments by day of week and time
+                    grouped_appointments = customer_detail[:appointments].group_by do |apt|
+                      [apt[:scheduled_at].wday, apt[:scheduled_at].strftime("%H:%M"), apt[:duration]]
+                    end
+                  %>
+                  
+                  <% grouped_appointments.sort_by { |(wday, time, duration), _| [wday, time] }.each do |(wday, time, duration), appointments| %>
+                    <% day_name = appointments.first[:day_name] %>
+                    <% count = appointments.size %>
+                    
+                    <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
+                      <div class="flex items-center space-x-3">
+                        <span class="text-xl">📅</span>
+                        <div>
+                          <div class="font-medium text-gray-900 dark:text-gray-100">
+                            <%= day_name %> - <%= time %>
+                          </div>
+                          <div class="text-sm text-gray-500 dark:text-gray-400">
+                            <%= duration %>h de duração
+                          </div>
+                        </div>
+                      </div>
+                      <span class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-sm font-medium">
+                        <%= count %>x
+                      </span>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+
+        <!-- Confirmation Actions -->
+        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
+          <div class="text-center">
+            <h3 class="text-lg font-medium text-amber-800 dark:text-amber-200 mb-2">
+              Confirmar Criação de Compromissos
+            </h3>
+            <p class="text-sm text-amber-600 dark:text-amber-400 mb-4">
+              <%= @preview_result[:appointments_created] %> compromissos serão criados para o período <%= @target_period %> baseados nos horários regulares
+            </p>
+            
+            <div class="flex justify-center space-x-4">
+              <%= link_to manage_auto_generation_appointments_path, 
+                  class: "px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" do %>
+                ❌ Cancelar
+              <% end %>
+              
+              <%= form_with url: generate_custom_period_appointments_path, method: :post, local: true, class: "inline" do |form| %>
+                <%= form.hidden_field :start_date, value: params[:start_date] %>
+                <%= form.hidden_field :end_date, value: params[:end_date] %>
+                <%= form.hidden_field :generation_type, value: "schedule_based" %>
+                <%= form.submit "✅ Criar Todos os Compromissos", 
+                    class: "px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md",
+                    confirm: "Tem certeza que deseja criar #{@preview_result[:appointments_created]} compromissos?" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+      <% else %>
+        <!-- No Appointments to Create -->
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4">📅</div>
+          <h3 class="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">
+            Nenhum Compromisso para Criar
+          </h3>
+          <p class="text-blue-600 dark:text-blue-300 mb-4">
+            Não foram encontrados horários regulares ou todos os compromissos já existem para <strong><%= @target_period %></strong>.
+          </p>
+          <p class="text-sm text-blue-500 dark:text-blue-400 mb-6">
+            Defina horários regulares para os clientes para que possam aparecer aqui:
+          </p>
+          
+          <!-- Show customers without schedules -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left max-w-4xl mx-auto">
+            <% current_user.customers.active.includes(:customer_schedules).each do |customer| %>
+              <% if customer.customer_schedules.enabled.empty? %>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-600">
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-medium text-gray-900 dark:text-gray-100">
+                      👤 <%= customer.name %>
+                    </h4>
+                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Sem horários regulares definidos
+                  </p>
+                  <%= link_to "Definir Horários", customer_path(customer), 
+                      class: "inline-block px-3 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600",
+                      target: "_blank" %>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @preview_result[:errors].any? %>
+        <!-- Errors -->
+        <div class="mt-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-600 rounded-lg p-4">
+          <h3 class="text-lg font-medium text-red-800 dark:text-red-200 mb-2">⚠️ Erros Encontrados</h3>
+          <ul class="text-sm text-red-600 dark:text-red-400 space-y-1">
+            <% @preview_result[:errors].each do |error| %>
+              <li>• <%= error %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+    </div>
+  </div>
+</div>

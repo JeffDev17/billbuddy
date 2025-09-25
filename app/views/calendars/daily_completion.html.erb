@@ -37,18 +37,18 @@
       </div>
       
       <!-- Global Sensitive Data Toggle -->
-      <div data-controller="global-sensitive-data">
+      <div data-controller="sensitive-data" data-sensitive-data-type-value="global">
         <button type="button" 
-                data-action="click->global-sensitive-data#toggle"
+                data-action="click->sensitive-data#toggle"
                 class="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
-          <span data-global-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
+          <span data-sensitive-data-target="toggleIcon">👁️‍🗨️</span>
           <span>Mostrar Valores</span>
         </button>
       </div>
     </div>
 
     <!-- Metrics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center">
           <div class="p-2 bg-blue-100 dark:bg-blue-900 rounded-full">
@@ -94,7 +94,27 @@
             <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Ganhos do Dia</p>
             <%= render "shared/sensitive_data" do %>
               <p class="text-2xl font-bold text-green-600 dark:text-green-400">R$ <%= sprintf('%.2f', @completion_data[:total_earnings]) %></p>
+              <% if @completion_data[:cancellation_revenue] > 0 %>
+                <p class="text-xs text-red-600 dark:text-red-400 mt-1">
+                  Total com aulas canceladas: R$ <%= sprintf('%.2f', @completion_data[:total_earnings] + @completion_data[:cancellation_revenue]) %>
+                </p>
+              <% end %>
             <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="p-2 bg-purple-100 dark:bg-purple-900 rounded-full">
+            📈
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Lucro da Semana</p>
+            <%= render "shared/sensitive_data" do %>
+              <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">R$ <%= sprintf('%.2f', @current_week_revenue) %></p>
+            <% end %>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Inclui cancelamentos</p>
           </div>
         </div>
       </div>
@@ -202,20 +222,32 @@
                       <% end %>
                       
                       <!-- Cancel Button -->
-                      <%= link_to mark_cancelled_appointment_path(appointment), 
-                          data: { 
-                            turbo_method: :post, 
-                            turbo_confirm: "Tem certeza que deseja cancelar este compromisso?" 
-                          },
-                          class: "inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600",
-                          title: "Cancelar compromisso" do %>
+                      <button type="button" 
+                              onclick="openCancellationModal(<%= appointment.id %>)"
+                              class="inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-600"
+                              title="Cancelar compromisso">
                         ❌
-                      <% end %>
+                      </button>
                     <% elsif appointment.status == 'completed' %>
                       <!-- Show completion date for completed appointments -->
                       <span class="text-xs text-green-600 dark:text-green-400">
                         Concluída em <%= appointment.completed_at&.strftime('%d/%m') || 'N/A' %>
                       </span>
+                    <% elsif appointment.status == 'cancelled' %>
+                      <!-- Show cancellation type and reschedule option if available -->
+                      <div class="flex items-center space-x-1">
+                        <span class="text-xs <%= appointment.cancellation_color_class %>">
+                          <%= appointment.detailed_status %>
+                        </span>
+                        <% if appointment.can_be_rescheduled? %>
+                          <button type="button" 
+                                  onclick="openRescheduleModal(<%= appointment.id %>)"
+                                  class="inline-flex items-center px-2 py-1 border border-orange-300 text-xs font-medium rounded text-orange-700 bg-orange-50 hover:bg-orange-100"
+                                  title="Reagendar compromisso">
+                            📅
+                          </button>
+                        <% end %>
+                      </div>
                     <% end %>
                   </div>
                 </div>

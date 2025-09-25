@@ -32,13 +32,24 @@ Rails.application.routes.draw do
     resources :customer_credits
     resources :extra_time_balances
   end
+
+
   devise_for :users
+
+  # Profile management routes
+  get "profile", to: "profile#show"
+  get "profile/edit", to: "profile#edit"
+  patch "profile", to: "profile#update"
+  get "profile/change-password", to: "profile#change_password", as: "change_password"
+  patch "profile/change-password", to: "profile#update_password", as: "update_password"
+
   resources :payments do
     collection do
       get :monthly_checklist
       post :mark_paid
       post :unmark_paid
       post :update_payment_status
+      post :update_payment_amount
       post :bulk_mark_paid
     end
   end
@@ -59,17 +70,32 @@ Rails.application.routes.draw do
       post "setup_auto_generation"
       post "cancel_auto_generation"
       post "run_auto_generation_now"
+
+      # New unified system routes
+      post "fill_current_month", to: "appointments#fill_current_month"
+      get "preview_current_month", to: "appointments#preview_current_month"
+      post "generate_next_month", to: "appointments#generate_next_month"
+      get "preview_next_month", to: "appointments#preview_next_month"
+      post "preview_next_month", to: "appointments#preview_next_month"
+      post "generate_custom_period", to: "appointments#generate_custom_period"
+      get "get_month_stats", to: "appointments#get_month_stats"
+      delete "delete_month_appointments", to: "appointments#delete_month_appointments"
+      post "generate_specific_month", to: "appointments#generate_specific_month"
+
       get "preview_generation"
       post "confirm_generation"
     end
     member do
       post "mark_completed", to: "appointments#mark_completed"
+      get "cancellation_options", to: "appointments#cancellation_options"
       post "mark_cancelled", to: "appointments#mark_cancelled"
+      post "reschedule", to: "appointments#reschedule"
     end
   end
   resources :payments, only: [ :index ]
   resources :customer_credits, only: [ :index ]
   resources :extra_time_balances, only: [ :index ]
+  resources :customer_schedules, only: [ :create, :update, :destroy ]
 
   get "whatsapp/auth", to: "whatsapp#auth"
   get "whatsapp/status", to: "whatsapp#status"
@@ -92,6 +118,12 @@ Rails.application.routes.draw do
       post "sync_appointment/:appointment_id", to: "calendars#sync_appointment", as: "sync_appointment"
       post "bulk_sync", to: "calendars#bulk_sync"
       post "sync_customer_recurring/:customer_id", to: "calendars#sync_customer_recurring", as: "sync_customer_recurring"
+
+      # New Smart Sync routes
+      post "smart_sync_current_month", to: "calendars#smart_sync_current_month"
+      post "smart_sync_next_month", to: "calendars#smart_sync_next_month"
+      post "smart_sync_custom_month", to: "calendars#smart_sync_custom_month"
+
       get "metrics", to: "calendars#metrics"
     end
   end

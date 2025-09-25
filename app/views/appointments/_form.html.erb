@@ -11,7 +11,7 @@
     </div>
     
     <div class="px-6 py-4">
-      <%= form_with model: appointment, local: true, data: { controller: "appointment-recurring", turbo: false } do |form| %>
+      <%= form_with model: appointment, local: true, data: { controller: "appointment-recurring cancellation-fields", turbo: false } do |form| %>
         <% if appointment.errors.any? %>
           <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-md p-4 mb-6">
             <div class="flex">
@@ -60,6 +60,59 @@
                 class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
           </div>
 
+          <!-- Manual Pricing Override -->
+          <div class="col-span-2 border-t border-gray-200 dark:border-gray-600 pt-4">
+            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">💰 Precificação</h4>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <%= form.label :hourly_rate, "Taxa por Hora (R$)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+                <%= form.number_field :hourly_rate, 
+                    step: 0.01, 
+                    min: 0,
+                    value: appointment.hourly_rate || (appointment.customer&.effective_hourly_rate),
+                    placeholder: appointment.customer&.effective_hourly_rate ? "Padrão: R$ #{sprintf('%.2f', appointment.customer.effective_hourly_rate)}" : "Ex: 85.00",
+                    class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <% if appointment.has_stored_rate? %>
+                    <span class="text-blue-600 dark:text-blue-400">✓ Taxa personalizada definida</span>
+                  <% else %>
+                    Deixe em branco para usar taxa padrão do cliente
+                  <% end %>
+                </p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor Total</label>
+                <div class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <span id="total-value">
+                    <% if appointment.hourly_rate.present? && appointment.duration.present? %>
+                      R$ <%= sprintf('%.2f', appointment.hourly_rate * appointment.duration) %>
+                    <% elsif appointment.customer&.effective_hourly_rate && appointment.duration %>
+                      R$ <%= sprintf('%.2f', appointment.customer.effective_hourly_rate * appointment.duration) %>
+                    <% else %>
+                      R$ --,--
+                    <% end %>
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Calculado automaticamente</p>
+              </div>
+            </div>
+            
+            <% if appointment.persisted? && appointment.hourly_rate.present? %>
+              <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                <p class="text-xs text-blue-700 dark:text-blue-300">
+                  <strong>Fonte:</strong> <%= appointment.rate_source&.humanize || "Personalizada" %>
+                  <% if appointment.rate_source == "monthly_package" %>
+                    (baseado nos valores mensais do cliente)
+                  <% elsif appointment.rate_source == "custom" %>
+                    (taxa personalizada do cliente)
+                  <% end %>
+                </p>
+              </div>
+            <% end %>
+          </div>
+
           <div>
             <%= form.label :status, "Status", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
             <%= form.select :status, 
@@ -70,7 +123,67 @@
                   ["Não compareceu", "no_show"]
                 ], appointment.status), 
                 {},
-                { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" } %>
+                { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100",
+                  data: { action: "change->cancellation-fields#toggleFields" } } %>
+          </div>
+
+          <!-- Campos de Cancelamento - aparecem apenas quando status é 'cancelled' -->
+          <div data-cancellation-fields-target="container" class="sm:col-span-2 <%= 'hidden' unless appointment.cancelled? %>">
+            <div class="space-y-4 p-4 bg-red-50 dark:bg-red-900/30 rounded-md border border-red-200 dark:border-red-700">
+              <h4 class="text-sm font-medium text-red-800 dark:text-red-200 mb-3">
+                🚫 Detalhes do Cancelamento
+              </h4>
+              
+              <div>
+                <%= form.label :cancellation_type, "Tipo de Cancelamento", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+                <div class="space-y-2">
+                  <label class="flex items-center space-x-3 p-3 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <%= form.radio_button :cancellation_type, "standard", 
+                          checked: (appointment.cancellation_type == "standard"),
+                          class: "text-red-600 focus:ring-red-500 border-gray-300 dark:border-gray-600" %>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Cancelamento Normal</div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400">Cancelamento sem reagendamento nem cobrança</div>
+                    </div>
+                  </label>
+                  
+                  <label class="flex items-center space-x-3 p-3 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <%= form.radio_button :cancellation_type, "pending_reschedule", 
+                          checked: (appointment.cancellation_type == "pending_reschedule"),
+                          class: "text-orange-600 focus:ring-orange-500 border-gray-300 dark:border-gray-600" %>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Cancelar com Reagendamento</div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400">Cliente pode reagendar (administração manual)</div>
+                    </div>
+                  </label>
+                  
+                  <label class="flex items-center space-x-3 p-3 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                    <%= form.radio_button :cancellation_type, "with_revenue", 
+                          checked: (appointment.cancellation_type == "with_revenue"),
+                          class: "text-red-800 focus:ring-red-700 border-gray-300 dark:border-gray-600" %>
+                    <div class="flex-1">
+                      <div class="text-sm font-medium text-gray-900 dark:text-gray-100">Cancelamento em Cima da Hora</div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400">Valor será adicionado ao faturamento</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <%= form.label :cancellation_reason, "Motivo do Cancelamento", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+                <%= form.text_area :cancellation_reason, 
+                    rows: 3,
+                    class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100",
+                    placeholder: "Ex: Cliente teve compromisso urgente, problemas de saúde, etc." %>
+              </div>
+
+              <div>
+                <%= form.label :cancelled_at, "Data do Cancelamento", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+                <%= form.datetime_local_field :cancelled_at, 
+                    value: appointment.cancelled_at&.strftime("%Y-%m-%dT%H:%M"),
+                    class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" %>
+              </div>
+            </div>
           </div>
 
           <div class="sm:col-span-2">

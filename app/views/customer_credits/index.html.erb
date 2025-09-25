@@ -20,8 +20,21 @@
       <tbody class="bg-white divide-y divide-gray-200">
       <% @customer_credits.each do |credit| %>
         <tr>
-          <td class="px-6 py-4 whitespace-nowrap"><%= credit.service_package.name %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= credit.service_package.hours %> horas</td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <%= credit.package_name %>
+            <% if credit.custom_credit? %>
+              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 ml-2">
+                ⚡ Personalizado
+              </span>
+            <% end %>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <% if credit.custom_credit? %>
+              <span class="text-gray-500">-</span>
+            <% else %>
+              <%= credit.service_package.hours %> horas
+            <% end %>
+          </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <% if credit.remaining_hours > 0 %>
               <span class="text-green-600"><%= credit.remaining_hours %> horas</span>

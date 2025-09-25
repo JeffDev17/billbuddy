@@ -1,0 +1,95 @@
+<!-- Password Reset Request Page -->
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-900 dark:via-blue-900 dark:to-cyan-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <!-- Logo and Header -->
+    <div class="text-center">
+      <div class="mx-auto h-16 w-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
+        <i class="fas fa-key text-white text-2xl"></i>
+      </div>
+      <h2 class="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
+        Recuperar Senha
+      </h2>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        Digite seu email para receber instruções de recuperação
+      </p>
+    </div>
+
+    <!-- Reset Form -->
+    <div class="bg-white dark:bg-gray-800 py-8 px-6 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700">
+      <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }, local: true, class: "space-y-6") do |f| %>
+        
+        <!-- Email Field -->
+        <div>
+          <%= f.label :email, class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" do %>
+            <i class="fas fa-envelope mr-2 text-gray-400"></i>
+            Email
+          <% end %>
+          <%= f.email_field :email, 
+              autofocus: true, 
+              autocomplete: "email",
+              class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ease-in-out",
+              placeholder: "Digite seu email cadastrado" %>
+        </div>
+
+        <!-- Info Box -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+          <div class="flex">
+            <i class="fas fa-info-circle text-blue-400 mr-3 mt-0.5"></i>
+            <div class="text-sm text-blue-800 dark:text-blue-200">
+              <p class="font-medium mb-1">Como funciona:</p>
+              <ul class="space-y-1 text-xs">
+                <li>• Você receberá um email com o link de recuperação</li>
+                <li>• O link será salvo em <code class="bg-blue-100 dark:bg-blue-800 px-1 rounded">tmp/mail/</code></li>
+                <li>• Abra o arquivo de email e clique no link</li>
+                <li>• Defina uma nova senha</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div>
+          <%= f.submit "Enviar instruções", class: "w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out transform hover:scale-105" %>
+        </div>
+      <% end %>
+
+      <!-- Back to Login -->
+      <div class="mt-6 text-center">
+        <%= link_to new_session_path(resource_name), 
+            class: "inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors duration-200" do %>
+          <i class="fas fa-arrow-left mr-2"></i>
+          Voltar para o login
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if notice %>
+      <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+        <div class="flex">
+          <i class="fas fa-check-circle text-green-400 mr-3 mt-0.5"></i>
+          <div class="text-sm text-green-800 dark:text-green-200">
+            <p class="font-medium mb-1">Email enviado com sucesso!</p>
+            <p class="text-xs">Verifique o arquivo de email em: <code class="bg-green-100 dark:bg-green-800 px-1 rounded">tmp/mail/</code></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <% if alert %>
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+        <div class="flex">
+          <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-0.5"></i>
+          <p class="text-sm text-red-800 dark:text-red-200"><%= alert %></p>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Footer -->
+    <div class="text-center">
+      <p class="text-xs text-gray-500 dark:text-gray-400">
+        © <%= Date.current.year %> BillBuddy. Sistema de gestão para professores.
+      </p>
+    </div>
+  </div>
+</div>

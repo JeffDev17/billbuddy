@@ -2,46 +2,31 @@ class DashboardController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # Basic stats
     @customers_count = current_user_customers.count
     @active_customers = current_user_customers.active.count
     @total_appointments_today = current_user_appointments.today.count
     @completed_appointments_today = current_user_appointments.today.completed.count
 
-    # Today's agenda and completion data
     @selected_date = Date.current
     @daily_completion_data = appointment_completion_service.get_daily_completion_data(@selected_date)
     @todays_appointments = appointment_completion_service.get_completable_appointments(@selected_date)
 
-    # Weekly metrics
     week_start = Date.current.beginning_of_week
     week_end = Date.current.end_of_week
     @weekly_stats = calculate_weekly_stats(week_start, week_end)
 
-    # Upcoming appointments (next 5)
-    @upcoming_appointments = current_user_appointments
-                              .where("scheduled_at > ?", Time.current)
-                              .includes(:customer)
-                              .order(:scheduled_at)
-                              .limit(5)
+    @upcoming_appointments = current_user_appointments.where("scheduled_at > ?", Time.current).includes(:customer).order(:scheduled_at).limit(5)
 
-    # Recent activity (last 5 completed)
-    @recent_completed = current_user_appointments
-                        .completed
-                        .includes(:customer)
-                        .order(completed_at: :desc)
-                        .limit(5)
+    @recent_completed = current_user_appointments.completed.includes(:customer).order(completed_at: :desc).limit(5)
 
-    # Revenue insights
     @insights = calculate_revenue_insights
 
-    # Low credit warnings
-    @low_credit_customers = current_user_customers
-                            .credit
-                            .joins(:customer_credits)
-                            .where("customer_credits.remaining_hours <= ?", 2)
-                            .distinct
-                            .limit(5)
+    @low_credit_customers = current_user_customers.credit.joins(:customer_credits).limit(5).where("customer_credits.remaining_hours <= ?", 2).distinct
+
+    @todays_birthdays = current_user_customers.with_birthday_today
+    @this_month_birthdays = current_user_customers.with_birthday_this_month.sort_by { |c| c.birthdate.day }
+
+    @business_health = calculate_business_health_metrics
   end
 
   private
@@ -67,33 +52,39 @@ class DashboardController < ApplicationController
       scheduled_at: week_start.beginning_of_day..week_end.end_of_day
     )
 
+    total_booked = appointments.count
+    completed = appointments.completed.count
+    scheduled = appointments.scheduled.count
+    cancelled = appointments.cancelled.count
+
+    non_cancelled = total_booked - cancelled
+    completion_rate = non_cancelled > 0 ?
+      (completed.to_f / non_cancelled * 100).round(1) : 0
+
+    cancellation_rate = total_booked > 0 ?
+      (cancelled.to_f / total_booked * 100).round(1) : 0
+
     {
-      total: appointments.count,
-      completed: appointments.completed.count,
-      scheduled: appointments.scheduled.count,
-      cancelled: appointments.cancelled.count,
+      total: total_booked,
+      completed: completed,
+      scheduled: scheduled,
+      cancelled: cancelled,
+      non_cancelled: non_cancelled,
       total_hours: appointments.sum(:duration),
-      completion_rate: appointments.count > 0 ?
-        (appointments.completed.count.to_f / appointments.count * 100).round(1) : 0
+      completion_rate: completion_rate,
+      cancellation_rate: cancellation_rate
     }
   end
 
-    def calculate_revenue_insights
-    # Calculate today's earnings
+  def calculate_revenue_insights
     todays_earnings = calculate_earnings_for_period(Date.current.beginning_of_day..Date.current.end_of_day)
 
-    # Calculate this week's earnings
     week_start = Date.current.beginning_of_week
     week_end = Date.current.end_of_week
     weekly_earnings = calculate_earnings_for_period(week_start.beginning_of_day..week_end.end_of_day)
 
-    # Calculate average hourly rate across all customers
     avg_hourly_rate = calculate_average_hourly_rate
-
-    # Find best earning day this week
     best_day_this_week = find_best_earning_day_this_week(week_start, week_end)
-
-    # Calculate pending payments amount
     pending_payments = calculate_pending_payments
 
     {
@@ -126,7 +117,7 @@ class DashboardController < ApplicationController
     daily_earnings = {}
 
     (week_start..week_end).each do |date|
-      next if date > Date.current # Don't calculate future days
+      next if date > Date.current
 
       day_earnings = calculate_earnings_for_period(date.beginning_of_day..date.end_of_day)
       daily_earnings[date] = day_earnings if day_earnings > 0
@@ -148,5 +139,48 @@ class DashboardController < ApplicationController
            .where(status: "pending")
            .sum(:amount)
            .round(2)
+  end
+
+  def calculate_business_health_metrics
+    month_start = Date.current.beginning_of_month
+    month_end = Date.current.end_of_month
+    this_month_appointments = current_user_appointments.where(scheduled_at: month_start.beginning_of_day..month_end.end_of_day)
+
+    last_month_start = 1.month.ago.beginning_of_month
+    last_month_end = 1.month.ago.end_of_month
+    last_month_appointments = current_user_appointments.where(scheduled_at: last_month_start.beginning_of_day..last_month_end.end_of_day)
+
+    total_customers = current_user_customers.count
+    active_customers = current_user_customers.active.count
+    retention_rate = total_customers > 0 ? (active_customers.to_f / total_customers * 100).round(1) : 0
+
+    this_month_count = this_month_appointments.count
+    last_month_count = last_month_appointments.count
+
+    growth_rate = if last_month_count > 0
+      ((this_month_count - last_month_count).to_f / last_month_count * 100).round(1)
+    else
+      this_month_count > 0 ? 100.0 : 0.0
+    end
+
+    this_month_not_cancelled = this_month_appointments.where.not(status: "cancelled")
+    reliability_rate = if this_month_not_cancelled.count > 0
+      (this_month_not_cancelled.where(status: "completed").count.to_f / this_month_not_cancelled.count * 100).round(1)
+    else
+      0.0
+    end
+
+    trending_up = growth_rate > 0
+
+    {
+      retention_rate: retention_rate,
+      growth_rate: growth_rate,
+      reliability_rate: reliability_rate,
+      trending_up: trending_up,
+      this_month_appointments: this_month_count,
+      last_month_appointments: last_month_count,
+      active_customers: active_customers,
+      total_customers: total_customers
+    }
   end
 end

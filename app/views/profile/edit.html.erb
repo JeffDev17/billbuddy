@@ -1,0 +1,145 @@
+<!-- Profile Edit Page -->
+<div class="max-w-2xl mx-auto">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+          <i class="fas fa-user-edit mr-3 text-purple-600 dark:text-purple-400"></i>
+          Editar Perfil
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Atualize suas informações pessoais</p>
+      </div>
+      <%= link_to profile_path, 
+          class: "inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors duration-200" do %>
+        <i class="fas fa-arrow-left mr-2"></i>
+        Voltar ao Perfil
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Edit Form -->
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
+      <h2 class="text-lg font-semibold text-white flex items-center">
+        <i class="fas fa-id-card mr-3"></i>
+        Informações da Conta
+      </h2>
+    </div>
+    
+    <div class="p-6">
+      <%= form_with model: @user, url: profile_path, method: :patch, local: true, class: "space-y-6" do |f| %>
+        
+        <!-- Error Messages -->
+        <% if @user.errors.any? %>
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+            <div class="flex">
+              <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-0.5"></i>
+              <div class="text-sm text-red-800 dark:text-red-200">
+                <p class="font-medium mb-2">Erro ao atualizar perfil:</p>
+                <ul class="list-disc list-inside space-y-1">
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Email Field -->
+        <div>
+          <%= f.label :email, class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" do %>
+            <i class="fas fa-envelope mr-2 text-gray-400"></i>
+            Email
+          <% end %>
+          <%= f.email_field :email, 
+              autofocus: true, 
+              autocomplete: "email",
+              class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ease-in-out",
+              placeholder: "seu@email.com" %>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Seu email é usado para login e notificações importantes.
+          </p>
+        </div>
+
+        <!-- Current Password (required for email changes) -->
+        <div>
+          <%= f.label :current_password, class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" do %>
+            <i class="fas fa-lock mr-2 text-gray-400"></i>
+            Senha Atual
+          <% end %>
+          <%= f.password_field :current_password, 
+              autocomplete: "current-password",
+              class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200 ease-in-out",
+              placeholder: "Digite sua senha atual para confirmar" %>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Necessário para confirmar alterações de email.
+          </p>
+        </div>
+
+        <!-- Account Info Display -->
+        <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-4">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+            <i class="fas fa-info-circle mr-2 text-gray-400"></i>
+            Informações da Conta
+          </h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Membro desde:</span>
+              <span class="text-gray-900 dark:text-white"><%= @user.created_at.strftime('%d/%m/%Y') %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Total de clientes:</span>
+              <span class="text-gray-900 dark:text-white"><%= @user.customers.count %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600 dark:text-gray-400">Última atualização:</span>
+              <span class="text-gray-900 dark:text-white">
+                <%= @user.updated_at.strftime('%d/%m/%Y às %H:%M') %>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex items-center justify-between">
+          <%= link_to profile_path, 
+              class: "inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-xl text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200" do %>
+            <i class="fas fa-times mr-2"></i>
+            Cancelar
+          <% end %>
+          
+          <%= f.submit "Salvar Alterações", 
+              class: "inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 transform hover:scale-105" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Additional Actions -->
+  <div class="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+      <h2 class="text-lg font-semibold text-white flex items-center">
+        <i class="fas fa-shield-alt mr-3"></i>
+        Outras Configurações
+      </h2>
+    </div>
+    
+    <div class="p-6">
+      <div class="space-y-4">
+        <%= link_to change_password_path, 
+            class: "w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 hover:bg-green-50 dark:hover:bg-green-900/20 border border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500 rounded-xl transition-all duration-200" do %>
+          <div class="flex items-center">
+            <i class="fas fa-key text-green-600 dark:text-green-400 mr-3"></i>
+            <div>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">Alterar Senha</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Manter sua conta segura</p>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

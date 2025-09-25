@@ -42,6 +42,9 @@ class CalendarsController < ApplicationController
     start_date = params[:start].present? ? Date.parse(params[:start]) : Date.current.beginning_of_month
     end_date = params[:end].present? ? Date.parse(params[:end]) : Date.current.end_of_month
 
+    # Check if sensitive data should be hidden
+    hide_customer_names = params[:hide_names] == "true"
+
     # Get appointments for the date range
     appointments = current_user_appointments.where(
       scheduled_at: start_date.beginning_of_day..end_date.end_of_day
@@ -49,9 +52,11 @@ class CalendarsController < ApplicationController
 
     # Convert to FullCalendar format
     events = appointments.map do |appointment|
+      customer_name = hide_customer_names ? "****" : appointment.customer.name
+
       {
         id: appointment.id.to_s,
-        title: appointment.customer.name,
+        title: customer_name,
         start: appointment.scheduled_at.strftime("%Y-%m-%dT%H:%M:%S"),
         end: (appointment.scheduled_at + appointment.duration.hours).strftime("%Y-%m-%dT%H:%M:%S"),
         backgroundColor: event_background_color(appointment),
@@ -65,6 +70,7 @@ class CalendarsController < ApplicationController
         extendedProps: {
           customerId: appointment.customer.id,
           customerName: appointment.customer.name,
+          hiddenCustomerName: "****",
           customerPhone: appointment.customer.phone,
           status: appointment.status,
           duration: appointment.duration,
@@ -191,6 +197,91 @@ class CalendarsController < ApplicationController
     handle_auth_error
   end
 
+  # New Smart Sync actions
+  def smart_sync_current_month
+    sync_service = SmartGoogleCalendarSyncService.new(current_user)
+    result = sync_service.sync_current_month
+
+    if result[:success]
+      message = result[:message]
+      flash_type = :notice
+    else
+      message = result[:message] || "Erro na sincronização inteligente"
+      flash_type = :alert
+    end
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, flash_type => message }
+      format.json { render json: result }
+      format.turbo_stream do
+        @selected_date = Date.current
+        @events = calendar_data_service.appointments_for_date(@selected_date)
+                                      .map { |apt| calendar_data_service.appointment_to_event_object(apt) }
+        render turbo_stream: [
+          turbo_stream.update("events_list", partial: "events_list"),
+          turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { flash_type => message })
+        ]
+      end
+    end
+  rescue Google::Apis::AuthorizationError
+    handle_auth_error
+  end
+
+  def smart_sync_next_month
+    sync_service = SmartGoogleCalendarSyncService.new(current_user)
+    result = sync_service.sync_next_month
+
+    if result[:success]
+      message = result[:message]
+      flash_type = :notice
+    else
+      message = result[:message] || "Erro na sincronização do próximo mês"
+      flash_type = :alert
+    end
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, flash_type => message }
+      format.json { render json: result }
+      format.turbo_stream do
+        @selected_date = Date.current.next_month.beginning_of_month
+        @events = calendar_data_service.appointments_for_date(@selected_date)
+                                      .map { |apt| calendar_data_service.appointment_to_event_object(apt) }
+        render turbo_stream: [
+          turbo_stream.update("events_list", partial: "events_list"),
+          turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { flash_type => message })
+        ]
+      end
+    end
+  rescue Google::Apis::AuthorizationError
+    handle_auth_error
+  end
+
+  def smart_sync_custom_month
+    year = params[:year]&.to_i || Date.current.year
+    month = params[:month]&.to_i || Date.current.month
+
+    start_date = Date.new(year, month, 1).beginning_of_month
+    end_date = start_date.end_of_month
+
+    sync_service = SmartGoogleCalendarSyncService.new(current_user)
+    result = sync_service.sync_month(start_date, end_date)
+
+    if result[:success]
+      message = "#{start_date.strftime('%B %Y')}: #{result[:message]}"
+      flash_type = :notice
+    else
+      message = "Erro ao sincronizar #{start_date.strftime('%B %Y')}: #{result[:message]}"
+      flash_type = :alert
+    end
+
+    respond_to do |format|
+      format.html { redirect_to calendars_path, flash_type => message }
+      format.json { render json: result }
+    end
+  rescue Google::Apis::AuthorizationError
+    handle_auth_error
+  end
+
   def daily_completion
     @selected_date = params[:date].present? ? Date.parse(params[:date]) : Date.current
     @completion_data = appointment_completion_service.get_daily_completion_data(@selected_date)
@@ -203,13 +294,31 @@ class CalendarsController < ApplicationController
     # Add daily preview data
     @daily_preview = calendar_metrics_service.calculate_daily_preview(@selected_date)
     @projected_earnings = calendar_metrics_service.calculate_projected_daily_earnings(@selected_date)
+
+    # Calculate current week revenue including cancellations
+    week_start = @selected_date.beginning_of_week
+    week_end = @selected_date.end_of_week
+    week_period = week_start.beginning_of_day..week_end.end_of_day
+    @current_week_revenue = calendar_metrics_service.calculate_total_revenue_including_cancellations(week_period)
   end
 
   def metrics
+    # Get month/year from params or default to current month
+    @selected_month = params[:month]&.to_i || Date.current.month
+    @selected_year = params[:year]&.to_i || Date.current.year
+
+    # Validate month and year
+    @selected_month = [ @selected_month, 1 ].max
+    @selected_month = [ @selected_month, 12 ].min
+    @selected_year = [ @selected_year, 2020 ].max
+    @selected_year = [ @selected_year, Date.current.year + 1 ].min
+
+    # Create date for the selected month
+    @selected_date = Date.new(@selected_year, @selected_month, 1)
+    @period = @selected_date.beginning_of_month..@selected_date.end_of_month
+
     # Get current month data using AppointmentMetricsService
-    month = Date.current.month
-    year = Date.current.year
-    appointment_metrics_service = AppointmentMetricsService.new(current_user, month, year)
+    appointment_metrics_service = AppointmentMetricsService.new(current_user, @selected_month, @selected_year)
     @authorization_unavailable = calendar_data_service.authorization_unavailable?
 
     @daily_schedule = calendar_metrics_service.calculate_daily_schedule(Date.current)
@@ -221,11 +330,11 @@ class CalendarsController < ApplicationController
       status: "scheduled"
     ).includes(:customer)
 
-    # Calculate comprehensive statistics
+    # Calculate comprehensive statistics for selected month
     @sync_stats = calendar_metrics_service.calculate_sync_statistics
 
     begin
-      @comprehensive_stats = calendar_metrics_service.calculate_comprehensive_stats
+      @comprehensive_stats = calendar_metrics_service.calculate_comprehensive_stats(@period)
       Rails.logger.info "Comprehensive stats calculated: #{@comprehensive_stats}"
     rescue => e
       Rails.logger.error "Error calculating comprehensive stats: #{e.message}"
@@ -233,7 +342,7 @@ class CalendarsController < ApplicationController
     end
 
     begin
-      @monthly_trends = calendar_metrics_service.calculate_monthly_trends
+      @monthly_trends = calendar_metrics_service.calculate_monthly_trends_from_date(@selected_date)
       Rails.logger.info "Monthly trends calculated: #{@monthly_trends.size} months"
     rescue => e
       Rails.logger.error "Error calculating monthly trends: #{e.message}"
@@ -241,19 +350,30 @@ class CalendarsController < ApplicationController
     end
 
     begin
-      @weekly_performance = calendar_metrics_service.calculate_weekly_performance
+      @weekly_performance = calendar_metrics_service.calculate_weekly_performance_from_date(@selected_date)
       Rails.logger.info "Weekly performance calculated: #{@weekly_performance.size} weeks"
     rescue => e
       Rails.logger.error "Error calculating weekly performance: #{e.message}"
       @weekly_performance = []
     end
 
-    # Build monthly summary using metrics service
+    # Get cancellation metrics for the period
+    @cancellation_metrics = calendar_metrics_service.cancellation_metrics(@period)
+
+    # Calculate revenue including cancellations
+    @total_revenue_with_cancellations = calendar_metrics_service.calculate_total_revenue_including_cancellations(@period)
+
+    # Calculate weekly revenue for current month
+    @weekly_revenue = calendar_metrics_service.calculate_weekly_revenue_for_month(@selected_date)
+
+    # Build monthly summary using metrics service for selected month
     @monthly_summary = {
       earnings: {
         completed: appointment_metrics_service.total_earnings.round(2),
         projected: appointment_metrics_service.projected_earnings.round(2),
-        by_customer: appointment_metrics_service.earnings_by_customer.first(10)
+        by_customer: appointment_metrics_service.earnings_by_customer.first(10),
+        total_with_cancellations: @total_revenue_with_cancellations.round(2),
+        cancellation_revenue: @cancellation_metrics[:revenue_from_cancellations].round(2)
       },
       classes: {
         completed: appointment_metrics_service.completed_appointments.count,
@@ -263,6 +383,7 @@ class CalendarsController < ApplicationController
         total: appointment_metrics_service.total_appointments.count,
         forecast: appointment_metrics_service.monthly_forecast
       },
+      cancellations: @cancellation_metrics,
       workload: {
         total_hours: appointment_metrics_service.total_hours.round(1),
         busiest_days: appointment_metrics_service.busiest_days_of_week
@@ -281,6 +402,10 @@ class CalendarsController < ApplicationController
   end
 
       private
+
+  def current_user_appointments
+    @current_user_appointments ||= Appointment.joins(:customer).where(customers: { user_id: current_user.id })
+  end
 
   def google_calendar_service
     @google_calendar_service ||= GoogleCalendarService.new(current_user)
@@ -324,7 +449,7 @@ class CalendarsController < ApplicationController
     when "completed"
       "#059669"  # Emerald
     when "cancelled"
-      "#ef4444"  # Red
+      cancelled_background_color(appointment)
     when "no_show"
       "#f59e0b"  # Amber
     else
@@ -339,11 +464,37 @@ class CalendarsController < ApplicationController
     when "completed"
       "#047857"
     when "cancelled"
-      "#dc2626"
+      cancelled_border_color(appointment)
     when "no_show"
       "#d97706"
     else
       "#4b5563"
+    end
+  end
+
+  def cancelled_background_color(appointment)
+    case appointment.cancellation_type
+    when "pending_reschedule"
+      "#f97316"  # Orange - pode reagendar
+    when "with_revenue"
+      "#7f1d1d"  # Dark red - cancelamento em cima da hora (gera receita)
+    when "standard"
+      "#ef4444"  # Red - cancelamento padrão
+    else
+      "#ef4444"  # Red - fallback
+    end
+  end
+
+  def cancelled_border_color(appointment)
+    case appointment.cancellation_type
+    when "pending_reschedule"
+      "#ea580c"  # Darker orange
+    when "with_revenue"
+      "#450a0a"  # Very dark red
+    when "standard"
+      "#dc2626"  # Darker red
+    else
+      "#dc2626"  # Darker red - fallback
     end
   end
 end

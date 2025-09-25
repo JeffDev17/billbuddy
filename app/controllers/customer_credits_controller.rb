@@ -14,7 +14,7 @@ class CustomerCreditsController < ApplicationController
     @customer_credit = @customer.customer_credits.new(customer_credit_params)
 
     if @customer_credit.save
-      redirect_to customer_customer_credits_path(@customer), notice: 'Créditos adicionados com sucesso.'
+      redirect_to customer_customer_credits_path(@customer), notice: "Cr\u00E9ditos adicionados com sucesso."
     else
       render :new
     end
@@ -27,6 +27,6 @@ class CustomerCreditsController < ApplicationController
   end
 
   def customer_credit_params
-    params.require(:customer_credit).permit(:service_package_id, :purchase_date)
+    params.require(:customer_credit).permit(:service_package_id, :purchase_date, :remaining_hours)
   end
 end

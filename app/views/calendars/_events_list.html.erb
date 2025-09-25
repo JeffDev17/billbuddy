@@ -11,7 +11,9 @@
                   <div class="flex justify-between items-start">
                     <div>
                       <p class="font-medium text-indigo-600 dark:text-indigo-400">
-                        <%= event.customer.name %>
+                        <span data-controller="sensitive-data" data-sensitive-data-type-value="general">
+                          <span data-sensitive-data-target="content"><%= event.customer.name %></span>
+                        </span>
                       </p>
                       <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
                         <%= format_brazilian_time(event.start.date_time) %> - <%= format_brazilian_time(event.end.date_time) %>
@@ -81,6 +83,16 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
+                      <% end %>
+                      
+                      <%= form_with model: event.appointment, method: :delete, local: true, class: "inline",
+                          data: { 
+                            confirm: "⚠️ Tem certeza que deseja EXCLUIR este compromisso?\n\nEsta ação não pode ser desfeita!",
+                            turbo_confirm: "⚠️ Tem certeza que deseja EXCLUIR este compromisso?\n\nEsta ação não pode ser desfeita!"
+                          } do |form| %>
+                        <%= form.submit "🗑️", 
+                            class: "text-red-600 hover:text-red-700 p-1 text-sm border border-red-300 rounded hover:bg-red-50",
+                            title: "Excluir compromisso" %>
                       <% end %>
                     </div>
                   </div>

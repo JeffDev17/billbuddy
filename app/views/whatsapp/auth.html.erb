@@ -1,110 +1,170 @@
-<div class="container mt-5" data-controller="whatsapp-manager">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <!-- Service Management Panel -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">🔧 Gerenciamento do Serviço WhatsApp</h5>
+<div class="max-w-4xl mx-auto p-6" data-controller="whatsapp-manager">
+  <!-- Header -->
+  <div class="text-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <i class="fab fa-whatsapp text-green-500 mr-3"></i>
+      Configuração do WhatsApp
+    </h1>
+    <p class="text-gray-600 dark:text-gray-400">
+      Configure e gerencie a conexão do WhatsApp com o sistema
+    </p>
+  </div>
+
+  <!-- Service Status Card -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg mb-6 border border-gray-200 dark:border-gray-700">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-3 h-3 rounded-full bg-gray-400 animate-pulse" data-whatsapp-manager-target="statusDot"></div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Status do Serviço</h2>
         </div>
-        <div class="card-body">
-          <div class="row align-items-center">
-            <div class="col-md-8">
-              <div id="service-status">
-                <span data-whatsapp-manager-target="statusText">🔄 Verificando status...</span>
-              </div>
-            </div>
-            <div class="col-md-4 text-end">
-              <div class="btn-group" role="group">
-                <button type="button" 
-                        data-action="click->whatsapp-manager#startService"
-                        class="btn btn-success btn-sm">
-                  ▶️ Iniciar
-                </button>
-                <button type="button" 
-                        data-action="click->whatsapp-manager#restartService"
-                        class="btn btn-warning btn-sm">
-                  🔄 Reiniciar
-                </button>
-                <button type="button" 
-                        data-action="click->whatsapp-manager#stopService"
-                        class="btn btn-danger btn-sm">
-                  ⏹️ Parar
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="mt-2">
-            <small class="text-muted">Status do serviço será atualizado automaticamente.</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- WhatsApp Authentication Panel -->
-      <div class="card">
-        <div class="card-header">
-          <h3 class="text-center">🔗 Autenticação do WhatsApp</h3>
-        </div>
-        <div class="card-body text-center">
-          <!-- Messages -->
-          <div data-whatsapp-manager-target="messages"></div>
-          
-          <!-- Loading State -->
-          <div data-whatsapp-manager-target="loadingState">
-            <div class="spinner-border text-primary mb-3" role="status">
-              <span class="visually-hidden">Carregando...</span>
-            </div>
-            <p>Inicializando WhatsApp...</p>
-          </div>
-
-          <!-- QR Code Container -->
-          <div data-whatsapp-manager-target="qrContainer" style="display: none;">
-            <div class="alert alert-info">
-              <i class="fas fa-mobile-alt"></i>
-              <strong>Escaneie o QR Code com seu WhatsApp</strong><br>
-              <small>Abra o WhatsApp → Menu (⋮) → Dispositivos conectados → Conectar um dispositivo</small>
-            </div>
-            <div data-whatsapp-manager-target="qrCode" class="d-flex justify-content-center mb-3"></div>
-            <button data-action="click->whatsapp-manager#refreshQRCode" 
-                    class="btn btn-outline-primary btn-sm">
-              🔄 Gerar novo QR Code
-            </button>
-          </div>
-
-          <!-- Success State -->
-          <div data-whatsapp-manager-target="successState" style="display: none;">
-            <div class="text-success mb-3">
-              <i class="fas fa-check-circle" style="font-size: 48px;"></i>
-            </div>
-            <h4 class="text-success">WhatsApp Conectado com Sucesso!</h4>
-            <p class="text-muted">Você já pode usar o sistema. Esta página pode ser fechada.</p>
-          </div>
-
-          <!-- Error State -->
-          <div data-whatsapp-manager-target="errorState" style="display: none;">
-            <div class="text-danger mb-3">
-              <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
-            </div>
-            <h4 class="text-danger">Erro na Conexão</h4>
-            <p data-whatsapp-manager-target="errorMessage" class="text-muted"></p>
-            <button data-action="click->whatsapp-manager#restart" 
-                    class="btn btn-primary">
-              🔄 Tentar Novamente
-            </button>
-          </div>
-
-          <!-- Debug Info -->
-          <div class="mt-4">
-            <details>
-              <summary class="btn btn-link btn-sm">🔍 Informações de Debug</summary>
-              <div class="mt-2">
-                <pre data-whatsapp-manager-target="debugInfo" 
-                     class="text-start bg-light p-2 rounded" 
-                     style="font-size: 0.8rem;"></pre>
-              </div>
-            </details>
-          </div>
+        <div class="flex space-x-2">
+          <button data-action="click->whatsapp-manager#startService"
+                  class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors">
+            <i class="fas fa-play mr-1"></i> Iniciar
+          </button>
+          <button data-action="click->whatsapp-manager#restartService"
+                  class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg transition-colors">
+            <i class="fas fa-redo mr-1"></i> Reiniciar
+          </button>
+          <button data-action="click->whatsapp-manager#stopService"
+                  class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+            <i class="fas fa-stop mr-1"></i> Parar
+          </button>
         </div>
       </div>
     </div>
+    <div class="p-6">
+      <div class="text-gray-700 dark:text-gray-300">
+        <span data-whatsapp-manager-target="statusText">🔄 Verificando status do serviço...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp Connection Card -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white text-center">
+        <i class="fas fa-link text-blue-500 mr-2"></i>
+        Conexão com WhatsApp
+      </h2>
+    </div>
+    <div class="p-8">
+      <!-- Messages -->
+      <div data-whatsapp-manager-target="messages" class="mb-4"></div>
+      
+      <!-- Loading State -->
+      <div data-whatsapp-manager-target="loadingState" class="text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full mb-4">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Inicializando WhatsApp...</h3>
+        <p class="text-gray-600 dark:text-gray-400">Por favor, aguarde enquanto conectamos com o serviço WhatsApp</p>
+      </div>
+
+      <!-- QR Code Container -->
+      <div data-whatsapp-manager-target="qrContainer" style="display: none;" class="text-center">
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 mb-6">
+          <div class="flex items-center justify-center mb-4">
+            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mr-3">
+              <i class="fas fa-mobile-alt text-green-600 dark:text-green-400 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-green-900 dark:text-green-100">Escaneie o QR Code</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-green-800 dark:text-green-200">
+            <div class="flex flex-col items-center p-3 bg-green-100/50 dark:bg-green-900/30 rounded-lg">
+              <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold mb-2">1</div>
+              <p class="text-center">Abra o WhatsApp no seu celular</p>
+            </div>
+            <div class="flex flex-col items-center p-3 bg-green-100/50 dark:bg-green-900/30 rounded-lg">
+              <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold mb-2">2</div>
+              <p class="text-center">Toque no menu <strong>(⋮)</strong></p>
+            </div>
+            <div class="flex flex-col items-center p-3 bg-green-100/50 dark:bg-green-900/30 rounded-lg">
+              <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold mb-2">3</div>
+              <p class="text-center">Selecione <strong>"Dispositivos conectados"</strong></p>
+            </div>
+            <div class="flex flex-col items-center p-3 bg-green-100/50 dark:bg-green-900/30 rounded-lg">
+              <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold mb-2">4</div>
+              <p class="text-center">Escaneie o código abaixo</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- QR Code Display Area -->
+        <div class="bg-white dark:bg-gray-700 rounded-xl p-8 shadow-lg inline-block border-2 border-gray-100 dark:border-gray-600">
+          <div data-whatsapp-manager-target="qrCode" class="flex justify-center items-center min-h-[280px] min-w-[280px]">
+            <div class="animate-pulse">
+              <div class="h-64 w-64 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-qrcode text-4xl text-gray-400 dark:text-gray-500"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 space-y-3">
+          <button data-action="click->whatsapp-manager#refreshQRCode" 
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+            <i class="fas fa-sync-alt mr-2"></i> Gerar novo QR Code
+          </button>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            <i class="fas fa-clock mr-1"></i>
+            O QR Code expira em alguns minutos. Clique para gerar um novo se necessário.
+          </p>
+        </div>
+      </div>
+
+      <!-- Success State -->
+      <div data-whatsapp-manager-target="successState" style="display: none;" class="text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full mb-6">
+          <i class="fas fa-check-circle text-4xl text-green-600 dark:text-green-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-green-800 dark:text-green-200 mb-3">WhatsApp Conectado com Sucesso!</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
+          Sua conta do WhatsApp está agora conectada ao sistema. Você pode fechar esta página e começar a usar o sistema.
+        </p>
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <div class="flex items-center justify-center text-green-800 dark:text-green-200">
+            <i class="fas fa-info-circle mr-2"></i>
+            <span class="text-sm">O WhatsApp permanecerá conectado automaticamente</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div data-whatsapp-manager-target="errorState" style="display: none;" class="text-center">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full mb-6">
+          <i class="fas fa-exclamation-triangle text-4xl text-red-600 dark:text-red-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-red-800 dark:text-red-200 mb-3">Erro na Conexão</h3>
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+          <p data-whatsapp-manager-target="errorMessage" class="text-red-700 dark:text-red-300"></p>
+        </div>
+        <div class="space-y-3">
+          <button data-action="click->whatsapp-manager#restart" 
+                  class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+            <i class="fas fa-redo mr-2"></i> Tentar Novamente
+          </button>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            Se o problema persistir, tente reiniciar o serviço usando os botões acima
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debug Info -->
+  <div class="mt-6">
+    <details class="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <summary class="p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <i class="fas fa-bug mr-2"></i> Informações Técnicas
+        </span>
+      </summary>
+      <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+        <pre data-whatsapp-manager-target="debugInfo" 
+             class="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 p-3 rounded overflow-x-auto"></pre>
+      </div>
+    </details>
   </div>
 </div> 

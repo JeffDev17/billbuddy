@@ -11,8 +11,20 @@ Rails.application.configure do
       system("cd #{whatsapp_dir} && npm install")
     end
 
-    # Disable auto-start to prevent conflicts
-    # Use bin/rails whatsapp:start to manually start the service when needed
+    # Auto-start WhatsApp service when Rails starts
+    config.after_initialize do
+      Rails.logger.info "WhatsApp service will start automatically in 10 seconds..."
+      Thread.new do
+        # Wait longer for Rails to fully start and stabilize
+        sleep(10)
+        begin
+          Rails.logger.info "Starting WhatsApp service..."
+          WhatsappProcessManager.start!
+        rescue => e
+          Rails.logger.error "Failed to auto-start WhatsApp service: #{e.message}"
+        end
+      end
+    end
 
     # Gracefully stop the WhatsApp service when Rails shuts down
     at_exit do

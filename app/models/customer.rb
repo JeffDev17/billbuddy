@@ -3,15 +3,13 @@ require "csv"
 class Customer < ApplicationRecord
   include CreditDeductible
 
-  # Relacionamentos
   belongs_to :user
   has_many :customer_credits, dependent: :destroy
   has_many :subscriptions, dependent: :destroy
   has_many :appointments, dependent: :destroy
   has_many :extra_time_balances, dependent: :destroy
   has_many :payments, dependent: :destroy
-
-  # Validações
+  has_many :customer_schedules, dependent: :destroy
   validates :name, presence: true
   validates :email, uniqueness: { scope: :user_id, allow_blank: true }
   validates :phone, format: {
@@ -20,41 +18,30 @@ class Customer < ApplicationRecord
     allow_blank: true
   }
   validates :custom_hourly_rate, numericality: { greater_than: 0, allow_blank: true }
-  validates :package_value, numericality: { greater_than: 0, allow_blank: true }
-  validates :package_hours, numericality: { greater_than: 0, allow_blank: true }
-
-  # Callbacks
+  validates :monthly_amount, numericality: { greater_than: 0, allow_blank: true }
+  validates :monthly_hours, numericality: { greater_than: 0, allow_blank: true }
   before_validation :format_phone, if: :phone_changed?
   before_create :set_activated_at
+  after_update :update_future_appointment_rates_if_pricing_changed
 
-  # Enums para status e tipo de plano
   enum status: { active: "active", inactive: "inactive", on_hold: "on_hold" }
   enum plan_type: { credit: "credit", subscription: "subscription" }
-
-  # Scopes
   scope :with_remaining_credits, -> { joins(:customer_credits).where("customer_credits.remaining_hours > 0").distinct }
   scope :with_active_subscriptions, -> { joins(:subscriptions).where(subscriptions: { status: "active" }).distinct }
   scope :with_upcoming_appointments, -> { joins(:appointments).where("appointments.scheduled_at > ?", Time.current).distinct }
 
-  # New scopes for historical tracking
+  scope :with_birthdays, -> { where.not(birthdate: nil) }
   scope :active_during_month, ->(month_date) {
-    month_start = month_date.beginning_of_month
     month_end = month_date.end_of_month
 
-    where(
-      # Customer was activated before or during the month
-      "activated_at <= ?", month_end
-    ).where(
-      # And either never cancelled, or cancelled after the month ended
-      "cancelled_at IS NULL OR cancelled_at > ?", month_end
-    )
+    where("activated_at <= ?", month_end)
+      .where("cancelled_at IS NULL OR cancelled_at > ?", month_end)
   }
 
   scope :with_payment_history, -> {
     joins(:payments).where("payments.status IN (?)", [ "paid", "cancelled" ]).distinct
   }
 
-  # Métodos auxiliares
   def active_credit
     customer_credits.where("remaining_hours > 0").order(purchase_date: :desc).first
   end
@@ -66,20 +53,16 @@ class Customer < ApplicationRecord
   def active_subscription
     subscriptions.where(status: "active").order(start_date: :desc).first
   end
-
-  # Add a method for unsynced appointments
   def unsynced_appointments
     appointments.unsynced_scheduled
   end
 
-  # Get upcoming unsynced appointments
   def upcoming_unsynced_appointments(weeks_ahead = 4)
     unsynced_appointments.where(
       scheduled_at: Time.current..weeks_ahead.weeks.from_now
     )
   end
 
-  # Get sync status summary for this customer
   def sync_status_summary
     total = appointments.scheduled.count
     synced = appointments.scheduled.where.not(google_event_id: nil).count
@@ -91,56 +74,47 @@ class Customer < ApplicationRecord
     }
   end
 
-  # Get the effective hourly rate for this customer
   def effective_hourly_rate
     return custom_hourly_rate if custom_hourly_rate.present?
 
-    # Calculate based on manual package values
-    if package_value.present? && package_hours.present? && package_hours > 0
-      return (package_value / package_hours).round(2)
+    if monthly_amount.present? && monthly_hours.present? && monthly_hours > 0
+      return (monthly_amount / monthly_hours)
     end
 
-    # Fallback to service package rate or default
-    if credit? && active_credit
-      service_package = active_credit.service_package
-      return (service_package.price / service_package.hours) if service_package
-    elsif subscription? && active_subscription
-      service_package = active_subscription.service_package
-      return (service_package.price / service_package.hours) if service_package
-    end
-
-    # Default rate if no custom rate or service package found
     50.0
   end
 
-  # Check if customer has custom pricing
   def has_custom_pricing?
     custom_hourly_rate.present?
   end
 
-  # Get the package total value for display purposes
-  def package_total_value
-    # Use manual package value if set
-    return package_value if package_value.present?
-
-    # Fallback to existing logic
-    if subscription?
-      active_subscription&.amount || 0
-    else
-      last_credit = customer_credits.order(created_at: :desc).first
-      last_credit&.service_package&.price || 0
-    end
+  def monthly_total_amount
+    return monthly_amount if monthly_amount.present?
+    0
   end
 
-  # Historical activity tracking methods
+  alias_method :package_total_value, :monthly_total_amount
+
+  def update_future_appointment_rates!
+    return unless monthly_amount.present? && monthly_hours.present?
+
+    new_rate = effective_hourly_rate
+    new_source = monthly_amount.present? && monthly_hours.present? ? "monthly_package" : "default"
+
+    appointments
+      .where(status: "scheduled")
+      .where("scheduled_at >= ?", Time.current)
+      .update_all(
+        hourly_rate: new_rate,
+        rate_source: new_source
+      )
+  end
+
   def was_active_during_month?(month_date)
-    month_start = month_date.beginning_of_month
     month_end = month_date.end_of_month
 
-    # Customer was activated before or during the month
     return false if activated_at && activated_at > month_end
 
-    # Customer was not cancelled, or was cancelled after the month ended
     cancelled_at.nil? || cancelled_at > month_end
   end
 
@@ -186,14 +160,12 @@ class Customer < ApplicationRecord
     parts.join(" \u2022 ")
   end
 
-  # Calculate total earnings from completed appointments
   def total_earnings
     appointments.completed.sum do |appointment|
       appointment.duration * effective_hourly_rate
     end
   end
 
-  # Calculate earnings for a specific month
   def earnings_for_month(month, year)
     appointments.completed
                .where(scheduled_at: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month)
@@ -202,18 +174,89 @@ class Customer < ApplicationRecord
     end
   end
 
-  # Calculate total payments received
   def total_payments
     payments.sum(:amount)
   end
 
-  # Calculate payments for a specific month
+  def has_regular_schedule?
+    customer_schedules.enabled.exists?
+  end
+
+  def active_schedules
+    customer_schedules.enabled.order(:day_of_week, :start_time)
+  end
+
+  def schedule_for_day(day_of_week)
+    customer_schedules.enabled.for_day(day_of_week)
+  end
+
+  def regular_schedule_summary
+    return "Sem horários regulares" unless has_regular_schedule?
+
+    active_schedules.map(&:formatted_schedule).join(", ")
+  end
+
   def payments_for_month(month, year)
     payments.where(payment_date: Date.new(year, month, 1).beginning_of_month..Date.new(year, month, 1).end_of_month)
             .sum(:amount)
   end
 
-  # Métodos de classe para CSV
+  # Bday methods
+  def has_birthday?
+    birthdate.present?
+  end
+
+  def birthday_this_year
+    return nil unless has_birthday?
+    Date.new(Date.current.year, birthdate.month, birthdate.day)
+  end
+
+  def birthday_passed_this_year?
+    return false unless has_birthday?
+    birthday_this_year < Date.current
+  end
+
+  def next_birthday
+    return nil unless has_birthday?
+    this_year_birthday = birthday_this_year
+
+    if birthday_passed_this_year?
+      Date.new(Date.current.year + 1, birthdate.month, birthdate.day)
+    else
+      this_year_birthday
+    end
+  end
+
+  def days_until_birthday
+    return nil unless has_birthday?
+    next_birthday_date = next_birthday
+    (next_birthday_date - Date.current).to_i
+  end
+
+  def age
+    return nil unless has_birthday?
+    now = Date.current
+    age = now.year - birthdate.year
+    age -= 1 if now < birthday_this_year
+    age
+  end
+
+  def birthday_this_month?
+    has_birthday? && birthdate.month == Date.current.month
+  end
+
+  def birthday_today?
+    has_birthday? && birthdate.month == Date.current.month && birthdate.day == Date.current.day
+  end
+
+  def self.with_birthday_today
+    with_birthdays.select { |customer| customer.birthday_today? }
+  end
+
+  def self.with_birthday_this_month(month = Date.current.month)
+    with_birthdays.select { |customer| customer.birthdate.month == month }
+  end
+
   def self.to_csv(customers)
     CSV.generate(headers: true) do |csv|
       csv << [ "nome", "email", "telefone", "status", "tipo_plano", "preco_personalizado" ]
@@ -245,7 +288,6 @@ class Customer < ApplicationRecord
     errors = []
 
     CSV.foreach(file.path, headers: true, header_converters: :symbol) do |row|
-      # Convert headers to expected format
       row_data = {
         name: row[:nome] || row[:name],
         email: row[:email],
@@ -255,9 +297,7 @@ class Customer < ApplicationRecord
         custom_hourly_rate: row[:preco_personalizado] || row[:custom_hourly_rate]
       }
 
-      # Remove empty phone if present
       row_data[:phone] = nil if row_data[:phone].blank?
-      # Remove empty custom_hourly_rate if present
       row_data[:custom_hourly_rate] = nil if row_data[:custom_hourly_rate].blank?
 
       customer = user.customers.new(row_data)
@@ -277,10 +317,8 @@ class Customer < ApplicationRecord
   def format_phone
     return if phone.blank?
 
-    # Remove todos os caracteres que não sejam dígitos ou o símbolo +
     self.phone = phone.gsub(/[^\d+]/, "")
 
-    # Se não começar com +, assumir que é número brasileiro e adicionar +55
     unless phone.start_with?("+")
       self.phone = "+55#{phone}"
     end
@@ -288,5 +326,11 @@ class Customer < ApplicationRecord
 
   def set_activated_at
     self.activated_at ||= Time.current
+  end
+
+  def update_future_appointment_rates_if_pricing_changed
+    if saved_change_to_monthly_amount? || saved_change_to_monthly_hours? || saved_change_to_custom_hourly_rate?
+      update_future_appointment_rates!
+    end
   end
 end

@@ -1,5 +1,7 @@
 require "childprocess"
 require "socket"
+require "net/http"
+require "timeout"
 
 class WhatsappProcessManager
   class << self
@@ -107,12 +109,12 @@ class WhatsappProcessManager
     def thorough_cleanup
       Rails.logger.info "Performing thorough cleanup of WhatsApp processes"
 
-      # Kill processes on port 3001
+      # Kill processes on port 3001 (more targeted approach)
       cleanup_port(3001)
 
-      # Kill any node processes running WhatsApp-related files
-      system("pkill -f 'node.*app.js' 2>/dev/null || true")
-      system("pkill -f 'node.*whatsapp' 2>/dev/null || true")
+      # Kill only specific WhatsApp-related node processes (more precise patterns)
+      system("pkill -f 'whatsapp-api.*app.js' 2>/dev/null || true")
+      system("pkill -f 'node.*whatsapp-api' 2>/dev/null || true")
 
       # Kill any Chrome/Chromium processes that might be stuck (WhatsApp Web uses these)
       system("pkill -f 'chrome.*whatsapp' 2>/dev/null || true")
@@ -125,7 +127,7 @@ class WhatsappProcessManager
       end
 
       # Wait for cleanup to complete
-      sleep(2)
+      sleep(1) # Reduced from 2 seconds
     end
 
     private
@@ -133,12 +135,35 @@ class WhatsappProcessManager
     def cleanup_port(port)
       Rails.logger.info "Cleaning up any existing processes on port #{port}"
 
-      # Kill any process using the target port (more thorough approach)
-      [
-        "lsof -ti:#{port} | xargs kill -9 2>/dev/null || true",
-        "netstat -tlnp 2>/dev/null | grep :#{port} | awk '{print $7}' | cut -d/ -f1 | xargs kill -9 2>/dev/null || true",
-        "ss -tlpn 2>/dev/null | grep :#{port} | grep -o 'pid=[0-9]*' | cut -d= -f2 | xargs kill -9 2>/dev/null || true"
-      ].each { |cmd| system(cmd) }
+      # First, try to find processes on the specific port
+      pids = `lsof -ti:#{port} 2>/dev/null`.split.map(&:strip).reject(&:empty?)
+
+      pids.each do |pid|
+        begin
+          # Get process info before killing
+          process_info = `ps -p #{pid} -o comm= 2>/dev/null`.strip
+
+          # Only kill if it's actually a node process (not Rails)
+          if process_info.include?("node") || process_info.include?("whatsapp")
+            Rails.logger.info "Killing process #{pid} (#{process_info}) on port #{port}"
+            Process.kill("TERM", pid.to_i) # Use TERM first, then escalate if needed
+            sleep(1)
+
+            # Check if process is still alive, then use KILL
+            if `ps -p #{pid} 2>/dev/null`.strip != ""
+              Process.kill("KILL", pid.to_i)
+            end
+          else
+            Rails.logger.info "Skipping process #{pid} (#{process_info}) - not a Node.js process"
+          end
+        rescue Errno::ESRCH, Errno::EPERM => e
+          # Process already dead or permission denied, continue
+          Rails.logger.debug "Process #{pid} no longer exists or permission denied: #{e.message}"
+        end
+      end
+
+      # Clean up specific node processes more carefully
+      system("pkill -f 'whatsapp-api.*app.js' 2>/dev/null || true")
 
       # Wait a moment for cleanup
       sleep(1)
@@ -168,7 +193,7 @@ class WhatsappProcessManager
       end
     end
 
-    def wait_for_service(max_attempts: 45) # Increased from 30
+    def wait_for_service(max_attempts: 60) # Increased from 45 to 60 (1 minute)
       attempts = 0
 
       loop do
@@ -179,6 +204,11 @@ class WhatsappProcessManager
           raise "WhatsApp service did not respond after #{max_attempts} attempts"
         end
 
+        # Log progress every 10 attempts
+        if attempts % 10 == 0
+          Rails.logger.info "Waiting for WhatsApp service... (attempt #{attempts}/#{max_attempts})"
+        end
+
         sleep(1)
       end
     end
@@ -186,10 +216,15 @@ class WhatsappProcessManager
     def service_responding?
       return false unless @port
 
-      HTTParty.get("#{api_url}/status", timeout: 3)
-      true
-    rescue
-      false
+      begin
+        response = HTTParty.get("#{api_url}/status", timeout: 5)
+        response.code == 200
+      rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH, Timeout::Error, HTTParty::Error
+        false
+      rescue => e
+        Rails.logger.debug "Service responding check failed: #{e.message}"
+        false
+      end
     end
 
     def find_available_port(start_port)

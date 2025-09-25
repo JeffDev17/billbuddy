@@ -163,6 +163,62 @@ class PaymentsController < ApplicationController
     render json: { success: false, message: "Cliente não encontrado" }
   end
 
+  # Update payment amount via AJAX for inline editing
+  def update_payment_amount
+    customer = find_customer(params[:customer_id])
+    month_string = params[:month]
+    new_amount = params[:amount].to_f
+
+    if new_amount <= 0
+      render json: { success: false, message: "Valor deve ser maior que zero" }
+      return
+    end
+
+    month_date = Date.parse("#{month_string}-01")
+    payment_type = customer.plan_type
+    payment = payment_management_service.send(:find_existing_payment, customer, month_date, payment_type)
+    calculated_amount = customer.package_total_value
+
+    if payment
+      # Update existing payment amount
+      if payment.update(amount: new_amount)
+        render json: {
+          success: true,
+          amount: new_amount,
+          is_manual_override: (new_amount != calculated_amount)
+        }
+      else
+        render json: { success: false, message: "Erro ao atualizar pagamento" }
+      end
+    else
+      # Create new payment with custom amount
+      payment = customer.payments.build(
+        payment_type: payment_type,
+        payment_date: month_date,
+        payment_method: "pix",
+        amount: new_amount,
+        status: "pending",
+        notes: new_amount != calculated_amount ? "Valor personalizado - #{month_date.strftime('%B %Y')}" : "Pagamento mensal - #{month_date.strftime('%B %Y')}"
+      )
+
+      if payment.save
+        render json: {
+          success: true,
+          amount: new_amount,
+          payment_id: payment.id,
+          is_manual_override: (new_amount != calculated_amount)
+        }
+      else
+        render json: { success: false, message: "Erro ao criar pagamento" }
+      end
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: "Cliente não encontrado" }
+  rescue => e
+    Rails.logger.error "Update payment amount error: #{e.message}"
+    render json: { success: false, message: "Erro interno do servidor" }
+  end
+
   # Bulk mark payments as paid via AJAX (enhanced)
   def bulk_mark_paid
     customer_ids = params[:customer_ids] || []
@@ -229,9 +285,7 @@ class PaymentsController < ApplicationController
     @total_received = totals[:total_received] || 0
     @total_cancelled = totals[:cancelled_amount] || 0
     @total_pending = totals[:pending_amount] || 0
-
-    # Calculate total expected (all customers * their package values)
-    @total_expected = @customers.sum(&:package_total_value)
+    @total_expected = totals[:total_expected] || 0
 
     # Calculate subscription totals
     subscription_customers = @customers.select { |customer| customer.plan_type == "subscription" }
