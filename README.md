@@ -1,54 +1,27 @@
-# BillBuddy
+# BillBuddy 💼
 
-BillBuddy é um sistema de gerenciamento de cobranças recorrentes para profissionais autônomos e pequenos negócios.
+Sistema de gestão para profissionais autônomos. 
+Controle completo de agendamentos, pagamentos e clientes com métricas.
 
-## Funcionalidades
+## 🎭 Demo Online
+**🔗 Demo:** https://billbuddy-demo.onrender.com  
+**Login:** demo@billbuddy.com / demo123456
 
-- Gerenciamento de clientes/alunos
-- Sistema de créditos (pacotes de horas)
-- Cobranças recorrentes (mensalidades)
-- Controle de aulas e agendamentos
-- Notificações e lembretes
+*Base de dados renovada mensalmente com dados fictícios*
 
-## Métricas e Analytics
+## ✨ Funcionalidades
 
-O sistema inclui um dashboard completo de métricas utilizando a gem [Chartkick](https://chartkick.com/) para visualização de dados:
+- **📅 Agendamentos:** Criação, edição e cancelamento de aulas
+- **💰 Pagamentos:** Controle financeiro com múltiplas modalidades
+- **📊 Relatórios:** Dashboard com métricas e analytics
+- **📱 Integrações:** WhatsApp e Google Calendar
+- **👥 Clientes:** Gestão completa de relacionamento
 
-### Gráficos Disponíveis:
-- **Distribuição de Status**: Gráfico de pizza mostrando aulas concluídas, agendadas, canceladas e faltas
-- **Tendência Mensal**: Linha temporal dos últimos 6 meses de performance
-- **Performance Semanal**: Colunas mostrando dados das últimas 4 semanas
-- **Evolução do Faturamento**: Gráfico de área com evolução dos ganhos
-- **Top 5 Clientes**: Ranking dos clientes por faturamento
-- **Dias Mais Ocupados**: Distribuição de aulas por dia da semana
+## 🛠️ Tecnologias
 
-### Métricas Principais:
-- Ganhos do mês vs meta projetada
-- Ticket médio por aula
-- Taxa de realização e cancelamento
-- Total de horas trabalhadas
-- Status de sincronização com Google Calendar
+- **Backend:** Ruby 3.3.8, Rails 7.2.2
+- **Database:** PostgreSQL
+- **Frontend:** TailwindCSS, Stimulus
+- **Deploy:** Docker, Render
 
-## Requisitos
-
-- Ruby 3.2.x
-- Rails 7.x
-- PostgreSQL
-
-## Instalação
-
-1. Clone o repositório
-2. Execute `bundle install`
-3. Configure o banco de dados: `rails db:create db:migrate`
-4. Inicie o servidor: `rails server`
-
-## Desenvolvimento
-
-Este projeto segue as convenções padrão do Rails e utiliza:
-- TailwindCSS para estilização
-- RSpec para testes
-- Devise para autenticação
-
-## Licença
-
-[Escolha uma licença apropriada]
+*Projeto portfolio demonstrando habilidades Full-Stack Ruby on Rails*
