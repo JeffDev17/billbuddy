@@ -1,9 +1,20 @@
-# See https://git-scm.com/docs/gitattributes for more about git attribute files.
+# Linguagens
+*.rb linguist-language=Ruby
+*.erb linguist-language=Ruby
+*.rake linguist-language=Ruby
 
-# Mark the database schema as having been generated.
-db/schema.rb linguist-generated
+# Ignorar arquivos gerados/vendor do language detection
+app/assets/builds/* linguist-generated=true
+node_modules/* linguist-vendored=true
+vendor/* linguist-vendored=true
+public/assets/* linguist-generated=true
+*.map linguist-generated=true
+yarn.lock linguist-generated=true
+package-lock.json linguist-generated=true
 
-# Mark any vendored files as having been vendored.
-vendor/* linguist-vendored
-config/credentials/*.yml.enc diff=rails_credentials
-config/credentials.yml.enc diff=rails_credentials
+# Documentação
+*.md linguist-documentation=true
+
+# Forçar Ruby como linguagem principal
+*.rb text=auto
+*.erb text=auto
