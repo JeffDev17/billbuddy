@@ -1,5 +1,5 @@
 # Demo data for BillBuddy
-if Rails.env.production?
+if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
   puts "🎭 Creating demo data for BillBuddy..."
 
   # Create demo user
