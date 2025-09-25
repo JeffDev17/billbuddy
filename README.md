@@ -24,10 +24,4 @@ Controle completo de agendamentos, pagamentos e clientes com métricas.
 - **Frontend:** TailwindCSS, Stimulus
 - **Deploy:** Docker, Render
 
-Este sistema gerencia meu negócio como profissional autônomo:
-- 15+ alunos ativos
-- 200+ aulas/mês  
-- Controle financeiro completo
-- Notificações automáticas
-
 *Projeto portfolio demonstrando habilidades Full-Stack Ruby on Rails*
