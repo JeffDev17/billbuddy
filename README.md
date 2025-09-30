@@ -7,8 +7,6 @@ Controle completo de agendamentos, pagamentos e clientes com métricas.
 **🔗 Demo:** https://billbuddy-demo.onrender.com  
 **Login:** demo@billbuddy.com / demo123456
 
-*Base de dados renovada mensalmente com dados fictícios*
-
 ## ✨ Funcionalidades
 
 - **📅 Agendamentos:** Criação, edição e cancelamento de aulas
