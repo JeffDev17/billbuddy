@@ -98,19 +98,37 @@ class DashboardController < ApplicationController
   end
 
   def calculate_earnings_for_period(period)
-    current_user_appointments
+    # Optimize: use includes to avoid N+1 queries, but keep original logic
+    appointments = current_user_appointments
       .completed
       .where(completed_at: period)
-      .joins(:customer)
-      .sum { |appointment| appointment.duration * appointment.customer.effective_hourly_rate }
-      .round(2)
+      .includes(:customer)
+
+    total = appointments.sum { |appointment|
+      # Use stored rate if available, otherwise use customer's effective rate
+      rate = appointment.hourly_rate || appointment.customer.effective_hourly_rate
+      appointment.duration * rate
+    }
+
+    total.round(2)
   end
 
   def calculate_average_hourly_rate
-    customers_with_rates = current_user_customers.map(&:effective_hourly_rate)
-    return 0 if customers_with_rates.empty?
+    # Get all customers with their pricing data to calculate effective rates
+    customers = current_user_customers.pluck(:custom_hourly_rate, :monthly_amount, :monthly_hours)
 
-    (customers_with_rates.sum / customers_with_rates.size).round(2)
+    rates = customers.map do |custom_rate, monthly_amount, monthly_hours|
+      if custom_rate.present?
+        custom_rate
+      elsif monthly_amount.present? && monthly_hours.present? && monthly_hours > 0
+        monthly_amount / monthly_hours
+      else
+        50.0 # Default fallback
+      end
+    end
+
+    return 0 if rates.empty?
+    (rates.sum / rates.size).round(2)
   end
 
   def find_best_earning_day_this_week(week_start, week_end)

@@ -52,8 +52,8 @@ export default class extends Controller {
       firstDay: 0,
       height: 'auto',
       
-      // Default view
-      initialView: window.innerWidth < 768 ? 'listWeek' : 'timeGridWeek',
+      // Default view - always start with week view for better performance
+      initialView: 'timeGridWeek',
       
       // View options
       headerToolbar: {
@@ -413,6 +413,7 @@ export default class extends Controller {
   showError(message) {
     this.showFlashMessage(message, 'error')
   }
+
 
   showSuccess(message) {
     this.showFlashMessage(message, 'success')

@@ -6,6 +6,12 @@ class AppointmentsController < ApplicationController
   before_action :set_customers, only: [ :new, :edit, :update, :bulk_create, :process_bulk_create ]
 
   def index
+    # Default to current week if no date filters are provided (for better performance)
+    if params[:start_date].blank? && params[:end_date].blank? && params[:month].blank? && params[:year].blank?
+      params[:start_date] = Date.current.beginning_of_week.strftime("%Y-%m-%d")
+      params[:end_date] = Date.current.end_of_week.strftime("%Y-%m-%d")
+    end
+
     @appointments = appointment_filter_service.call(params)
     @customers_for_filter = current_user_customers.joins(:appointments).distinct.order(:name)
     @filter_stats = appointment_filter_service.filter_stats

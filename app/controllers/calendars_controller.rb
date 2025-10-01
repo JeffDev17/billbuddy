@@ -45,10 +45,10 @@ class CalendarsController < ApplicationController
     # Check if sensitive data should be hidden
     hide_customer_names = params[:hide_names] == "true"
 
-    # Get appointments for the date range
+    # Get appointments for the date range (limit for performance)
     appointments = current_user_appointments.where(
       scheduled_at: start_date.beginning_of_day..end_date.end_of_day
-    ).includes(:customer)
+    ).includes(:customer).limit(200)
 
     # Convert to FullCalendar format
     events = appointments.map do |appointment|
