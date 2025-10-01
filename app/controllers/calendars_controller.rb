@@ -64,22 +64,18 @@ class CalendarsController < ApplicationController
         textColor: "#ffffff",
         classNames: [
           "appointment-event",
-          "status-#{appointment.status}",
-          appointment.synced_to_calendar? ? "synced" : "unsynced"
+          "status-#{appointment.status}"
         ],
-        extendedProps: {
-          customerId: appointment.customer.id,
-          customerName: appointment.customer.name,
-          hiddenCustomerName: "****",
-          customerPhone: appointment.customer.phone,
-          status: appointment.status,
-          duration: appointment.duration,
-          notes: appointment.notes,
-          isSynced: appointment.synced_to_calendar?,
-          isRecurring: appointment.part_of_recurring_series?,
-          creditType: appointment.customer.credit? ? "credit" : "subscription",
-          remainingHours: appointment.customer.total_remaining_hours
-        }
+          extendedProps: {
+            customerId: appointment.customer.id,
+            customerName: appointment.customer.name,
+            hiddenCustomerName: "****",
+            customerPhone: appointment.customer.phone,
+            status: appointment.status,
+            duration: appointment.duration,
+            notes: appointment.notes,
+            creditType: appointment.customer.plan_type || "credit"
+          }
       }
     end
 
