@@ -135,12 +135,12 @@
               </dt>
               <dd class="text-2xl font-bold" data-controller="sensitive-data">
                 <span data-sensitive-data-target="content">
-                  R$ <%= @monthly_summary[:earnings][:completed] %>
+                  R$ <%= @monthly_summary[:earnings][:total_with_cancellations] %>
                 </span>
               </dd>
               <dt class="text-xs text-green-200 mt-1" data-controller="sensitive-data">
                 <span data-sensitive-data-target="content">
-                  Total + Cancelamentos: R$ <%= @monthly_summary[:earnings][:total_with_cancellations] %>
+                  Concluídas: R$ <%= @monthly_summary[:earnings][:completed] %> | Cancelamentos: R$ <%= @monthly_summary[:earnings][:cancellation_revenue] %>
                 </span>
               </dt>
             </dl>
@@ -630,7 +630,7 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                  <%= @monthly_summary[:earnings][:completed] > 0 ? ((earnings.to_f / @monthly_summary[:earnings][:completed]) * 100).round(1) : 0 %>%
+                  <%= @monthly_summary[:earnings][:total_with_cancellations] > 0 ? ((earnings.to_f / @monthly_summary[:earnings][:total_with_cancellations]) * 100).round(1) : 0 %>%
                 </td>
               </tr>
             <% end %>

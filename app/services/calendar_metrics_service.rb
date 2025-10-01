@@ -65,8 +65,9 @@ class CalendarMetricsService
     (0..5).each do |i|
       month_start = i.months.ago.beginning_of_month
       month_end = i.months.ago.end_of_month
+      month_period = month_start..month_end
 
-      appointments = current_user_appointments.where(scheduled_at: month_start..month_end)
+      appointments = current_user_appointments.where(scheduled_at: month_period)
 
       trends << {
         month_name: month_start.strftime("%B %Y"),
@@ -74,7 +75,7 @@ class CalendarMetricsService
         completed: appointments.where(status: "completed").count,
         cancelled: appointments.where(status: "cancelled").count,
         no_show: appointments.where(status: "no_show").count,
-        earnings: calculate_month_earnings(appointments.where(status: "completed"))
+        earnings: calculate_total_revenue_including_cancellations(month_period)
       }
     end
     trends.reverse
@@ -87,8 +88,9 @@ class CalendarMetricsService
       target_month = base_date.beginning_of_month - i.months
       month_start = target_month.beginning_of_month
       month_end = target_month.end_of_month
+      month_period = month_start..month_end
 
-      appointments = current_user_appointments.where(scheduled_at: month_start..month_end)
+      appointments = current_user_appointments.where(scheduled_at: month_period)
 
       trends << {
         month_name: month_start.strftime("%B %Y"),
@@ -96,7 +98,7 @@ class CalendarMetricsService
         completed: appointments.where(status: "completed").count,
         cancelled: appointments.where(status: "cancelled").count,
         no_show: appointments.where(status: "no_show").count,
-        earnings: calculate_month_earnings(appointments.where(status: "completed"))
+        earnings: calculate_total_revenue_including_cancellations(month_period)
       }
     end
     trends.reverse

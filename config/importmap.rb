@@ -6,6 +6,10 @@ pin "@hotwired/stimulus", to: "stimulus.min.js", preload: true
 pin "@hotwired/stimulus-loading", to: "stimulus-loading.js", preload: true
 pin_all_from "app/javascript/controllers", under: "controllers", preload: true
 
+# Additional JS files
+pin "scroll_position", to: "scroll_position.js", preload: true
+pin "appointment_modals", to: "appointment_modals.js", preload: true
+
 # Chartkick setup - using public directory (loaded dynamically when needed)
 pin "chartkick", to: "/js/chartkick.js", preload: false
 pin "chart.js", to: "/js/chart.umd.js", preload: false

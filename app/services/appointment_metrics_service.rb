@@ -25,10 +25,16 @@ class AppointmentMetricsService
   end
 
   def earnings_by_customer
-    completed_appointments.includes(:customer).group_by(&:customer).map do |customer, appointments|
-      total_earnings = appointments.sum { |appointment| appointment.duration * customer.effective_hourly_rate }
+    completed_appointments = appointments_in_period.where(status: "completed").includes(:customer)
+
+    cancelled_with_revenue = appointments_in_period.where(status: "cancelled", cancellation_type: "with_revenue").includes(:customer)
+
+    all_revenue_appointments = completed_appointments.to_a + cancelled_with_revenue.to_a
+
+    all_revenue_appointments.group_by(&:customer).map do |customer, appointments|
+      total_earnings = appointments.sum { |appointment| appointment.duration * appointment.effective_appointment_rate }
       [ customer.name, total_earnings ]
-    end.sort_by { |name, earnings| -earnings }  # Sort by earnings descending
+    end.sort_by { |name, earnings| -earnings }
   end
 
   # Class distribution
