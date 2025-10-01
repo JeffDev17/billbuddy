@@ -16,3 +16,4 @@ pin "chart.js", to: "/js/chart.umd.js", preload: false
 pin "chartjs-adapter-date-fns", to: "/js/chartjs-adapter-date-fns.bundle.min.js", preload: false
 
 # FullCalendar - removed importmap, using global window object instead
+# Force restart to clear connection pool cache
