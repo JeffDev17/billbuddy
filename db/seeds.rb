@@ -99,6 +99,21 @@ if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
             nil
           end
 
+          # Set cancellation type for cancelled appointments
+          cancellation_type = if status == "cancelled"
+            # 40% pending_reschedule, 20% with_revenue, 40% standard
+            rand_cancel = rand
+            if rand_cancel < 0.4
+              "pending_reschedule"
+            elsif rand_cancel < 0.6
+              "with_revenue"
+            else
+              "standard"
+            end
+          else
+            nil
+          end
+
           Appointment.find_or_create_by!(
             customer: customer,
             scheduled_at: scheduled_at
@@ -106,6 +121,7 @@ if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
             apt.duration = duration
             apt.status = status
             apt.notes = notes
+            apt.cancellation_type = cancellation_type
             apt.hourly_rate = customer_data[:custom_hourly_rate] if customer_data[:plan_type] == "credit"
           end
 
