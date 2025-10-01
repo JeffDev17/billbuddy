@@ -8,10 +8,10 @@ import { Turbo } from "@hotwired/turbo-rails"
 import "controllers"
 
 // Import scroll position preservation
-import "./scroll_position"
+import "scroll_position"
 
 // Import appointment modal functions
-import "./appointment_modals"
+import "appointment_modals"
 
 // Configure Turbo
 Turbo.config.drive.progressBarDelay = 100
