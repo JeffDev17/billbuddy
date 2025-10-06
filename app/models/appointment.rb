@@ -6,7 +6,7 @@ class Appointment < ApplicationRecord
     with_revenue: "with_revenue",
     standard: "standard"
   }
-  validates :scheduled_at, :duration, :status, presence: true
+  validates :customer_id, :scheduled_at, :duration, :status, presence: true
   validates :duration, numericality: { greater_than: 0 }
   validates :cancellation_type, presence: true, if: :cancelled?
   validates :cancellation_type, inclusion: { in: cancellation_types.keys }, allow_nil: true
@@ -25,6 +25,37 @@ class Appointment < ApplicationRecord
   scope :cancelled_with_revenue, -> { where(status: "cancelled", cancellation_type: "with_revenue") }
   scope :cancelled_pending_reschedule, -> { where(status: "cancelled", cancellation_type: "pending_reschedule") }
   scope :can_be_rescheduled, -> { cancelled_pending_reschedule }
+  scope :not_reminded, -> { where(reminder_sent_at: nil) }
+  scope :needs_reminder_soon, ->(time_range) {
+    where(status: "scheduled")
+      .where(scheduled_at: time_range)
+      .where(reminder_sent_at: nil)
+      .joins(:customer)
+      .where.not(customers: { phone: nil })
+  }
+
+  def needs_reminder?
+    scheduled? &&
+    has_valid_phone? &&
+    not_reminded_yet? &&
+    within_reminder_window?
+  end
+
+  def scheduled?
+    status == "scheduled"
+  end
+
+  def has_valid_phone?
+    customer.phone.present?
+  end
+
+  def not_reminded_yet?
+    reminder_sent_at.nil?
+  end
+
+  def within_reminder_window?
+    scheduled_at > Time.current && scheduled_at <= 30.minutes.from_now
+  end
 
   before_create :set_appointment_rate
   after_update :sync_to_calendar_if_needed, if: :should_sync_to_calendar?

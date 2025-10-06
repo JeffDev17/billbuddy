@@ -58,8 +58,6 @@ Rails.application.routes.draw do
   resources :subscriptions, only: [ :index ]
   resources :appointments, except: [ :show ] do
     collection do
-      get "bulk_create"
-      post "bulk_create", to: "appointments#process_bulk_create"
       delete "bulk_delete_by_customer/:customer_id", to: "appointments#bulk_delete_by_customer", as: "bulk_delete_by_customer"
       post "bulk_mark_completed", to: "appointments#bulk_mark_completed"
       get "review_sync"
@@ -103,6 +101,9 @@ Rails.application.routes.draw do
   post "whatsapp/start", to: "whatsapp#start_service"
   post "whatsapp/stop", to: "whatsapp#stop_service"
   post "whatsapp/restart", to: "whatsapp#restart_service"
+  post "whatsapp/toggle-reminders", to: "whatsapp#toggle_reminders"
+  get "whatsapp/reminder-stats", to: "whatsapp#reminder_stats"
+  post "whatsapp/send-reminder/:appointment_id", to: "whatsapp#send_reminder_for_appointment"
 
   get "/google/redirect", to: "calendars#redirect", as: :redirect_calendars
   get "/google/oauth2/callback", to: "calendars#callback", as: :callback_calendars

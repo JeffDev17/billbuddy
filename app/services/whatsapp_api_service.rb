@@ -14,6 +14,8 @@ class WhatsappApiService
       unless WhatsappProcessManager.start!
         raise WhatsappError, "Falha ao iniciar o serviço WhatsApp"
       end
+      # Give the service a moment to fully initialize after confirming it's running
+      sleep(2)
     end
   end
 
@@ -43,12 +45,13 @@ class WhatsappApiService
         return true # Success!
 
       rescue StandardError => e
-        if e.message.include?("CHAT_NOT_READY") && attempts < max_attempts
-          Rails.logger.warn("WhatsApp interface not ready, retrying... (#{attempts}/#{max_attempts})")
+        # Retry on both CHAT_NOT_READY and SERVICE_NOT_READY errors
+        if (e.message.include?("CHAT_NOT_READY") || e.message.include?("SERVICE_NOT_READY")) && attempts < max_attempts
+          Rails.logger.warn("WhatsApp service/chat not ready, retrying... (#{attempts}/#{max_attempts})")
           sleep(5) # Wait 5 seconds before retry
           next
         else
-          # Re-raise if it's not a CHAT_NOT_READY error or we've exhausted retries
+          # Re-raise if it's not a retryable error or we've exhausted retries
           raise e
         end
       end

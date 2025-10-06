@@ -8,16 +8,21 @@ class WhatsappProcessManager
     attr_accessor :process, :port, :log_file
 
     def start!
-      return true if running?
+      @port = 3001  # Set port first so running? can check it
+
+      # If service is already responding, don't restart it
+      if running?
+        Rails.logger.info "WhatsApp service already running and responding"
+        return true
+      end
 
       # Prevent multiple startup attempts
       return false if @starting
       @starting = true
 
       begin
-        # Always use port 3001, thoroughly clean any existing processes first
+        # Only clean up if service is not responding
         thorough_cleanup
-        @port = 3001
         @log_file = Rails.root.join("log", "whatsapp.log")
 
         Rails.logger.info "Starting WhatsApp Node.js service on port #{@port}"
@@ -67,11 +72,16 @@ class WhatsappProcessManager
     end
 
     def running?
-      return false unless @process
-      return false unless @process.respond_to?(:alive?)
-
       begin
-        @process.alive? && service_responding?
+        # Check if service is responding on the port (works across processes/workers)
+        if service_responding?
+          return true
+        end
+
+        # Fallback to process check if we have a reference
+        return false unless @process
+        return false unless @process.respond_to?(:alive?)
+        @process.alive?
       rescue => e
         Rails.logger.error "Error checking if WhatsApp process is running: #{e.message}"
         false

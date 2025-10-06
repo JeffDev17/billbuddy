@@ -53,7 +53,7 @@
                     </div>
                     
                     <!-- Individual Create Button -->
-                    <%= button_to "✅ Criar para #{customer_detail[:customer_name]}", generate_next_month_appointments_path,
+                    <%= button_to "✅ Criar para #{customer_detail[:customer_name]}", (@is_current_month ? fill_current_month_appointments_path : generate_next_month_appointments_path),
                         method: :post,
                         params: { 
                           generation_type: 'schedule_based',
@@ -115,7 +115,7 @@
                   ❌ Cancelar
                 <% end %>
                 
-                <%= button_to generate_next_month_appointments_path, 
+                <%= button_to (@is_current_month ? fill_current_month_appointments_path : generate_next_month_appointments_path), 
                     method: :post,
                     params: { generation_type: 'schedule_based' },
                     class: "px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md",

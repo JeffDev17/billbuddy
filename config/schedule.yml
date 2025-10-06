@@ -1,0 +1,6 @@
+appointment_reminders:
+  cron: "*/5 * * * *"
+  class: "AppointmentReminderJob"
+  queue: default
+  description: "Send reminders for any upcoming appointments (within 30 min) that haven't been notified yet"
+

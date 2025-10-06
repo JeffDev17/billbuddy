@@ -51,46 +51,10 @@ class AppointmentBulkOperationsService
     { success: false, message: "Cliente não encontrado." }
   end
 
-  def process_bulk_create(selected_customers, start_date, end_date, recurring_days, time_slots, duration)
-    return { success: false, message: "Selecione pelo menos um cliente." } if selected_customers.empty?
-    return { success: false, message: "Selecione pelo menos um dia da semana." } if recurring_days.empty?
-    return { success: false, message: "Adicione pelo menos um horário." } if time_slots.empty?
-
-    # Don't sync to calendar by default for bulk operations
-    result = appointment_creation_service.create_bulk(
-      selected_customers,
-      start_date,
-      end_date,
-      recurring_days,
-      time_slots,
-      duration,
-      sync_to_calendar: false
-    )
-
-    if result[:success] > 0
-      {
-        success: true,
-        message: "#{result[:success]} compromissos criados com sucesso!",
-        count: result[:success],
-        details: result[:details] || []
-      }
-    else
-      {
-        success: false,
-        message: "Nenhum compromisso foi criado.",
-        errors: result[:errors] || []
-      }
-    end
-  end
-
   private
 
   def appointment_completion_service
     @appointment_completion_service ||= AppointmentCompletionService.new(@user)
-  end
-
-  def appointment_creation_service
-    @appointment_creation_service ||= AppointmentCreationService.new(@user)
   end
 
   def find_customer(customer_id)

@@ -11,7 +11,13 @@ export default class extends Controller {
     "successState", 
     "errorState", 
     "errorMessage", 
-    "debugInfo"
+    "debugInfo",
+    "reminderToggle",
+    "statTotal",
+    "statSent",
+    "statPending",
+    "statFailed",
+    "remindersList"
   ]
 
   connect() {
@@ -326,5 +332,140 @@ export default class extends Controller {
     this.stopIntervals()
     this.showLoading('Reiniciando...')
     setTimeout(() => this.startStatusCheck(), 1000)
+  }
+
+  async toggleReminders() {
+    try {
+      const response = await fetch('/whatsapp/toggle-reminders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        this.updateToggleState(data.enabled)
+        this.showMessage(data.message, 'success')
+      } else {
+        this.showMessage(data.error || 'Erro ao alternar lembretes', 'error')
+      }
+    } catch (error) {
+      console.error('Erro ao alternar lembretes:', error)
+      this.showMessage('Erro de comunicação com o servidor', 'error')
+    }
+  }
+
+  async sendSingleReminder(event) {
+    const appointmentId = event.target.closest('button').dataset.appointmentId
+    const button = event.target.closest('button')
+    const originalHtml = button.innerHTML
+    
+    button.disabled = true
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Enviando...'
+
+    try {
+      const response = await fetch(`/whatsapp/send-reminder/${appointmentId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        this.showMessage(data.message, 'success')
+        setTimeout(() => this.refreshReminderStats(), 1000)
+      } else {
+        this.showMessage(data.error || 'Erro ao enviar lembrete', 'error')
+        button.disabled = false
+        button.innerHTML = originalHtml
+      }
+    } catch (error) {
+      console.error('Erro ao enviar lembrete:', error)
+      this.showMessage('Erro de comunicação com o servidor', 'error')
+      button.disabled = false
+      button.innerHTML = originalHtml
+    }
+  }
+
+  async refreshReminderStats() {
+    try {
+      const response = await fetch('/whatsapp/reminder-stats')
+      const data = await response.json()
+      
+      this.updateReminderStats(data.stats)
+      this.updateRemindersList(data.upcoming)
+      this.updateToggleState(data.enabled)
+    } catch (error) {
+      console.error('Erro ao atualizar estatísticas:', error)
+    }
+  }
+
+  updateToggleState(enabled) {
+    if (!this.hasReminderToggleTarget) return
+
+    const toggle = this.reminderToggleTarget
+    const indicator = toggle.querySelector('span')
+    
+    if (enabled) {
+      toggle.classList.remove('bg-gray-200')
+      toggle.classList.add('bg-blue-600')
+      indicator.classList.remove('translate-x-1')
+      indicator.classList.add('translate-x-6')
+    } else {
+      toggle.classList.remove('bg-blue-600')
+      toggle.classList.add('bg-gray-200')
+      indicator.classList.remove('translate-x-6')
+      indicator.classList.add('translate-x-1')
+    }
+  }
+
+  updateReminderStats(stats) {
+    if (this.hasStatTotalTarget) this.statTotalTarget.textContent = stats.total_today
+    if (this.hasStatSentTarget) this.statSentTarget.textContent = stats.sent_today
+    if (this.hasStatPendingTarget) this.statPendingTarget.textContent = stats.pending_today
+    if (this.hasStatFailedTarget) this.statFailedTarget.textContent = stats.failed_today
+  }
+
+  updateRemindersList(reminders) {
+    if (!this.hasRemindersListTarget) return
+
+    if (reminders.length === 0) {
+      this.remindersListTarget.innerHTML = `
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <i class="fas fa-inbox text-4xl mb-2"></i>
+          <p>Nenhum lembrete pendente no momento</p>
+        </div>
+      `
+      return
+    }
+
+    this.remindersListTarget.innerHTML = reminders.map(apt => `
+      <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div class="flex items-center space-x-3 flex-1">
+          <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
+            <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
+          </div>
+          <div>
+            <p class="font-medium text-gray-900 dark:text-white">${apt.customer_name}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              ${apt.scheduled_at}
+              <span class="text-xs">(em ${apt.minutes_until} min)</span>
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          ${apt.reminded 
+            ? '<span class="px-2 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 text-xs rounded-full"><i class="fas fa-check mr-1"></i>Enviado</span>'
+            : `<button data-action="click->whatsapp-manager#sendSingleReminder" data-appointment-id="${apt.id}" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"><i class="fas fa-paper-plane mr-1"></i>Enviar</button>`
+          }
+        </div>
+      </div>
+    `).join('')
   }
 } 

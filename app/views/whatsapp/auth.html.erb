@@ -153,6 +153,119 @@
     </div>
   </div>
 
+  <!-- Appointment Reminders Card -->
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg mt-6 border border-gray-200 dark:border-gray-700">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-bell text-blue-500 text-xl"></i>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Lembretes de Compromissos</h2>
+        </div>
+        <button data-action="click->whatsapp-manager#toggleReminders"
+                data-whatsapp-manager-target="reminderToggle"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 <%= current_user.appointment_reminders_enabled ? 'bg-blue-600' : 'bg-gray-200' %>">
+          <span class="<%= current_user.appointment_reminders_enabled ? 'translate-x-6' : 'translate-x-1' %> inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+        </button>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+        Envie lembretes automáticos 30 minutos antes dos compromissos
+      </p>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-blue-600 dark:text-blue-400 font-medium">Hoje</p>
+              <p class="text-2xl font-bold text-blue-900 dark:text-blue-100" data-whatsapp-manager-target="statTotal"><%= @reminder_stats[:total_today] %></p>
+            </div>
+            <i class="fas fa-calendar-day text-blue-400 text-2xl"></i>
+          </div>
+        </div>
+
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-green-600 dark:text-green-400 font-medium">Enviados</p>
+              <p class="text-2xl font-bold text-green-900 dark:text-green-100" data-whatsapp-manager-target="statSent"><%= @reminder_stats[:sent_today] %></p>
+            </div>
+            <i class="fas fa-check-circle text-green-400 text-2xl"></i>
+          </div>
+        </div>
+
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-yellow-600 dark:text-yellow-400 font-medium">Pendentes</p>
+              <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100" data-whatsapp-manager-target="statPending"><%= @reminder_stats[:pending_today] %></p>
+            </div>
+            <i class="fas fa-clock text-yellow-400 text-2xl"></i>
+          </div>
+        </div>
+
+        <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-red-600 dark:text-red-400 font-medium">Falhas</p>
+              <p class="text-2xl font-bold text-red-900 dark:text-red-100" data-whatsapp-manager-target="statFailed"><%= @reminder_stats[:failed_today] %></p>
+            </div>
+            <i class="fas fa-exclamation-circle text-red-400 text-2xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Reminders Section -->
+    <div class="p-6">
+      <div class="mb-4">
+        <h3 class="text-md font-semibold text-gray-900 dark:text-white">Próximos Lembretes</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Clique em "Enviar" para testar o lembrete manualmente</p>
+      </div>
+
+      <div data-whatsapp-manager-target="remindersList" class="space-y-2">
+        <% if @upcoming_reminders.any? %>
+          <% @upcoming_reminders.each do |appointment| %>
+            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div class="flex items-center space-x-3 flex-1">
+                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
+                  <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white"><%= appointment.customer.name %></p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <%= appointment.scheduled_at.strftime("%H:%M") %> 
+                    <% minutes_until = ((appointment.scheduled_at - Time.current) / 60).round %>
+                    <span class="text-xs">(em <%= minutes_until %> min)</span>
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <% if appointment.reminder_sent_at %>
+                  <span class="px-2 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 text-xs rounded-full">
+                    <i class="fas fa-check mr-1"></i>Enviado
+                  </span>
+                <% else %>
+                  <button data-action="click->whatsapp-manager#sendSingleReminder"
+                          data-appointment-id="<%= appointment.id %>"
+                          class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors">
+                    <i class="fas fa-paper-plane mr-1"></i>Enviar
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <i class="fas fa-inbox text-4xl mb-2"></i>
+            <p>Nenhum lembrete pendente no momento</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
   <!-- Debug Info -->
   <div class="mt-6">
     <details class="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_01_141029) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_03_181944) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -31,9 +31,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_141029) do
     t.text "cancellation_reason"
     t.datetime "cancelled_at"
     t.datetime "reschedule_deadline"
+    t.datetime "reminder_sent_at"
     t.index ["customer_id", "scheduled_at"], name: "index_appointments_on_customer_id_and_scheduled_at"
     t.index ["customer_id"], name: "index_appointments_on_customer_id"
     t.index ["rate_source"], name: "index_appointments_on_rate_source"
+    t.index ["reminder_sent_at"], name: "index_appointments_on_reminder_sent_at"
     t.index ["scheduled_at"], name: "index_appointments_on_scheduled_at"
     t.index ["status"], name: "index_appointments_on_status"
   end
@@ -278,6 +280,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_141029) do
     t.text "google_calendar_token"
     t.string "google_calendar_refresh_token"
     t.datetime "google_calendar_expires_at"
+    t.boolean "appointment_reminders_enabled", default: false, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
