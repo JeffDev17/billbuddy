@@ -4,7 +4,7 @@ ruby "3.3.8"
 
 gem "rails", "~> 7.2.2", ">= 7.2.2.1"
 gem "sprockets-rails"
-gem "pg", "~> 1.1"
+gem "pg", "~> 1.6"
 gem "puma", ">= 5.0"
 gem "importmap-rails"
 gem "turbo-rails"
