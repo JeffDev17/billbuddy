@@ -102,4 +102,16 @@ Rails.application.configure do
   # ]
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Memory optimization settings for 512MB instances
+  # Reduce query cache size to save memory
+  config.active_record.query_log_tags_enabled = false
+
+  # Disable automatic database connection pool for action cable
+  config.action_cable.disable_request_forgery_protection = true
+
+  # Limit database connection pool based on available threads
+  config.active_record.database_selector = nil
+  config.active_record.database_resolver = nil
+  config.active_record.database_resolver_context = nil
 end

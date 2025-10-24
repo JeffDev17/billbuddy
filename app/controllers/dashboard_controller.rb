@@ -15,13 +15,29 @@ class DashboardController < ApplicationController
     week_end = Date.current.end_of_week
     @weekly_stats = calculate_weekly_stats(week_start, week_end)
 
-    @upcoming_appointments = current_user_appointments.where("scheduled_at > ?", Time.current).includes(:customer).order(:scheduled_at).limit(5)
+    @upcoming_appointments = current_user_appointments
+                               .where("scheduled_at > ?", Time.current)
+                               .includes(:customer)
+                               .select("appointments.*, customers.name as customer_name")
+                               .order(:scheduled_at)
+                               .limit(5)
 
-    @recent_completed = current_user_appointments.completed.includes(:customer).order(completed_at: :desc).limit(5)
+    @recent_completed = current_user_appointments
+                          .completed
+                          .includes(:customer)
+                          .select("appointments.*, customers.name as customer_name")
+                          .order(completed_at: :desc)
+                          .limit(5)
 
     @insights = calculate_revenue_insights
 
-    @low_credit_customers = current_user_customers.credit.joins(:customer_credits).limit(5).where("customer_credits.remaining_hours <= ?", 2).distinct
+    @low_credit_customers = current_user_customers
+                              .credit
+                              .joins(:customer_credits)
+                              .select("customers.id, customers.name, SUM(customer_credits.remaining_hours) as total_remaining")
+                              .group("customers.id, customers.name")
+                              .having("SUM(customer_credits.remaining_hours) <= ?", 2)
+                              .limit(5)
 
     @todays_birthdays = current_user_customers.with_birthday_today
     @this_month_birthdays = current_user_customers.with_birthday_this_month.sort_by { |c| c.birthdate.day }
