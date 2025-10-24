@@ -14,7 +14,4 @@ test:
   <<: *default
   database: billbuddy_test
 production:
-  <<: *default
-  database: billbuddy_production
-  username: billbuddy
-  password: <%= ENV["DATABASE_PASSWORD"] %>
+  url: <%= ENV['DATABASE_URL'] %>
