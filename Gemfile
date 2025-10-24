@@ -31,7 +31,7 @@ end
 
 gem "devise"
 gem "simple_form"
-gem "rails_admin"
+# gem "rails_admin"
 gem "httparty"
 gem "sidekiq"
 gem "sidekiq-cron"
