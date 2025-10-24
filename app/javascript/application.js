@@ -13,6 +13,9 @@ import "scroll_position"
 // Import appointment modal functions
 import "appointment_modals"
 
+// Import theme initialization (must be early for no flash)
+import "theme_init"
+
 // Configure Turbo
 Turbo.config.drive.progressBarDelay = 100
 Turbo.session.drive = true

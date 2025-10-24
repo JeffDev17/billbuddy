@@ -27,7 +27,6 @@ class AppointmentBulkOperationsService
     customer = find_customer(customer_id)
     appointments = customer.appointments
 
-    # Filter by date range if provided
     if params[:start_date].present? && params[:end_date].present?
       appointments = appointments.where(
         scheduled_at: Date.parse(params[:start_date]).beginning_of_day..
@@ -35,7 +34,6 @@ class AppointmentBulkOperationsService
       )
     end
 
-    # Filter for future events only if requested
     appointments = appointments.future if params[:future_only] == "true"
 
     deleted_count = appointments.count

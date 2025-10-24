@@ -5,6 +5,13 @@ class BulkMessageService
   end
 
   def send_bulk_messages(customers, message, message_type = "custom")
+    # TODO: WhatsApp temporariamente desativado
+    return {
+      success_count: 0,
+      failed_count: customers.count,
+      errors: [ "WhatsApp está temporariamente desativado" ]
+    }
+
     success_count = 0
     failed_count = 0
     errors = []

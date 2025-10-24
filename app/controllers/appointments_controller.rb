@@ -6,7 +6,6 @@ class AppointmentsController < ApplicationController
   before_action :set_customers, only: [ :new, :create, :edit, :update ]
 
   def index
-    # Default to current week if no date filters are provided (for better performance)
     if params[:start_date].blank? && params[:end_date].blank? && params[:month].blank? && params[:year].blank?
       params[:start_date] = Date.current.beginning_of_week.strftime("%Y-%m-%d")
       params[:end_date] = Date.current.end_of_week.strftime("%Y-%m-%d")
@@ -214,7 +213,6 @@ class AppointmentsController < ApplicationController
   end
 
   def manage_auto_generation
-    # Simple fast loading - no need to check scheduled jobs for basic view
   end
 
   def setup_auto_generation

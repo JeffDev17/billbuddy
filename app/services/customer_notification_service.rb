@@ -5,6 +5,9 @@ class CustomerNotificationService
   end
 
   def send_whatsapp_notification
+    # TODO: WhatsApp temporariamente desativado
+    return failure_result("WhatsApp está temporariamente desativado")
+
     validate_phone_presence!
 
     formatted_phone = PhoneFormatterService.format(@customer.phone)
@@ -16,6 +19,9 @@ class CustomerNotificationService
   end
 
   def send_payment_reminder
+    # TODO: WhatsApp temporariamente desativado
+    return failure_result("WhatsApp está temporariamente desativado")
+
     validate_phone_presence!
 
     formatted_phone = PhoneFormatterService.format(@customer.phone)
@@ -33,6 +39,9 @@ class CustomerNotificationService
   end
 
   def send_custom_payment_reminder(amount, custom_message = nil)
+    # TODO: WhatsApp temporariamente desativado
+    return failure_result("WhatsApp está temporariamente desativado")
+
     validate_phone_presence!
     validate_amount!(amount)
     validate_message!(custom_message)

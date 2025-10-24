@@ -1,0 +1,208 @@
+<div class="max-w-4xl mx-auto py-8">
+  <div class="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-lg overflow-hidden">
+    <!-- Header -->
+    <div class="bg-indigo-600 dark:bg-indigo-700 px-6 py-4">
+      <h1 class="text-xl font-bold text-white flex items-center">
+        🤖 Chat com IA
+        <span class="ml-2 text-sm font-normal opacity-75">Assistente Inteligente</span>
+      </h1>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex flex-col" style="height: calc(100vh - 300px); min-height: 500px;">
+      <!-- Messages Container -->
+      <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-gray-100 dark:bg-gray-900">
+        <div id="welcome-message" class="text-center py-8 text-gray-500 dark:text-dark-text-secondary">
+          <div class="text-4xl mb-2">💬</div>
+          <p>Olá! Sou seu assistente de IA. Como posso ajudar?</p>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="border-t border-gray-200 dark:border-gray-600 p-4 bg-white dark:bg-gray-800">
+        <div class="mb-3">
+          <button 
+            id="weekly-insight-button" 
+            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+          >
+            Gerar Insight Semanal
+          </button>
+        </div>
+        <div class="flex space-x-3">
+          <input 
+            type="text" 
+            id="message-input" 
+            placeholder="Digite sua mensagem..."
+            class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            maxlength="500"
+          >
+          <button 
+            id="send-button" 
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+            </svg>
+            Enviar
+          </button>
+        </div>
+        <div class="mt-2 text-xs text-gray-500 dark:text-dark-text-secondary">
+          Pressione Enter para enviar • Máximo 500 caracteres
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const messageInput = document.getElementById('message-input');
+  const sendButton = document.getElementById('send-button');
+  const chatMessages = document.getElementById('chat-messages');
+  const welcomeMessage = document.getElementById('welcome-message');
+  const weeklyInsightButton = document.getElementById('weekly-insight-button');
+
+  // Enviar mensagem
+  async function sendMessage() {
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+
+    // Desabilitar input
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    sendButton.innerHTML = `
+      <svg class="animate-spin w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Enviando...
+    `;
+
+    // Remover mensagem de boas-vindas se existir
+    if (welcomeMessage) {
+      welcomeMessage.remove();
+    }
+
+    // Adicionar mensagem do usuário
+    addMessage('user', message);
+    messageInput.value = '';
+
+    try {
+      const response = await fetch('/chat/send_message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ message: message })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        addMessage('ai', result.message);
+      } else {
+        addMessage('error', result.error || 'Erro desconhecido');
+      }
+    } catch (error) {
+      addMessage('error', `Erro de conexão: ${error.message}`);
+    } finally {
+      // Reabilitar input
+      messageInput.disabled = false;
+      sendButton.disabled = false;
+      sendButton.innerHTML = `
+        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+        </svg>
+        Enviar
+      `;
+      messageInput.focus();
+    }
+  }
+
+  // Adicionar mensagem ao chat
+  function addMessage(type, content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `mb-4 ${type === 'user' ? 'text-right' : 'text-left'}`;
+    
+    const bubble = document.createElement('div');
+    bubble.className = `inline-block max-w-2xl px-4 py-3 rounded-lg ${getMessageStyle(type)}`;
+    
+    const text = document.createElement('div');
+    text.className = 'whitespace-pre-wrap';
+    text.textContent = content;
+    
+    const time = document.createElement('div');
+    time.className = 'text-xs opacity-70 mt-2';
+    time.textContent = new Date().toLocaleTimeString();
+    
+    bubble.appendChild(text);
+    bubble.appendChild(time);
+    messageDiv.appendChild(bubble);
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function getMessageStyle(type) {
+    switch(type) {
+      case 'user':
+        return 'bg-indigo-600 text-white shadow-sm';
+      case 'ai':
+        return 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 shadow-sm';
+      case 'error':
+        return 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 border border-red-200 dark:border-red-700';
+      default:
+        return 'bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600';
+    }
+  }
+
+  // Gerar insight semanal
+  async function generateWeeklyInsight() {
+    weeklyInsightButton.disabled = true;
+    weeklyInsightButton.textContent = 'Gerando...';
+
+    if (welcomeMessage) {
+      welcomeMessage.remove();
+    }
+
+    try {
+      const response = await fetch('/chat/weekly_insight', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+        }
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        addMessage('ai', result.message);
+      } else {
+        addMessage('error', result.error);
+      }
+    } catch (error) {
+      addMessage('error', `Erro: ${error.message}`);
+    } finally {
+      weeklyInsightButton.disabled = false;
+      weeklyInsightButton.textContent = 'Gerar Insight Semanal';
+    }
+  }
+
+  // Event listeners
+  weeklyInsightButton.addEventListener('click', generateWeeklyInsight);
+  sendButton.addEventListener('click', sendMessage);
+  
+  messageInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Focar no input
+  messageInput.focus();
+});
+</script>

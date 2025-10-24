@@ -14,7 +14,7 @@
     <div class="flex flex-wrap gap-3 mt-4 sm:mt-0">
       <%= link_to new_appointment_path, 
           class: "bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors" do %>
-        ➕ Nova Aula
+        ➕ Novo Agendamento
       <% end %>
       <%= link_to calendars_path, 
           class: "bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors" do %>
@@ -67,7 +67,7 @@
           <div class="ml-5 w-0 flex-1">
             <dl>
               <dt class="text-sm font-medium text-purple-100 truncate">
-                Aulas de Hoje
+                Agendamentos de Hoje
               </dt>
               <dd class="text-3xl font-bold">
                 <%= @total_appointments_today %>
@@ -206,7 +206,7 @@
         <div class="text-center py-8">
           <div class="text-4xl mb-4">🏖️</div>
           <p class="text-gray-500 dark:text-gray-400">
-            Nenhuma aula agendada para hoje
+            Nenhum agendamento para hoje
           </p>
           <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">
             Que tal aproveitar para organizar a agenda?
@@ -258,10 +258,10 @@
       <!-- Weekly Overview -->
       <div class="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg">
         <h4 class="text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-3">📈 Resumo da Semana</h4>
-        <div class="grid grid-cols-2 gap-4 text-xs">
+          <div class="grid grid-cols-2 gap-4 text-xs">
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Total:</span>
-            <span class="font-medium text-gray-900 dark:text-gray-100"><%= @weekly_stats[:total] %> aulas</span>
+            <span class="font-medium text-gray-900 dark:text-gray-100"><%= @weekly_stats[:total] %> agendamentos</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Horas:</span>
@@ -281,7 +281,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Efetivas:</span>
-            <span class="font-medium text-gray-900 dark:text-gray-100"><%= @weekly_stats[:non_cancelled] %> aulas</span>
+            <span class="font-medium text-gray-900 dark:text-gray-100"><%= @weekly_stats[:non_cancelled] %> agendamentos</span>
           </div>
           <% if @weekly_stats[:scheduled] > 0 %>
           <div class="flex justify-between">
@@ -306,11 +306,11 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Este Mês:</span>
-            <span class="font-medium text-gray-900 dark:text-gray-100"><%= @business_health[:this_month_appointments] %> aulas</span>
+            <span class="font-medium text-gray-900 dark:text-gray-100"><%= @business_health[:this_month_appointments] %> agendamentos</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600 dark:text-gray-400">Mês Anterior:</span>
-            <span class="font-medium text-gray-600 dark:text-gray-400"><%= @business_health[:last_month_appointments] %> aulas</span>
+            <span class="font-medium text-gray-600 dark:text-gray-400"><%= @business_health[:last_month_appointments] %> agendamentos</span>
           </div>
         </div>
       </div>
@@ -373,7 +373,7 @@
     <!-- Upcoming Appointments -->
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        ⏰ Próximas Aulas
+        ⏰ Próximos Agendamentos
       </h3>
       
       <% if @upcoming_appointments.any? %>
@@ -394,9 +394,9 @@
             </div>
           <% end %>
         </div>
-      <% else %>
+        <% else %>
         <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-          Nenhuma aula próxima agendada
+          Nenhum agendamento próximo
         </p>
       <% end %>
     </div>
@@ -425,9 +425,9 @@
             </div>
           <% end %>
         </div>
-      <% else %>
+        <% else %>
         <p class="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-          Nenhuma aula concluída recentemente
+          Nenhum agendamento concluído recentemente
         </p>
       <% end %>
     </div>

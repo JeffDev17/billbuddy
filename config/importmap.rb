@@ -9,6 +9,7 @@ pin_all_from "app/javascript/controllers", under: "controllers", preload: true
 # Additional JS files - fix asset paths
 pin "scroll_position", preload: true
 pin "appointment_modals", preload: true
+pin "theme_init", preload: true
 
 # Chartkick setup - using public directory (loaded dynamically when needed)
 pin "chartkick", to: "/js/chartkick.js", preload: false

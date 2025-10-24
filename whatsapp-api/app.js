@@ -8,7 +8,6 @@ const session = require('./persist-session');
 
 console.log('📦 Dependencies loaded successfully');
 
-// Função para logging mais detalhado
 function logWithTimestamp(message, data = null) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${message}`);
@@ -17,7 +16,6 @@ function logWithTimestamp(message, data = null) {
     }
 }
 
-// Configure CORS
 const app = express();
 app.use(cors({
     origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost.billbuddy.com.br:3000'],
@@ -27,7 +25,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// Variáveis de controle
 let isReady = false;
 let isAuthenticated = false;
 let lastQR = null;
@@ -35,7 +32,6 @@ let connectionRetries = 0;
 let client = null;
 let isInitializing = false;
 
-// Função para limpar cliente existente
 async function cleanupClient() {
     if (client) {
         try {
@@ -52,7 +48,6 @@ async function cleanupClient() {
     lastQR = null;
 }
 
-// Função para inicializar o cliente
 async function initializeClient() {
     if (isInitializing) {
         logWithTimestamp('Cliente já está sendo inicializado, aguardando...');
@@ -91,11 +86,9 @@ async function initializeClient() {
     }
 }
 
-// Configurar eventos do cliente
 function setupClientEvents() {
     if (!client) return;
 
-    // QR Code event
     client.on('qr', (qr) => {
         logWithTimestamp('📱 QR Code recebido - escaneie com seu WhatsApp');
         lastQR = qr;
@@ -126,7 +119,7 @@ function setupClientEvents() {
         logWithTimestamp('Falha na autenticação do WhatsApp:', error.message);
         isReady = false;
         isAuthenticated = false;
-        setTimeout(() => restartClient(), 5000); // Aguardar 5s antes de reiniciar
+        setTimeout(() => restartClient(), 5000);
     });
 
     client.on('disconnected', async (reason) => {
@@ -141,7 +134,6 @@ function setupClientEvents() {
     });
 }
 
-// Função para reiniciar o cliente
 async function restartClient() {
     logWithTimestamp('Reiniciando cliente WhatsApp...');
     await cleanupClient();
@@ -149,7 +141,6 @@ async function restartClient() {
     return true;
 }
 
-// Endpoints da API
 app.get('/qr-code', (req, res) => {
     try {
         if (isAuthenticated && isReady) {
@@ -186,7 +177,6 @@ app.post('/send-message', async (req, res) => {
     }
 
     try {
-        // Clean and format phone number
         const cleanPhone = phone.replace(/[^\d]/g, '');
         const formattedNumber = cleanPhone + '@c.us';
         
@@ -195,7 +185,6 @@ app.post('/send-message', async (req, res) => {
             messageLength: message.length
         });
         
-        // Send the message
         const result = await client.sendMessage(formattedNumber, message);
         
         logWithTimestamp('✅ Mensagem enviada com sucesso!');
@@ -204,7 +193,6 @@ app.post('/send-message', async (req, res) => {
     } catch (error) {
         logWithTimestamp('❌ Erro ao enviar mensagem:', error.message);
         
-        // Simple error handling
         if (error.message.includes('not registered')) {
             return res.status(400).json({ 
                 error: 'Phone number not registered on WhatsApp',
@@ -259,11 +247,10 @@ app.get('/status', async (req, res) => {
     }
 });
 
-// Endpoint para forçar reinicialização
 app.post('/restart', async (req, res) => {
     try {
         logWithTimestamp('Reinicialização forçada solicitada');
-        connectionRetries = 0; // Reset do contador
+        connectionRetries = 0;
         await restartClient();
         res.json({ success: true, message: 'Reinicialização iniciada' });
     } catch (error) {
@@ -278,7 +265,6 @@ console.log(`🌐 Attempting to start server on port ${PORT}...`);
 const server = app.listen(PORT, '0.0.0.0', () => {
     logWithTimestamp(`Servidor rodando na porta ${PORT}`);
     console.log(`✅ Server successfully started on http://0.0.0.0:${PORT}`);
-    // Inicializar cliente automaticamente
     setTimeout(() => initializeClient(), 1000);
 });
 
@@ -290,7 +276,6 @@ server.on('error', (error) => {
     process.exit(1);
 });
 
-// Graceful shutdown
 process.on('SIGINT', async () => {
     logWithTimestamp('Recebido SIGINT, encerrando graciosamente...');
     await cleanupClient();

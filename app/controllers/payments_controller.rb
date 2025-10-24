@@ -58,14 +58,12 @@ class PaymentsController < ApplicationController
     payment_amount = @payment.amount
     @payment.destroy
 
-    # Determine where to redirect based on referer or default to history
     redirect_path = if request.referer&.include?("history")
                       payment_history_customer_payments_path(@customer)
     else
                       customer_payments_path(@customer)
     end
 
-    # Show warning if deleting past month payment
     formatted_amount = "%.2f" % payment_amount
     if payment_date < Date.current.beginning_of_month
       redirect_to redirect_path,
@@ -76,7 +74,6 @@ class PaymentsController < ApplicationController
     end
   end
 
-  # Payment history for a specific customer
   def history
     @payments = @customer.payments
                         .recent_first
@@ -108,28 +105,42 @@ class PaymentsController < ApplicationController
     @is_current_or_future_month = checklist_data[:is_current_or_future_month]
     @customers = checklist_data[:customers]
     @payments_by_customer = checklist_data[:payments_by_customer]
+    @overdue_customers = checklist_data[:overdue_customers]
 
     assign_financial_totals(checklist_data[:financial_totals])
   end
-
-  # Update payment status via AJAX (enhanced to allow past month with warning)
   def update_payment_status
     customer = find_customer(params[:customer_id])
     month_date = Date.parse("#{params[:month]}-01")
 
-    # Allow past month editing but with audit trail
     if month_date < Date.current.beginning_of_month
       Rails.logger.warn "Past month payment edit: User #{current_user.email} editing payment for #{customer.name} in #{params[:month]}"
     end
 
-    result = payment_management_service.update_payment_status(customer, params[:month], params[:status], allow_past_month: true)
+    if params[:status] == "paid" && params[:custom_date].present?
+      result = payment_management_service.mark_payment_paid(
+        customer,
+        params[:month],
+        allow_past_month: true,
+        processed_by: current_user.email,
+        custom_date: params[:custom_date]
+      )
+    else
+      result = payment_management_service.update_payment_status(
+        customer,
+        params[:month],
+        params[:status],
+        allow_past_month: true,
+        processed_by: current_user.email
+      )
+    end
 
     render json: result
   rescue ActiveRecord::RecordNotFound
     render json: { success: false, message: "Cliente não encontrado" }
   end
 
-  # Mark payment as paid via AJAX (enhanced)
+  # Mark payment as paid via AJAX (enhanced with custom date)
   def mark_paid
     customer = find_customer(params[:customer_id])
     month_date = Date.parse("#{params[:month]}-01")
@@ -139,7 +150,13 @@ class PaymentsController < ApplicationController
       Rails.logger.warn "Past month payment mark as paid: User #{current_user.email} marking payment for #{customer.name} in #{params[:month]}"
     end
 
-    result = payment_management_service.mark_payment_paid(customer, params[:month], allow_past_month: true, processed_by: current_user.email)
+    result = payment_management_service.mark_payment_paid(
+      customer,
+      params[:month],
+      allow_past_month: true,
+      processed_by: current_user.email,
+      custom_date: params[:custom_date]
+    )
 
     render json: result
   rescue ActiveRecord::RecordNotFound
@@ -163,7 +180,6 @@ class PaymentsController < ApplicationController
     render json: { success: false, message: "Cliente não encontrado" }
   end
 
-  # Update payment amount via AJAX for inline editing
   def update_payment_amount
     customer = find_customer(params[:customer_id])
     month_string = params[:month]
@@ -180,7 +196,6 @@ class PaymentsController < ApplicationController
     calculated_amount = customer.package_total_value
 
     if payment
-      # Update existing payment amount
       if payment.update(amount: new_amount)
         render json: {
           success: true,
@@ -191,7 +206,6 @@ class PaymentsController < ApplicationController
         render json: { success: false, message: "Erro ao atualizar pagamento" }
       end
     else
-      # Create new payment with custom amount
       payment = customer.payments.build(
         payment_type: payment_type,
         payment_date: month_date,
@@ -219,7 +233,7 @@ class PaymentsController < ApplicationController
     render json: { success: false, message: "Erro interno do servidor" }
   end
 
-  # Bulk mark payments as paid via AJAX (enhanced)
+  # Bulk mark payments as paid via AJAX (enhanced with custom date and audit trail)
   def bulk_mark_paid
     customer_ids = params[:customer_ids] || []
     month = params[:month]
@@ -234,13 +248,18 @@ class PaymentsController < ApplicationController
       return
     end
 
-    # Check if it's a past month and warn
     month_date = Date.parse("#{month}-01")
     if month_date < Date.current.beginning_of_month
       Rails.logger.warn "Bulk past month payment marking: User #{current_user.email} bulk marking payments for #{customer_ids.length} customers in #{month}"
     end
 
-    result = payment_management_service.bulk_mark_payments_paid(customer_ids, month, allow_past_month: true, processed_by: current_user.email)
+    result = payment_management_service.bulk_mark_payments_paid(
+      customer_ids,
+      month,
+      allow_past_month: true,
+      processed_by: current_user.email,
+      custom_date: params[:custom_date]
+    )
 
     if result.is_a?(Hash) && result[:success]
       render json: {
@@ -287,14 +306,12 @@ class PaymentsController < ApplicationController
     @total_pending = totals[:pending_amount] || 0
     @total_expected = totals[:total_expected] || 0
 
-    # Calculate subscription totals
     subscription_customers = @customers.select { |customer| customer.plan_type == "subscription" }
     @subscription_expected = subscription_customers.sum(&:package_total_value)
     @subscription_received = @payments_by_customer.select { |customer_id, payments|
       subscription_customers.any? { |customer| customer.id == customer_id } && payments.any?(&:paid?)
     }.values.flatten.select(&:paid?).sum(&:amount)
 
-    # Calculate credit totals
     credit_customers = @customers.select { |customer| customer.plan_type == "credit" }
     @credit_expected = credit_customers.sum(&:package_total_value)
     @credit_received = @payments_by_customer.select { |customer_id, payments|

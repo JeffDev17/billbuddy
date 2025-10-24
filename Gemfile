@@ -23,14 +23,10 @@ end
 
 group :development do
   gem "web-console"
-  gem "rspec-rails"
-  gem "factory_bot_rails"
-  gem "faker"
 end
 
 group :test do
-  gem "capybara"
-  gem "selenium-webdriver"
+  gem "minitest"
 end
 
 gem "devise"
@@ -48,3 +44,4 @@ gem "groupdate"
 gem "cssbundling-rails"
 gem "jsbundling-rails"
 gem "childprocess"
+gem "ruby_llm"

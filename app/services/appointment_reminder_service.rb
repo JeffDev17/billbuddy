@@ -55,6 +55,9 @@ class AppointmentReminderService
   end
 
   def send_whatsapp_message(appointment)
+    # TODO: WhatsApp temporariamente desativado
+    return true
+
     formatted_phone = format_phone(appointment.customer.phone)
     message = build_message(appointment)
 
@@ -69,7 +72,7 @@ class AppointmentReminderService
     <<~MESSAGE
       Olá #{appointment.customer.name}!
 
-      Lembrete: Sua aula está agendada para #{format_time(appointment.scheduled_at)}.
+      Lembrete: Seu agendamento está marcado para #{format_time(appointment.scheduled_at)}.
 
       📅 Data: #{format_date(appointment.scheduled_at)}
       ⏱️ Duração: #{format_duration(appointment.duration)}

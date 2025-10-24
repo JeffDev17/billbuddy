@@ -4,6 +4,10 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index"
   root "dashboard#index"
 
+  get "chat", to: "chat#index"
+  post "chat/send_message", to: "chat#send_message"
+  get "chat/weekly_insight", to: "chat#weekly_insight"
+
   resources :customers do
     collection do
       get :import_csv
@@ -15,7 +19,7 @@ Rails.application.routes.draw do
     end
     member do
       post "debit_hours"
-      post "notify_whatsapp"
+      # post "notify_whatsapp"  # WhatsApp desativado
       post "notify_payment_reminder"
       get :payment_reminder_form
       post :send_payment_reminder
@@ -34,7 +38,8 @@ Rails.application.routes.draw do
   end
 
 
-  devise_for :users
+  # Zero registro de novos usuários
+  devise_for :users, skip: [ :registrations ]
 
   # Profile management routes
   get "profile", to: "profile#show"
@@ -95,15 +100,16 @@ Rails.application.routes.draw do
   resources :extra_time_balances, only: [ :index ]
   resources :customer_schedules, only: [ :create, :update, :destroy ]
 
-  get "whatsapp/auth", to: "whatsapp#auth"
-  get "whatsapp/status", to: "whatsapp#status"
-  get "whatsapp/qr-code", to: "whatsapp#qr_code"
-  post "whatsapp/start", to: "whatsapp#start_service"
-  post "whatsapp/stop", to: "whatsapp#stop_service"
-  post "whatsapp/restart", to: "whatsapp#restart_service"
-  post "whatsapp/toggle-reminders", to: "whatsapp#toggle_reminders"
-  get "whatsapp/reminder-stats", to: "whatsapp#reminder_stats"
-  post "whatsapp/send-reminder/:appointment_id", to: "whatsapp#send_reminder_for_appointment"
+  # WhatsApp desativado temporariamente
+  # get "whatsapp/auth", to: "whatsapp#auth"
+  # get "whatsapp/status", to: "whatsapp#status"
+  # get "whatsapp/qr-code", to: "whatsapp#qr_code"
+  # post "whatsapp/start", to: "whatsapp#start_service"
+  # post "whatsapp/stop", to: "whatsapp#stop_service"
+  # post "whatsapp/restart", to: "whatsapp#restart_service"
+  # post "whatsapp/toggle-reminders", to: "whatsapp#toggle_reminders"
+  # get "whatsapp/reminder-stats", to: "whatsapp#reminder_stats"
+  # post "whatsapp/send-reminder/:appointment_id", to: "whatsapp#send_reminder_for_appointment"
 
   get "/google/redirect", to: "calendars#redirect", as: :redirect_calendars
   get "/google/oauth2/callback", to: "calendars#callback", as: :callback_calendars

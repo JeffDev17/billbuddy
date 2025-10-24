@@ -94,7 +94,7 @@ if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
           when "no_show"
             [ "Cliente não compareceu", "Sem aviso prévio" ].sample
           when "completed"
-            [ "Aula excelente!", "Progresso notável", "Revisão de gramática", nil ].sample
+            [ "Sessão excelente!", "Progresso notável", "Revisão de conteúdo", nil ].sample
           else
             nil
           end

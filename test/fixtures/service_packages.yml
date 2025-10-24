@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+basic:
+  name: "Basic Package"
+  hours: 10
+  price: 500.0
+  active: true
+  created_at: <%= 1.month.ago %>
+  updated_at: <%= 1.month.ago %>
+
+premium:
+  name: "Premium Package"
+  hours: 20
+  price: 900.0
+  active: true
+  created_at: <%= 1.month.ago %>
+  updated_at: <%= 1.month.ago %>
+
+inactive:
+  name: "Inactive Package"
+  hours: 5
+  price: 250.0
+  active: false
+  created_at: <%= 1.month.ago %>
+  updated_at: <%= 1.month.ago %>

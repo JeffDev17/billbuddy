@@ -8,20 +8,18 @@ class WhatsappProcessManager
     attr_accessor :process, :port, :log_file
 
     def start!
-      @port = 3001  # Set port first so running? can check it
+      @port = 3001
 
-      # If service is already responding, don't restart it
+
       if running?
         Rails.logger.info "WhatsApp service already running and responding"
         return true
       end
 
-      # Prevent multiple startup attempts
       return false if @starting
       @starting = true
 
       begin
-        # Only clean up if service is not responding
         thorough_cleanup
         @log_file = Rails.root.join("log", "whatsapp.log")
 
@@ -42,43 +40,38 @@ class WhatsappProcessManager
     end
 
     def stop!
-      return true unless @process
-
       Rails.logger.info "Stopping WhatsApp Node.js service"
 
       begin
-        if @process.respond_to?(:alive?) && @process.alive?
-          @process.stop(5) # Give it 5 seconds to gracefully stop
+        if @process && @process.respond_to?(:alive?) && @process.alive?
+          @process.stop(5)
         end
       rescue ChildProcess::TimeoutError
-        @process.kill! if @process.respond_to?(:kill!) # Force kill if it doesn't stop gracefully
+        @process.kill! if @process.respond_to?(:kill!)
       rescue => e
         Rails.logger.error "Error stopping WhatsApp process: #{e.message}"
       ensure
         @process = nil
-        Rails.logger.info "WhatsApp service stopped"
       end
 
-      # Clean up any remaining processes
       thorough_cleanup
 
+      Rails.logger.info "WhatsApp service stopped"
       true
     end
 
     def restart!
       stop!
-      sleep(3) # Give it more time
+      sleep(3)
       start!
     end
 
     def running?
       begin
-        # Check if service is responding on the port (works across processes/workers)
         if service_responding?
           return true
         end
 
-        # Fallback to process check if we have a reference
         return false unless @process
         return false unless @process.respond_to?(:alive?)
         @process.alive?
@@ -115,29 +108,26 @@ class WhatsappProcessManager
       end
     end
 
-    # New method for comprehensive cleanup
     def thorough_cleanup
       Rails.logger.info "Performing thorough cleanup of WhatsApp processes"
 
-      # Kill processes on port 3001 (more targeted approach)
       cleanup_port(3001)
 
-      # Kill only specific WhatsApp-related node processes (more precise patterns)
       system("pkill -f 'whatsapp-api.*app.js' 2>/dev/null || true")
       system("pkill -f 'node.*whatsapp-api' 2>/dev/null || true")
+      system("pkill -f 'node.*app\\.js' 2>/dev/null || true")
 
-      # Kill any Chrome/Chromium processes that might be stuck (WhatsApp Web uses these)
+      system("pkill -f 'whatsapp.*Chromium' 2>/dev/null || true")
       system("pkill -f 'chrome.*whatsapp' 2>/dev/null || true")
       system("pkill -f 'chromium.*whatsapp' 2>/dev/null || true")
+      system("pkill -f '.wwebjs_auth.*Chromium' 2>/dev/null || true")
 
-      # Clean up any .wwebjs_auth sessions that might be locked
       auth_dir = Rails.root.join("whatsapp-api", ".wwebjs_auth")
       if auth_dir.exist?
         Dir.glob(auth_dir.join("**", "*.lock")).each { |f| File.delete(f) rescue nil }
       end
 
-      # Wait for cleanup to complete
-      sleep(1) # Reduced from 2 seconds
+      sleep(1)
     end
 
     private
@@ -145,21 +135,17 @@ class WhatsappProcessManager
     def cleanup_port(port)
       Rails.logger.info "Cleaning up any existing processes on port #{port}"
 
-      # First, try to find processes on the specific port
       pids = `lsof -ti:#{port} 2>/dev/null`.split.map(&:strip).reject(&:empty?)
 
       pids.each do |pid|
         begin
-          # Get process info before killing
           process_info = `ps -p #{pid} -o comm= 2>/dev/null`.strip
 
-          # Only kill if it's actually a node process (not Rails)
           if process_info.include?("node") || process_info.include?("whatsapp")
             Rails.logger.info "Killing process #{pid} (#{process_info}) on port #{port}"
-            Process.kill("TERM", pid.to_i) # Use TERM first, then escalate if needed
+            Process.kill("TERM", pid.to_i)
             sleep(1)
 
-            # Check if process is still alive, then use KILL
             if `ps -p #{pid} 2>/dev/null`.strip != ""
               Process.kill("KILL", pid.to_i)
             end
@@ -167,15 +153,12 @@ class WhatsappProcessManager
             Rails.logger.info "Skipping process #{pid} (#{process_info}) - not a Node.js process"
           end
         rescue Errno::ESRCH, Errno::EPERM => e
-          # Process already dead or permission denied, continue
           Rails.logger.debug "Process #{pid} no longer exists or permission denied: #{e.message}"
         end
       end
 
-      # Clean up specific node processes more carefully
       system("pkill -f 'whatsapp-api.*app.js' 2>/dev/null || true")
 
-      # Wait a moment for cleanup
       sleep(1)
     rescue => e
       Rails.logger.warn "Error during port cleanup: #{e.message}"
@@ -185,16 +168,14 @@ class WhatsappProcessManager
       @process = ChildProcess.build("node", "app.js")
       @process.environment["PORT"] = @port.to_s
       @process.environment["NODE_ENV"] = Rails.env
-      @process.environment["FORCE_COLOR"] = "0" # Disable colors in logs
+      @process.environment["FORCE_COLOR"] = "0"
       @process.cwd = Rails.root.join("whatsapp-api").to_s
 
-      # Redirect output to log file
       @process.io.stdout = @process.io.stderr = File.open(@log_file, "a")
       @process.detach = true
 
       @process.start
 
-      # Give the process more time to start
       sleep(3)
 
       unless @process&.alive?
@@ -203,7 +184,7 @@ class WhatsappProcessManager
       end
     end
 
-    def wait_for_service(max_attempts: 60) # Increased from 45 to 60 (1 minute)
+    def wait_for_service(max_attempts: 60)
       attempts = 0
 
       loop do
@@ -214,7 +195,6 @@ class WhatsappProcessManager
           raise "WhatsApp service did not respond after #{max_attempts} attempts"
         end
 
-        # Log progress every 10 attempts
         if attempts % 10 == 0
           Rails.logger.info "Waiting for WhatsApp service... (attempt #{attempts}/#{max_attempts})"
         end

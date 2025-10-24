@@ -21,7 +21,6 @@ class PaymentManagementService
     customers = eligible_customers_for_month(month_date)
     payments_by_customer = payments_for_month(month_date)
 
-    # Sort customers based on the sort_by parameter
     sorted_customers = sort_customers_by_payment_status(customers, payments_by_customer, sort_by)
 
     {
@@ -30,17 +29,27 @@ class PaymentManagementService
       is_current_or_future_month: month_date >= Date.current.beginning_of_month,
       customers: sorted_customers,
       payments_by_customer: payments_by_customer,
-      financial_totals: calculate_monthly_totals(month_date)
+      financial_totals: calculate_monthly_totals(month_date),
+      overdue_customers: customers_with_overdue_payments(month_date)
     }
   end
 
-  # Enhanced to allow past month editing with audit trail
+
+  def customers_with_overdue_payments(before_month)
+    overdue_customer_ids = base_payments_scope
+      .where("payment_date < ?", before_month.beginning_of_month)
+      .where(status: "pending")
+      .pluck(:customer_id)
+      .uniq
+
+    @user.customers.where(id: overdue_customer_ids)
+  end
+
   def update_payment_status(customer, month_string, new_status, allow_past_month: false, processed_by: nil)
     return failure_result("Status inválido") unless valid_status?(new_status)
 
     month_date = Date.parse("#{month_string}-01")
 
-    # Check past month restriction if not explicitly allowed
     if !allow_past_month && month_date < Date.current.beginning_of_month
       return failure_result("Não é possível alterar pagamentos de meses passados")
     end
@@ -49,17 +58,14 @@ class PaymentManagementService
     payment = find_existing_payment(customer, month_date, payment_type)
 
     if payment
-      # Update existing payment
       previous_status = payment.status
       if payment.update(status: new_status, processed_by: processed_by)
-        # Set received_at when marking as paid
         if new_status == "paid" && previous_status != "paid"
           payment.update(received_at: Time.current)
         elsif new_status != "paid"
           payment.update(received_at: nil)
         end
 
-        # Log past month changes
         if month_date < Date.current.beginning_of_month
           Rails.logger.info "Past month payment status change: Customer #{customer.name} (#{customer.id}) - #{previous_status} → #{new_status} in #{month_string} by #{processed_by}"
         end
@@ -69,19 +75,16 @@ class PaymentManagementService
         failure_result("Erro ao atualizar pagamento: #{payment.errors.full_messages.join(', ')}")
       end
     else
-      # Create new payment
       payment = build_new_payment(customer, month_date, payment_type)
       payment.status = new_status
       payment.amount = calculate_payment_amount(customer, month_date)
       payment.processed_by = processed_by
 
-      # Set received_at if marking as paid
       if new_status == "paid"
         payment.received_at = Time.current
       end
 
       if payment.save
-        # Log past month creation
         if month_date < Date.current.beginning_of_month
           Rails.logger.info "Past month payment creation: Customer #{customer.name} (#{customer.id}) - new payment with status #{new_status} in #{month_string} by #{processed_by}"
         end
@@ -96,23 +99,22 @@ class PaymentManagementService
     failure_result("Erro interno do servidor")
   end
 
-  # Enhanced to allow past month editing
-  def mark_payment_paid(customer, month_string, allow_past_month: false, processed_by: nil)
+  def mark_payment_paid(customer, month_string, allow_past_month: false, processed_by: nil, custom_date: nil)
     month_date = Date.parse("#{month_string}-01")
 
-    # Check past month restriction if not explicitly allowed
     if !allow_past_month && month_date < Date.current.beginning_of_month
       return failure_result("Não é possível alterar pagamentos de meses passados")
     end
+
+    payment_date = custom_date.present? ? Date.parse(custom_date.to_s) : month_date
 
     payment_type = customer.plan_type
     payment = find_existing_payment(customer, month_date, payment_type)
 
     if payment
-      if payment.update(status: "paid", received_at: Time.current, processed_by: processed_by)
-        # Log past month changes
+      if payment.update(status: "paid", payment_date: payment_date, received_at: Time.current, processed_by: processed_by)
         if month_date < Date.current.beginning_of_month
-          Rails.logger.info "Past month payment marked as paid: Customer #{customer.name} (#{customer.id}) in #{month_string} by #{processed_by}"
+          Rails.logger.info "Past month payment marked as paid: Customer #{customer.name} (#{customer.id}) in #{month_string} by #{processed_by}, payment_date: #{payment_date}"
         end
 
         success_result("paid", payment.amount, payment.id)
@@ -123,13 +125,13 @@ class PaymentManagementService
       payment = build_new_payment(customer, month_date, payment_type)
       payment.status = "paid"
       payment.amount = calculate_payment_amount(customer, month_date)
+      payment.payment_date = payment_date
       payment.received_at = Time.current
       payment.processed_by = processed_by
 
       if payment.save
-        # Log past month creation
         if month_date < Date.current.beginning_of_month
-          Rails.logger.info "Past month payment created as paid: Customer #{customer.name} (#{customer.id}) in #{month_string} by #{processed_by}"
+          Rails.logger.info "Past month payment created as paid: Customer #{customer.name} (#{customer.id}) in #{month_string} by #{processed_by}, payment_date: #{payment_date}"
         end
 
         success_result("paid", payment.amount, payment.id)
@@ -139,11 +141,9 @@ class PaymentManagementService
     end
   end
 
-  # Enhanced to allow past month editing
   def unmark_payment_paid(customer, month_string, allow_past_month: false)
     month_date = Date.parse("#{month_string}-01")
 
-    # Check past month restriction if not explicitly allowed
     if !allow_past_month && month_date < Date.current.beginning_of_month
       return failure_result("Não é possível alterar pagamentos de meses passados")
     end
@@ -153,7 +153,6 @@ class PaymentManagementService
 
     if payment && payment.paid?
       if payment.update(status: "pending", received_at: nil, processed_by: nil)
-        # Log past month changes
         if month_date < Date.current.beginning_of_month
           Rails.logger.info "Past month payment unmarked: Customer #{customer.name} (#{customer.id}) in #{month_string}"
         end
@@ -167,11 +166,9 @@ class PaymentManagementService
     end
   end
 
-  # Enhanced bulk operation with past month support
-  def bulk_mark_payments_paid(customer_ids, month_string, allow_past_month: false, processed_by: nil)
+  def bulk_mark_payments_paid(customer_ids, month_string, allow_past_month: false, processed_by: nil, custom_date: nil)
     month_date = Date.parse("#{month_string}-01")
 
-    # Check past month restriction if not explicitly allowed
     if !allow_past_month && month_date < Date.current.beginning_of_month
       return failure_result("Não é possível alterar pagamentos de meses passados")
     end
@@ -182,7 +179,7 @@ class PaymentManagementService
       customer = @user.customers.find_by(id: customer_id)
       next unless customer
 
-      result = mark_payment_paid(customer, month_string, allow_past_month: true, processed_by: processed_by)
+      result = mark_payment_paid(customer, month_string, allow_past_month: true, processed_by: processed_by, custom_date: custom_date)
       if result[:success]
         results[:success] << customer.name
         results[:total_amount] += result[:amount]
@@ -191,9 +188,8 @@ class PaymentManagementService
       end
     end
 
-    # Log bulk past month operations
     if month_date < Date.current.beginning_of_month && !results[:success].empty?
-      Rails.logger.info "Bulk past month payment marking: #{results[:success].length} payments marked for #{month_string} by #{processed_by}"
+      Rails.logger.info "Bulk past month payment marking: #{results[:success].length} payments marked for #{month_string} by #{processed_by}, custom_date: #{custom_date}"
     end
 
     results
@@ -245,38 +241,27 @@ class PaymentManagementService
     payments.where("payment_date <= ?", end_date)
   end
 
-  # FIXED: Improved customer eligibility with proper historical tracking
   def eligible_customers_for_month(month_date)
     current_month = Date.current.beginning_of_month
 
     if month_date < current_month
-      # For past months, show customers who were ACTIVE during that month
-      # This ensures proper historical accuracy regardless of current status
       historical_customers_for_month(month_date)
     elsif month_date == current_month
-      # For current month, show active customers + customers with existing payments
-      # This handles cases where customers canceled but have payments for this month
       current_month_customers(month_date)
     else
-      # For future months, show only currently active customers
       @user.customers.active
            .where(plan_type: [ "subscription", "credit" ])
            .order(:name)
     end
   end
 
-  # NEW: Get customers who were active during a specific historical month
   def historical_customers_for_month(month_date)
-    # Get customers who were active during that month (using new tracking)
     historically_active = @user.customers
                                .active_during_month(month_date)
                                .where(plan_type: [ "subscription", "credit" ])
 
-    # Also include customers who have payment records for that month
-    # (this handles cases where tracking might be incomplete)
     customer_ids_with_payments = payments_for_month(month_date).keys
 
-    # Combine both sets for comprehensive historical accuracy
     all_relevant_customer_ids = (
       historically_active.pluck(:id) + customer_ids_with_payments
     ).uniq
@@ -286,17 +271,12 @@ class PaymentManagementService
          .order(:name)
   end
 
-  # NEW: Get customers for current month (active + those with existing payments)
   def current_month_customers(month_date)
-    # Get currently active customers
     currently_active = @user.customers.active
                             .where(plan_type: [ "subscription", "credit" ])
 
-    # Also include customers who have payment records for this month
-    # (handles cases where customers canceled but have payments for this month)
     customer_ids_with_payments = payments_for_month(month_date).keys
 
-    # Combine both sets for comprehensive current month management
     all_relevant_customer_ids = (
       currently_active.pluck(:id) + customer_ids_with_payments
     ).uniq
@@ -325,11 +305,11 @@ class PaymentManagementService
   def calculate_monthly_totals(month_date)
     payments = payments_for_month(month_date).values.flatten
 
-    # Calculate expected amount based on actual payments or customer pricing
     total_expected = calculate_total_expected_amount(month_date)
     total_paid = payments.select(&:paid?).sum(&:amount)
     total_cancelled = payments.select(&:cancelled?).sum(&:amount)
-    total_pending = payments.select { |p| p.pending? }.sum(&:amount)
+
+    total_pending = total_expected - total_paid - total_cancelled
 
     {
       total_expected: total_expected,
@@ -340,7 +320,6 @@ class PaymentManagementService
   end
 
   def calculate_pending_amount(month_date)
-    # Calculate based on actual pending payment records
     payments_for_month(month_date).values.flatten.select(&:pending?).sum(&:amount)
   end
 
@@ -351,10 +330,8 @@ class PaymentManagementService
     eligible_customers_for_month(month_date).each do |customer|
       payments = payments_for_month(month_date)[customer.id]
       if payments&.any?
-        # Use actual payment amount if exists
         total += payments.first.amount
       else
-        # Use calculated amount for customers without payments
         total += calculate_payment_amount(customer, month_date)
       end
     end
@@ -376,7 +353,7 @@ class PaymentManagementService
     customer.payments.build(
       payment_type: payment_type,
       payment_date: month_date,
-      payment_method: "pix", # Default to PIX
+      payment_method: "pix",
       notes: "Pagamento mensal - #{month_date.strftime('%B %Y')}"
     )
   end
@@ -398,7 +375,6 @@ class PaymentManagementService
   def sort_customers_by_payment_status(customers, payments_by_customer, sort_by)
     case sort_by
     when "payment_status"
-      # Sort by payment status: paid first, then cancelled, then pending
       customers.sort_by do |customer|
         payment = payments_by_customer[customer.id]&.first
         status = payment&.status || "pending"
@@ -406,7 +382,6 @@ class PaymentManagementService
         [ status_priority[status] || 4, customer.name.downcase ]
       end
     when "payment_status_reverse"
-      # Sort by payment status: pending first, then cancelled, then paid
       customers.sort_by do |customer|
         payment = payments_by_customer[customer.id]&.first
         status = payment&.status || "pending"
@@ -414,19 +389,15 @@ class PaymentManagementService
         [ status_priority[status] || 4, customer.name.downcase ]
       end
     when "plan_type"
-      # Sort by plan type: subscription first, then credit
       customers.sort_by do |customer|
         plan_priority = { "subscription" => 1, "credit" => 2 }
         [ plan_priority[customer.plan_type] || 3, customer.name.downcase ]
       end
     when "package_value"
-      # Sort by package value: highest first
       customers.sort_by { |customer| [ -customer.package_total_value, customer.name.downcase ] }
     when "package_value_asc"
-      # Sort by package value: lowest first
       customers.sort_by { |customer| [ customer.package_total_value, customer.name.downcase ] }
     else
-      # Default: sort by name
       customers.order(:name)
     end
   end

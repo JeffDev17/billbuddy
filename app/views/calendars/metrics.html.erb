@@ -189,7 +189,7 @@
           <div class="ml-5 w-0 flex-1">
             <dl>
               <dt class="text-sm font-medium text-blue-100 truncate">
-                Total de Aulas
+                Total de Agendamentos
               </dt>
               <dd class="text-2xl font-bold">
                 <%= @monthly_summary[:classes][:total] %>
@@ -247,7 +247,7 @@
                 <%= @comprehensive_stats&.dig(:completion_rate) || 0 %>%
               </dd>
               <dt class="text-xs text-purple-200 mt-1">
-                Das aulas passadas do mês
+                Dos agendamentos passados do mês
               </dt>
             </dl>
           </div>
@@ -281,7 +281,7 @@
         <% if @monthly_trends.present? && @monthly_trends.any? %>
           <!-- Debug: <%= @monthly_trends.inspect %> -->
           <%= line_chart @monthly_trends.map { |t| [t[:month_name], t[:completed]] },
-              label: "Aulas Concluídas",
+              label: "Agendamentos Concluídos",
               colors: ["#3b82f6"],
               curve: false,
               height: "250px",
@@ -304,7 +304,7 @@
         <% if @weekly_performance.present? && @weekly_performance.any? %>
           <!-- Debug: <%= @weekly_performance.inspect %> -->
           <%= column_chart @weekly_performance.map { |w| [w[:week_label], w[:completed]] },
-              label: "Aulas Concluídas",
+              label: "Agendamentos Concluídos",
               colors: ["#059669"],
               height: "250px" %>
         <% else %>
@@ -366,7 +366,7 @@
         <% busiest_days_data = @monthly_summary[:workload][:busiest_days].to_h %>
         <% if busiest_days_data.present? %>
           <%= column_chart busiest_days_data,
-              label: "Número de Aulas",
+              label: "Número de Agendamentos",
               colors: ["#f59e0b"],
               height: "250px" %>
         <% else %>
@@ -534,7 +534,7 @@
             <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
               <span class="text-sm text-gray-600 dark:text-gray-400"><%= day %></span>
               <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                <%= count %> aulas
+                <%= count %> agendamentos
               </span>
             </div>
           <% end %>
@@ -692,7 +692,7 @@
       <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
         <div class="grid grid-cols-2 gap-4 text-sm">
           <div class="flex justify-between">
-            <span class="text-blue-700 dark:text-blue-300">Total de aulas:</span>
+            <span class="text-blue-700 dark:text-blue-300">Total de agendamentos:</span>
             <span class="font-medium text-blue-900 dark:text-blue-100">
               <%= @daily_schedule[:total_classes] %>
             </span>

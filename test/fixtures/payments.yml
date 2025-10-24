@@ -1,0 +1,52 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  customer: one
+  payment_type: "monthly"
+  amount: 500.0
+  payment_date: <%= 1.month.from_now %>
+  status: "pending"
+  payment_method: "pix"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+two:
+  customer: one
+  payment_type: "monthly"
+  amount: 750.0
+  payment_date: <%= 2.weeks.from_now %>
+  status: "pending"
+  payment_method: "pix"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+paid:
+  customer: one
+  payment_type: "monthly"
+  amount: 1000.0
+  payment_date: <%= 1.month.ago %>
+  status: "paid"
+  payment_method: "pix"
+  received_at: <%= 1.month.ago %>
+  created_at: <%= 2.months.ago %>
+  updated_at: <%= 1.month.ago %>
+
+overdue:
+  customer: one
+  payment_type: "monthly"
+  amount: 300.0
+  payment_date: <%= 5.days.ago %>
+  status: "overdue"
+  payment_method: "pix"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+cancelled:
+  customer: one
+  payment_type: "monthly"
+  amount: 200.0
+  payment_date: <%= 1.month.from_now %>
+  status: "cancelled"
+  payment_method: "pix"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>

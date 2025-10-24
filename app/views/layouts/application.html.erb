@@ -17,14 +17,24 @@
   
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class'
-    }
-  </script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
 
   <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Dark Mode Styles -->
+  <style>
+    body { background-color: #f9fafb !important; }
+    .dark body { background-color: #0f0f0f !important; }
+    .dark .bg-white { background-color: #1a1a1a !important; }
+    .dark .bg-gray-50 { background-color: #2a2a2a !important; }
+    .dark .bg-gray-100 { background-color: #2a2a2a !important; }
+    .dark .text-gray-900 { color: #f5f5f5 !important; }
+    .dark .text-gray-600 { color: #d1d5db !important; }
+    .dark .text-gray-500 { color: #9ca3af !important; }
+    .dark .border-gray-200 { border-color: #333333 !important; }
+    .dark .border-gray-300 { border-color: #444444 !important; }
+  </style>
 
   <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/main.min.css" rel="stylesheet">
@@ -32,172 +42,8 @@
   <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.js"></script>
 
-  <!-- JavaScript - Load AFTER CSS -->
+  <!-- JavaScript -->
   <%= javascript_importmap_tags %>
-  <script>
-    // Force reload of WhatsApp controllers to clear cache
-    if (window.performance && window.performance.navigation.type === 1) {
-      console.log('🔄 Page reloaded - WhatsApp controllers will be refreshed');
-    }
-  </script>
-
-  <style>
-      /* Componentes personalizados */
-      .btn {
-          @apply px-4 py-2 rounded font-medium transition-colors duration-200;
-      }
-
-      .btn-primary {
-          @apply bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-purple-600 dark:hover:bg-purple-700;
-      }
-
-      .btn-secondary {
-          @apply bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700;
-      }
-
-      .btn-danger {
-          @apply bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700;
-      }
-
-      .card {
-          @apply bg-white rounded-lg shadow-md overflow-hidden;
-      }
-      
-      .dark .card {
-          background-color: #1a1a1a;
-      }
-
-      .card-header {
-          @apply px-6 py-4 border-b border-gray-200;
-      }
-      
-      .dark .card-header {
-          border-color: #333333;
-      }
-
-      .card-body {
-          @apply p-6;
-      }
-
-      .form-input {
-          @apply w-full px-3 py-2 border border-gray-300 rounded-md
-          focus:outline-none focus:ring-2 focus:ring-indigo-500
-          bg-white text-gray-900;
-      }
-      
-      .dark .form-input {
-          background-color: #2a2a2a;
-          border-color: #444444;
-          color: #f5f5f5;
-      }
-      
-      .dark .form-input:focus {
-          ring-color: #8b5cf6;
-      }
-
-      .form-label {
-          @apply block text-sm font-medium text-gray-700 mb-1;
-      }
-      
-      .dark .form-label {
-          color: #d1d5db;
-      }
-
-      .table-container {
-          @apply overflow-x-auto rounded-lg shadow;
-      }
-
-      .table {
-          @apply min-w-full divide-y divide-gray-200;
-      }
-      
-      .dark .table {
-          divide-color: #333333;
-      }
-
-      .table-header {
-          @apply bg-gray-50;
-      }
-      
-      .dark .table-header {
-          background-color: #2a2a2a;
-      }
-
-      .table-header-cell {
-          @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
-      }
-      
-      .dark .table-header-cell {
-          color: #9ca3af;
-      }
-
-      .table-body {
-          @apply bg-white divide-y divide-gray-200;
-      }
-      
-      .dark .table-body {
-          background-color: #1a1a1a;
-          divide-color: #333333;
-      }
-
-      .table-row {
-          @apply hover:bg-gray-50;
-      }
-      
-      .dark .table-row:hover {
-          background-color: #2a2a2a;
-      }
-
-      .table-cell {
-          @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
-      }
-      
-      .dark .table-cell {
-          color: #f5f5f5;
-      }
-
-      /* Fix for scrolling background */
-      body {
-          background-color: #f9fafb; /* gray-50 */
-      }
-      
-      .dark body {
-          background-color: #0f0f0f; /* Very dark gray, almost black */
-      }
-      
-      /* Dark theme overrides for white components */
-      .dark .bg-white {
-          background-color: #1a1a1a !important;
-      }
-      
-      .dark .bg-gray-50 {
-          background-color: #2a2a2a !important;
-      }
-      
-      .dark .bg-gray-100 {
-          background-color: #2a2a2a !important;
-      }
-      
-      .dark .text-gray-900 {
-          color: #f5f5f5 !important;
-      }
-      
-      .dark .text-gray-600 {
-          color: #d1d5db !important;
-      }
-      
-      .dark .text-gray-500 {
-          color: #9ca3af !important;
-      }
-      
-      .dark .border-gray-200 {
-          border-color: #333333 !important;
-      }
-      
-      .dark .border-gray-300 {
-          border-color: #444444 !important;
-      }
-  </style>
 </head>
 
 <body class="h-full text-gray-900 dark:text-gray-100" data-controller="theme">
@@ -219,36 +65,22 @@
 
             <%= link_to "Compromissos", appointments_path, class: "#{controller_name == 'appointments' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
+            <%# Chat AI temporariamente oculto %>
+            <%#= link_to "Chat AI", chat_path, class: "#{controller_name == 'chat' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
+
             <%= link_to "Agenda", calendars_path, class: "#{controller_name == 'calendars' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%= link_to "Daily Classes", daily_completion_calendars_path, class: "#{action_name == 'daily_completion' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
+            <%= link_to "Agendamentos Diários", daily_completion_calendars_path, class: "#{action_name == 'daily_completion' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
             <%= link_to "Métricas", metrics_calendars_path, class: "#{action_name == 'metrics' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
             <%= link_to "Payments", monthly_checklist_payments_path, class: "#{controller_name == 'payments' && action_name == 'monthly_checklist' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
 
-            <%= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
+            <%# WhatsApp temporariamente oculto %>
+            <%#= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'border-purple-400 dark:border-purple-300 text-white dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:border-purple-300 dark:hover:border-purple-400 hover:text-white dark:hover:text-purple-200'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200" %>
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <!-- WhatsApp Status Indicator -->
-          <div data-controller="whatsapp-status" class="relative">
-            <div data-whatsapp-status-target="indicator" 
-                 class="flex items-center space-x-1 px-2 py-1 rounded-full text-xs transition-all duration-200 cursor-pointer"
-                 data-action="click->whatsapp-status#toggleTooltip"
-                 title="Status do WhatsApp">
-              <div data-whatsapp-status-target="dot" class="w-2 h-2 rounded-full bg-gray-400"></div>
-              <i class="fab fa-whatsapp text-sm"></i>
-            </div>
-            
-            <!-- Tooltip -->
-            <div data-whatsapp-status-target="tooltip" 
-                 class="hidden absolute right-0 mt-2 w-48 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg p-2 shadow-lg z-50">
-              <div data-whatsapp-status-target="tooltipText">Verificando status...</div>
-              <div class="absolute -top-1 right-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45"></div>
-            </div>
-          </div>
-
           <button data-action="theme#toggle" class="p-2 rounded-full text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-800 hover:text-white dark:hover:text-purple-200 transition-colors duration-200">
             <i id="theme-icon" class="fas fa-moon"></i>
           </button>
@@ -319,13 +151,14 @@
 
         <%= link_to "Agenda", calendars_path, class: "#{controller_name == 'calendars' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
-        <%= link_to "Daily Classes", daily_completion_calendars_path, class: "#{action_name == 'daily_completion' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
+        <%= link_to "Agendamentos Diários", daily_completion_calendars_path, class: "#{action_name == 'daily_completion' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
         <%= link_to "Métricas", metrics_calendars_path, class: "#{action_name == 'metrics' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
         <%= link_to "Checklist", monthly_checklist_payments_path, class: "#{controller_name == 'payments' && action_name == 'monthly_checklist' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
-        <%= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
+         <%# WhatsApp temporariamente oculto %>
+         <%#= link_to "WhatsApp", whatsapp_auth_path, class: "#{controller_name == 'whatsapp' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
 
         <%= link_to "Perfil", profile_path, class: "#{controller_name == 'profile' ? 'bg-purple-900 dark:bg-purple-800 border-purple-400 dark:border-purple-300 text-purple-100 dark:text-purple-100' : 'border-transparent text-slate-300 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-purple-900 hover:border-purple-400 dark:hover:border-purple-300 hover:text-white dark:hover:text-purple-200'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200" %>
       </div>
@@ -368,7 +201,7 @@
         <div class="flex items-center space-x-2">
           <h1 class="text-lg font-bold text-indigo-600 dark:text-dark-accent">BillBuddy</h1>
           <span class="text-gray-500 dark:text-dark-text-secondary">•</span>
-          <span class="text-sm text-gray-500 dark:text-dark-text-secondary">Sistema de Gestão de Aulas</span>
+          <span class="text-sm text-gray-500 dark:text-dark-text-secondary">Sistema de Gestão de Agendamentos</span>
         </div>
         <div class="text-xs text-gray-400 dark:text-gray-500">
           © <%= Date.current.year %> BillBuddy. Desenvolvido para professores e profissionais autônomos.
@@ -378,51 +211,5 @@
   </footer>
   <% end %>
 </div>
-
-<script>
-    // Verificar preferência do usuário para tema escuro
-    function updateThemeIcon() {
-        const themeIcon = document.getElementById('theme-icon');
-        if (document.documentElement.classList.contains('dark')) {
-            themeIcon.className = 'fas fa-sun';
-        } else {
-            themeIcon.className = 'fas fa-moon';
-        }
-    }
-
-    // Verificar preferência do usuário
-    if (localStorage.theme === 'dark' ||
-        (!('theme' in localStorage) &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-
-    updateThemeIcon();
-
-    // Função para alternar o tema
-    function toggleTheme() {
-        if (document.documentElement.classList.contains('dark')) {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
-        }
-        updateThemeIcon();
-    }
-
-    // Hide WhatsApp status tooltip when clicking outside
-    document.addEventListener('click', function(event) {
-        const whatsappStatus = document.querySelector('[data-controller="whatsapp-status"]');
-        if (whatsappStatus && !whatsappStatus.contains(event.target)) {
-            const tooltip = whatsappStatus.querySelector('[data-whatsapp-status-target="tooltip"]');
-            if (tooltip) {
-                tooltip.classList.add('hidden');
-            }
-        }
-    });
-</script>
 </body>
 </html>

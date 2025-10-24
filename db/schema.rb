@@ -107,100 +107,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_03_181944) do
     t.index ["customer_id"], name: "index_failed_notifications_on_customer_id"
   end
 
-  create_table "lesson_contents", force: :cascade do |t|
-    t.bigint "lesson_id", null: false
-    t.string "content_type", default: "whiteboard"
-    t.text "content"
-    t.text "student_annotations"
-    t.integer "position", default: 0
-    t.boolean "visible_to_student", default: true
-    t.boolean "allows_student_annotations", default: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["lesson_id", "position"], name: "index_lesson_contents_on_lesson_id_and_position"
-    t.index ["lesson_id"], name: "index_lesson_contents_on_lesson_id"
-  end
-
-  create_table "lesson_tags", force: :cascade do |t|
-    t.bigint "lesson_id", null: false
-    t.string "tag_name", null: false
-    t.string "tag_type", default: "subject"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["lesson_id"], name: "index_lesson_tags_on_lesson_id"
-    t.index ["tag_name", "tag_type"], name: "index_lesson_tags_on_tag_name_and_tag_type"
-  end
-
-  create_table "lessons", force: :cascade do |t|
-    t.bigint "appointment_id", null: false
-    t.bigint "teacher_id", null: false
-    t.bigint "student_id", null: false
-    t.string "title"
-    t.text "objectives"
-    t.text "summary"
-    t.string "status", default: "scheduled"
-    t.datetime "started_at"
-    t.datetime "finished_at"
-    t.integer "duration_minutes"
-    t.text "teacher_notes"
-    t.text "homework_assigned"
-    t.float "progress_score"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["appointment_id"], name: "index_lessons_on_appointment_id"
-    t.index ["started_at"], name: "index_lessons_on_started_at"
-    t.index ["status"], name: "index_lessons_on_status"
-    t.index ["student_id", "status"], name: "index_lessons_on_student_id_and_status"
-    t.index ["student_id", "teacher_id"], name: "index_lessons_on_student_id_and_teacher_id"
-    t.index ["student_id"], name: "index_lessons_on_student_id"
-    t.index ["teacher_id", "status"], name: "index_lessons_on_teacher_id_and_status"
-    t.index ["teacher_id"], name: "index_lessons_on_teacher_id"
-  end
-
-  create_table "material_assignments", force: :cascade do |t|
-    t.bigint "lesson_id", null: false
-    t.bigint "material_id", null: false
-    t.boolean "required", default: false
-    t.boolean "completed_by_student", default: false
-    t.datetime "assigned_at"
-    t.datetime "completed_at"
-    t.text "student_feedback"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["lesson_id"], name: "index_material_assignments_on_lesson_id"
-    t.index ["material_id"], name: "index_material_assignments_on_material_id"
-  end
-
-  create_table "materials", force: :cascade do |t|
-    t.bigint "teacher_id", null: false
-    t.string "title", null: false
-    t.text "description"
-    t.string "material_type"
-    t.string "file_url"
-    t.text "content"
-    t.json "metadata"
-    t.boolean "public", default: false
-    t.string "category"
-    t.string "difficulty_level"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["material_type", "public"], name: "index_materials_on_material_type_and_public"
-    t.index ["teacher_id", "category"], name: "index_materials_on_teacher_id_and_category"
-    t.index ["teacher_id"], name: "index_materials_on_teacher_id"
-  end
-
-  create_table "new_words", force: :cascade do |t|
-    t.bigint "lesson_id", null: false
-    t.bigint "student_id", null: false
-    t.bigint "teacher_id", null: false
-    t.string "word"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["lesson_id"], name: "index_new_words_on_lesson_id"
-    t.index ["student_id"], name: "index_new_words_on_student_id"
-    t.index ["teacher_id"], name: "index_new_words_on_teacher_id"
-  end
-
   create_table "payments", force: :cascade do |t|
     t.bigint "customer_id", null: false
     t.string "payment_type", null: false
@@ -233,25 +139,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_03_181944) do
     t.boolean "active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "student_progresses", force: :cascade do |t|
-    t.bigint "teacher_id", null: false
-    t.bigint "student_id", null: false
-    t.string "subject"
-    t.string "topic"
-    t.float "mastery_level", default: 0.0
-    t.integer "lessons_count", default: 0
-    t.integer "materials_completed", default: 0
-    t.text "strengths"
-    t.text "improvement_areas"
-    t.text "teacher_notes"
-    t.date "last_updated_date"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["student_id"], name: "index_student_progresses_on_student_id"
-    t.index ["teacher_id", "student_id", "subject"], name: "idx_on_teacher_id_student_id_subject_59a5776b2f"
-    t.index ["teacher_id"], name: "index_student_progresses_on_teacher_id"
   end
 
   create_table "subscriptions", force: :cascade do |t|
@@ -292,20 +179,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_03_181944) do
   add_foreign_key "customers", "users"
   add_foreign_key "extra_time_balances", "customers"
   add_foreign_key "failed_notifications", "customers"
-  add_foreign_key "lesson_contents", "lessons"
-  add_foreign_key "lesson_tags", "lessons"
-  add_foreign_key "lessons", "appointments"
-  add_foreign_key "lessons", "customers", column: "student_id"
-  add_foreign_key "lessons", "users", column: "teacher_id"
-  add_foreign_key "material_assignments", "lessons"
-  add_foreign_key "material_assignments", "materials"
-  add_foreign_key "materials", "users", column: "teacher_id"
-  add_foreign_key "new_words", "customers", column: "student_id"
-  add_foreign_key "new_words", "lessons"
-  add_foreign_key "new_words", "users", column: "teacher_id"
   add_foreign_key "payments", "customers"
-  add_foreign_key "student_progresses", "customers", column: "student_id"
-  add_foreign_key "student_progresses", "users", column: "teacher_id"
   add_foreign_key "subscriptions", "customers"
   add_foreign_key "subscriptions", "service_packages"
 end

@@ -120,7 +120,7 @@ class GoogleCalendarEventBuilder
     description << ""
     description << "⚠️ Esta é uma série recorrente criada pelo BillBuddy."
     description << "Para cancelar toda a série, delete este evento."
-    description << "Para cancelar apenas uma aula, altere o status do compromisso no BillBuddy."
+    description << "Para cancelar apenas um agendamento, altere o status do compromisso no BillBuddy."
 
     description.join("\n")
   end

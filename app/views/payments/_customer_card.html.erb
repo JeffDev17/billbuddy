@@ -1,0 +1,61 @@
+<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2 hover:shadow-md transition-shadow cursor-pointer"
+     data-customer-id="<%= customer.id %>"
+     data-status="<%= current_status %>">
+  
+  <div class="flex items-start justify-between mb-1">
+    <div class="flex items-center space-x-2 flex-1">
+      <div class="w-6 h-6 <%= customer.subscription? ? 'bg-purple-500' : 'bg-blue-500' %> rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+        <%= customer.name.first.upcase %>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
+          <%= customer.name %>
+        </div>
+        <% if @overdue_customers&.include?(customer) %>
+          <span class="text-[9px] text-red-600 dark:text-red-400">🚨 Atrasado</span>
+        <% end %>
+      </div>
+    </div>
+    
+    <%= link_to customer_path(customer), class: "text-indigo-500 hover:text-indigo-700 dark:text-indigo-400", target: "_blank" do %>
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+      </svg>
+    <% end %>
+  </div>
+
+  <div class="flex items-center justify-between text-[10px] text-gray-600 dark:text-gray-400 mb-2">
+    <span><%= customer.subscription? ? '📅 Assinatura' : '💳 Crédito' %></span>
+    <% existing_payment = payment %>
+    <% display_amount = existing_payment&.amount || customer.package_total_value %>
+    <span class="font-semibold text-gray-900 dark:text-gray-100">R$ <%= number_with_precision(display_amount, precision: 2) %></span>
+  </div>
+
+  <div class="flex items-center space-x-1">
+    <button data-action="click->payment-checklist#changeStatus" 
+            data-customer-id="<%= customer.id %>"
+            data-month="<%= selected_month %>"
+            data-new-status="pending"
+            data-current-status="<%= current_status %>"
+            class="flex-1 px-1 py-1 text-[9px] rounded <%= current_status == 'pending' ? 'bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 font-bold' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-yellow-100 dark:hover:bg-yellow-900' %> transition-colors">
+      ⏳
+    </button>
+    <button data-action="click->payment-checklist#changeStatus"
+            data-customer-id="<%= customer.id %>"
+            data-month="<%= selected_month %>"
+            data-new-status="paid"
+            data-current-status="<%= current_status %>"
+            class="flex-1 px-1 py-1 text-[9px] rounded <%= current_status == 'paid' ? 'bg-green-200 dark:bg-green-800 text-green-900 dark:text-green-100 font-bold' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-green-100 dark:hover:bg-green-900' %> transition-colors">
+      ✅
+    </button>
+    <button data-action="click->payment-checklist#changeStatus"
+            data-customer-id="<%= customer.id %>"
+            data-month="<%= selected_month %>"
+            data-new-status="cancelled"
+            data-current-status="<%= current_status %>"
+            class="flex-1 px-1 py-1 text-[9px] rounded <%= current_status == 'cancelled' ? 'bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-bold' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600' %> transition-colors">
+      ❌
+    </button>
+  </div>
+</div>
+

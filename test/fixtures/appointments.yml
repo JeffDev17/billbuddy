@@ -1,0 +1,54 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  customer: one
+  scheduled_at: <%= 1.day.from_now %>
+  duration: 60
+  status: "scheduled"
+  hourly_rate: 100.0
+  rate_source: "custom"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+two:
+  customer: one
+  scheduled_at: <%= 2.days.from_now %>
+  duration: 90
+  status: "scheduled"
+  hourly_rate: 120.0
+  rate_source: "default"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+completed:
+  customer: one
+  scheduled_at: <%= 1.day.ago %>
+  duration: 60
+  status: "completed"
+  hourly_rate: 100.0
+  rate_source: "custom"
+  completed_at: <%= 1.day.ago %>
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.day.ago %>
+
+cancelled:
+  customer: one
+  scheduled_at: <%= 3.days.from_now %>
+  duration: 60
+  status: "cancelled"
+  cancellation_type: "standard"
+  hourly_rate: 100.0
+  rate_source: "custom"
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+past:
+  customer: one
+  scheduled_at: <%= 1.week.ago %>
+  duration: 60
+  status: "completed"
+  hourly_rate: 100.0
+  rate_source: "custom"
+  completed_at: <%= 1.week.ago %>
+  created_at: <%= 2.weeks.ago %>
+  updated_at: <%= 1.week.ago %>

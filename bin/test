@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+require "bundler/setup"
+
+APP_ROOT = File.expand_path("..", __dir__)
+
+Dir.chdir APP_ROOT do
+  exec "rails", "test", *ARGV
+end
