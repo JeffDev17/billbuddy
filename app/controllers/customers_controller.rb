@@ -15,11 +15,11 @@ class CustomersController < ApplicationController
     @active_and_on_hold_customers = @customers.where(status: [ "active", "on_hold" ]).order(
       Arel.sql("CASE WHEN status = 'active' THEN 0 ELSE 1 END"),
       :name
-    ).limit(100)
-    @inactive_customers = @customers.inactive.order(:name).limit(50)
+    )
+    @inactive_customers = @customers.inactive.order(:name)
 
-    @active_customers = @customers.active.order(:name).limit(100)
-    @on_hold_customers = @customers.on_hold.order(:name).limit(50)
+    @active_customers = @customers.active.order(:name)
+    @on_hold_customers = @customers.on_hold.order(:name)
 
     # Main customers list for the table (active and on_hold only)
     @customers = @active_and_on_hold_customers
@@ -35,8 +35,7 @@ class CustomersController < ApplicationController
     @pending_reschedule_count = @customer.appointments.cancelled_pending_reschedule.count
 
     # Customer navigation (active customers first, then by name)
-    # Only load IDs for navigation to reduce memory
-    @ordered_customers = current_user_customers.select(:id, :name, :status).order(
+    @ordered_customers = current_user_customers.order(
       Arel.sql("CASE WHEN status = 'active' THEN 0 WHEN status = 'on_hold' THEN 1 ELSE 2 END"),
       :name
     )
@@ -48,13 +47,8 @@ class CustomersController < ApplicationController
       @next_customer = current_index < @ordered_customers.count - 1 ? @ordered_customers[current_index + 1] : nil
     end
 
-    # Get appointments with limit to reduce memory usage (last 6 months)
-    six_months_ago = 6.months.ago
-    @all_appointments = @customer.appointments
-                                 .where("scheduled_at >= ?", six_months_ago)
-                                 .includes(:customer)
-                                 .order(scheduled_at: :desc)
-                                 .limit(500)
+    # Get all appointments with proper ordering and grouping
+    @all_appointments = @customer.appointments.includes(:customer).order(scheduled_at: :desc)
     @appointments_by_status = @all_appointments.group_by(&:status)
 
     # Separate past appointments from future ones for accurate completion rate calculation
