@@ -45,3 +45,5 @@ gem "cssbundling-rails"
 gem "jsbundling-rails"
 gem "childprocess"
 gem "ruby_llm"
+
+gem "dockerfile-rails", ">= 1.7", group: :development

@@ -108,6 +108,8 @@ GEM
       railties (>= 4.1.0)
       responders
       warden (~> 1.2.3)
+    dockerfile-rails (1.7.10)
+      rails (>= 3.0.0)
     dotenv (3.1.8)
     dotenv-rails (3.1.8)
       dotenv (= 3.1.8)
@@ -462,6 +464,7 @@ DEPENDENCIES
   cssbundling-rails
   debug
   devise
+  dockerfile-rails (>= 1.7)
   dotenv-rails
   google-apis-calendar_v3
   groupdate
