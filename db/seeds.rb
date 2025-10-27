@@ -1,33 +1,21 @@
 # Demo data for BillBuddy
-if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
-  puts "🎭 Creating demo data for BillBuddy..."
+demo_user = User.find_or_create_by!(email: "demo@billbuddy.com") do |user|
+  user.password = "demo123456"
+  user.password_confirmation = "demo123456"
+end
 
-  # Create demo user
-  demo_user = User.find_or_create_by!(email: "demo@billbuddy.com") do |user|
-    user.password = "demo123456"
-    user.password_confirmation = "demo123456"
-    puts "🔐 Setting password for demo user..."
+# Verify user creation and password
+if demo_user.persisted?
+  # Test password validation
+  unless demo_user.valid_password?("demo123456")
+    demo_user.update!(password: "demo123456", password_confirmation: "demo123456")
   end
+else
+  raise "Demo user creation failed"
+end
 
-  # Verify user creation and password
-  if demo_user.persisted?
-    puts "✅ Demo user created: #{demo_user.email}"
-    puts "🔑 Password hash present: #{demo_user.encrypted_password.present?}"
-
-    # Test password validation
-    if demo_user.valid_password?("demo123456")
-      puts "✅ Password validation working correctly"
-    else
-      puts "❌ Password validation failed - updating..."
-      demo_user.update!(password: "demo123456", password_confirmation: "demo123456")
-    end
-  else
-    puts "❌ Failed to create demo user: #{demo_user.errors.full_messages}"
-    raise "Demo user creation failed"
-  end
-
-  # Create diverse demo customers
-  customers_data = [
+# Create diverse demo customers
+customers_data = [
     { name: "Ana Silva", email: "ana@email.com", status: "active", plan_type: "subscription", monthly_amount: 480, monthly_hours: 8, activated_at: 8.months.ago },
     { name: "Bruno Costa", email: "bruno@email.com", status: "active", plan_type: "credit", custom_hourly_rate: 85, activated_at: 10.months.ago },
     { name: "Carla Santos", email: "carla@email.com", status: "active", plan_type: "subscription", monthly_amount: 720, monthly_hours: 12, activated_at: 6.months.ago },
@@ -40,9 +28,7 @@ if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
     { name: "João Pereira", email: "joao@email.com", status: "active", plan_type: "credit", custom_hourly_rate: 80, activated_at: 1.month.ago }
   ]
 
-  puts "📅 Creating customers and appointments throughout the year..."
-
-  customers_data.each_with_index do |customer_data, index|
+customers_data.each_with_index do |customer_data, index|
     customer = demo_user.customers.find_or_create_by!(name: customer_data[:name]) do |c|
       c.assign_attributes(customer_data.except(:activated_at, :cancelled_at))
       c.activated_at = customer_data[:activated_at]
@@ -176,10 +162,4 @@ if Rails.env.production? && ENV['AUTO_SEED'] == 'true'
         end
       end
     end
-
-    puts "✅ Created data for #{customer.name}: #{customer.appointments.count} appointments, #{customer.payments.count} payments"
   end
-
-  puts "✅ Demo customers and data created!"
-  puts "🎉 BillBuddy demo is ready!"
-end

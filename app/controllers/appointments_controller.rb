@@ -1,5 +1,6 @@
 class AppointmentsController < ApplicationController
   include UserScoped
+  include AppointmentsHelper
 
   before_action :authenticate_user!
   before_action :set_appointment, only: [ :edit, :update, :destroy, :mark_completed, :mark_cancelled, :cancellation_options, :reschedule ]
@@ -111,10 +112,23 @@ class AppointmentsController < ApplicationController
       }
     )
 
-    if result[:success]
-      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), notice: result[:message]
-    else
-      redirect_to navigation_service.smart_return_path_for_action(request.referer, appointments_path), alert: result[:message]
+    respond_to do |format|
+      if result[:success]
+        format.html { redirect_to calendars_path, notice: result[:message] }
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { notice: result[:message] }),
+            turbo_stream.remove("cancellation-modal")
+          ]
+        end
+      else
+        format.html { redirect_to calendars_path, alert: result[:message] }
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.prepend("flash-messages", partial: "shared/flash", locals: { alert: result[:message] })
+          ]
+        end
+      end
     end
   end
 

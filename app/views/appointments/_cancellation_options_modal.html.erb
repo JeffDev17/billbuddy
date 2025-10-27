@@ -19,8 +19,7 @@
               </p>
             </div>
 
-            <%= form_with url: mark_cancelled_appointment_path(appointment), method: :post, local: true, id: "cancellation-form",
-                      onsubmit: "closeCancellationModal(); return true;" do |form| %>
+            <%= form_with url: mark_cancelled_appointment_path(appointment), method: :post, id: "cancellation-form" do |form| %>
               
               <!-- Tipo de Cancelamento -->
               <div class="mb-4">

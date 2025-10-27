@@ -54,4 +54,61 @@ module AppointmentsHelper
     day_name = day_names[day_index]
     pattern.to_s.include?(day_name)
   end
+
+  # Event styling helpers for FullCalendar
+  def event_background_color(appointment)
+    case appointment.status
+    when "scheduled"
+      appointment.customer.credit? ? "#3b82f6" : "#8b5cf6"  # Blue for credit, Purple for subscription
+    when "completed"
+      "#059669"  # Emerald
+    when "cancelled"
+      cancelled_background_color(appointment)
+    when "no_show"
+      "#f59e0b"  # Amber
+    else
+      "#6b7280"  # Gray
+    end
+  end
+
+  def event_border_color(appointment)
+    case appointment.status
+    when "scheduled"
+      appointment.customer.credit? ? "#2563eb" : "#7c3aed"
+    when "completed"
+      "#047857"
+    when "cancelled"
+      cancelled_border_color(appointment)
+    when "no_show"
+      "#d97706"
+    else
+      "#4b5563"
+    end
+  end
+
+  def cancelled_background_color(appointment)
+    case appointment.cancellation_type
+    when "pending_reschedule"
+      "#f97316"  # Orange - pode reagendar
+    when "with_revenue"
+      "#7f1d1d"  # Dark red - cancelamento em cima da hora (gera receita)
+    when "standard"
+      "#ef4444"  # Red - cancelamento padrão
+    else
+      "#ef4444"  # Red - fallback
+    end
+  end
+
+  def cancelled_border_color(appointment)
+    case appointment.cancellation_type
+    when "pending_reschedule"
+      "#ea580c"  # Darker orange
+    when "with_revenue"
+      "#450a0a"  # Very dark red
+    when "standard"
+      "#dc2626"  # Darker red
+    else
+      "#dc2626"  # Darker red fallback
+    end
+  end
 end

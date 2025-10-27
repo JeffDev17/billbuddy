@@ -26,6 +26,8 @@ export default class extends Controller {
         sensitiveDataController.setFullCalendar(this.calendar)
       }
     }, 100)
+
+    // Simple calendar refresh - no complex event handling needed
   }
 
   disconnect() {
@@ -119,6 +121,10 @@ export default class extends Controller {
 
     // Render calendar
     this.calendar.render()
+    
+    // Store global reference for external access
+    window.fullCalendarInstance = this.calendar
+    console.log('FullCalendar initialized and ready, instance stored globally')
     
     // Apply dark theme styles after render
     this.applyDarkTheme()
@@ -359,7 +365,7 @@ export default class extends Controller {
   }
 
   async updateAppointmentTime(appointmentId, newStart, newEnd) {
-    const duration = Math.round((newEnd - newStart) / (1000 * 60 * 60))
+    const duration = Math.round(((newEnd - newStart) / (1000 * 60 * 60)) * 2) / 2
     
     const formatAsLocal = (date) => {
       const year = date.getFullYear()
@@ -478,4 +484,5 @@ export default class extends Controller {
       }
     }
   }
+
 }
